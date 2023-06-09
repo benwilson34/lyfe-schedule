@@ -4,18 +4,83 @@
  * TODO convert to typescript...need to find type definitions somewhere
  */
 
-import { Fragment, useRef, useState } from 'react'
+import { Fragment, useCallback, useRef, useState, useMemo, useEffect } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { Calendar } from 'react-calendar';
 import dayjs from 'dayjs';
 import 'react-calendar/dist/Calendar.css';
+import { calculateRangeDays } from '@/util/task';
 
-export function AddTaskModal({ isOpen, setIsOpen }) {
+export function AddTaskModal({ isOpen, setIsOpen, setTasks }) {
 
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [title, setTitle] = useState('');
+  const [startDate, setStartDate] = useState(dayjs());
+  const [endDate, setEndDate] = useState(dayjs());
+  const [isRepeating, setIsRepeating] = useState(false);
+  const [repeatDays, setRepeatDays] = useState(1);
+  const [rangeDays, setRangeDays] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const cancelButtonRef = useRef(null)
+  // type DateField = 'startDate' | 'endDate' | 'rangeDays';
+  const [lockedField, setLockedField] = useState('rangeDays');
+
+  const cancelButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (lockedField === 'rangeDays') {
+      setRangeDays(calculateRangeDays(startDate, endDate));
+      return;
+    }
+    // TODO calculate other locked fields startDate and endDate
+    throw new Error('Not implemented yet');
+  });
+
+  const isValid = useMemo(() => {
+    // TODO validate new task
+    const isValidTitle = typeof title === 'string' && title.trim().length > 0;
+    return isValidTitle;
+  }, [title]);
+
+  const onRangeFieldChange = useCallback((event) => {
+    setRangeDays(event.target.value);
+  }, [setRangeDays])
+
+  const onAddButtonClick = useCallback(async () => {
+    try {
+      const taskToAdd = {
+        title,
+        startDate: dayjs(startDate),
+        endDate: dayjs(endDate),
+        rangeDays,
+        ...(isRepeating && { repeatDays }),
+      };
+      console.log('>> about to add task...', taskToAdd);
+      
+      setIsLoading(true);
+      const result = await fetch(`/api/tasks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskToAdd),
+      });
+      const body = await result.json();
+      if (result.status === 200) {
+        // console.log('>> Success!!');
+        taskToAdd.id = body.data.taskId;
+      } else {
+        throw new Error(`>> error: ${JSON.stringify(body)}`);
+      }
+      setTasks((tasks) => [...tasks, taskToAdd]);
+      setIsOpen(false);
+      // TODO show some confimation message
+    } catch (error) {
+      console.error(error);
+      // TODO show some error message
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setIsLoading, setIsOpen, title, isRepeating]);
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -55,24 +120,32 @@ export function AddTaskModal({ isOpen, setIsOpen }) {
                       </Dialog.Title>
                       <div className="mt-2">
                         <div className="mb-4">
-                          Title:&nbsp;
-                          <input type="text"></input>
+                          Title<span className="text-red-400">*</span>:&nbsp;
+                          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}></input>
                         </div>
                         <div className="mb-4">
                           <p>
                             Start date: {startDate.toString()}
                           </p>
-                          <Calendar onChange={setStartDate} value={startDate} />
+                          <Calendar onChange={(d) => setStartDate(dayjs(d))} value={startDate.toDate()} disabled={isLoading || lockedField === 'startDate'}/>
                         </div>
                         <div className="mb-4">
                           <p>
                             End date: {endDate.toString()}
                           </p>
-                          <Calendar onChange={setEndDate} value={endDate} />
+                          <Calendar onChange={(d) => setEndDate(dayjs(d))} value={endDate.toDate()} disabled={isLoading || lockedField === 'endDate'} />
                         </div>
                         <div className="mb-4">
                           Range:&nbsp;
-                          {dayjs(endDate).diff(dayjs(startDate), 'days') + ' days'}
+                          <input type="number" onChange={onRangeFieldChange}  value={rangeDays} min={0} disabled={isLoading || lockedField === 'rangeDays'} className="w-12"></input> days
+                        </div>
+                        <div className="mb-4">
+                          <input type="checkbox" onChange={(e) => setIsRepeating(e.target.checked)} className="inline-block"></input>
+                          <div className="inline-block">
+                            <span>&nbsp;Repeat every </span>
+                            <input type='number' value={repeatDays} onChange={(e) => setRepeatDays(parseInt(e.target.value, 10))} min={1} step={1} className="w-12" disabled={isLoading || !isRepeating}></input>
+                            <span>&nbsp;days</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -82,7 +155,8 @@ export function AddTaskModal({ isOpen, setIsOpen }) {
                   <button
                     type="button"
                     className="inline-flex w-full justify-center rounded-md bg-green-300 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
-                    onClick={() => setIsOpen(false)}
+                    onClick={onAddButtonClick}
+                    disabled={!isValid || isLoading}
                   >
                     Add
                   </button>
@@ -91,6 +165,7 @@ export function AddTaskModal({ isOpen, setIsOpen }) {
                     className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
                     onClick={() => setIsOpen(false)}
                     ref={cancelButtonRef}
+                    disabled={isLoading}
                   >
                     Cancel
                   </button>

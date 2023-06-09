@@ -51,6 +51,7 @@ async function addNewTask(
 ) {
   try {
     // TODO validate req.body
+    console.log(`taskToAdd:`, req.body); // TODO remove
     const id = await addTask(req.body);
     new SuccessResponse({
       title: 'TODO',

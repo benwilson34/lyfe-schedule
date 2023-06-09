@@ -17,25 +17,6 @@ function dtoTaskToTask(taskDto: TaskDto): Task {
   return task as Task;
 }
 
-function calculateTaskFields(task: Task): Task {
-  // TODO validate task fields?
-  // TODO move this to the backend?
-  const newTask: Task = {...task};
-  if (newTask.startDate && newTask.rangeDays) {
-    newTask.endDate = newTask.startDate.add(newTask.rangeDays, 'days');
-    return newTask;
-  }
-  if (newTask.endDate && newTask.rangeDays) {
-    newTask.startDate = newTask.endDate.subtract(newTask.rangeDays, 'days');
-    return newTask;
-  }
-  if (newTask.startDate && newTask.endDate) {
-    newTask.rangeDays = newTask.endDate.diff(newTask.startDate, 'days');
-    return newTask;
-  }
-  throw new Error('Invalid task! Needs at least two of [startDate, endDate, rangeDays].');
-}
-
 export async function getServerSideProps(context: any) {
   await initDb();
   const initTasks: TaskDto[] = await getAllTasks();
@@ -47,7 +28,7 @@ export async function getServerSideProps(context: any) {
 }
 
 export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
-  const [tasks, setTasks] = useState(initTasks.map(dtoTaskToTask).map(calculateTaskFields));
+  const [tasks, setTasks] = useState(initTasks.map(dtoTaskToTask) as Task[]);
 
   const [isShowingAddModal, setIsShowingAddModal] = useState(false);
 
@@ -78,7 +59,6 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
 
   const calculatePriority = (startDate: dayjs.Dayjs, endDate: dayjs.Dayjs) => {
     // TODO handle identical start and end 
-    // TODO actually might want to do mins instead of days?
     const MIN_PRIORITY = 0;
     const MAX_PRIORITY = 1;
     const rangeHours = endDate.diff(startDate, 'hours');
@@ -158,6 +138,8 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     );
   }
 
+  console.log('>> tasks:', tasks); // TODO remove
+
   return (
     <main
       className={`flex min-h-screen flex-col items-center p-6 pt-12 ${inter.className}`}
@@ -169,7 +151,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       </div>
       {tasks?.map((item) => renderTask(item))}
 
-      <AddTaskModal isOpen={isShowingAddModal} setIsOpen={setIsShowingAddModal} />
+      <AddTaskModal isOpen={isShowingAddModal} setIsOpen={setIsShowingAddModal} setTasks={setTasks} />
     </main>
   )
 }
