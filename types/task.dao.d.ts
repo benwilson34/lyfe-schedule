@@ -7,6 +7,8 @@ import type TaskDto from './task.dto';
  *   Node MongoDB package?
  * @todo convert `startDate` type to `Date` here if the DTO changes it to `string`
  */
-export type TaskDao = OptionalId<Omit<TaskDto, 'id' | 'startDate' | 'endDate'>>;
+export type TaskDao = OptionalId<Omit<TaskDto, 'id'>>;
 
 export type TaskInsertDao = WithoutId<TaskDao>;
+
+export type TaskUpdateDao = WithoutId<Partial<TaskDao>>;

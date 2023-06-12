@@ -1,5 +1,5 @@
 import type { TaskDto } from '@/types/task.dto';
-import type { TaskDao, TaskInsertDao } from '@/types/task.dao';
+import type { TaskDao, TaskInsertDao, TaskUpdateDao } from '@/types/task.dao';
 import { MongoClient, Collection, ObjectId, WithoutId } from 'mongodb';
 
 const URL = `mongodb://127.0.0.1:27017`; // TODO load from env var
@@ -38,14 +38,21 @@ export async function addTask(newTask: WithoutId<TaskDto>): Promise<string> {
   return insertResult.insertedId.toString();
 }
 
-export async function updateTask(id: ObjectId|string, task: TaskDto): Promise<boolean> {
+export async function updateTask(id: ObjectId|string, task: TaskUpdateDao): Promise<string> {
   await initIfNeeded();
   // TODO validate task
   const oid = id instanceof ObjectId ? id : new ObjectId(id);
   console.log(task as any);
   // FIXME need to learn how "casting" in Typescript should work
-  const updatedResult = await tasks!.updateOne({ _id: oid }, { $set: { ...task } });
-  return updatedResult.modifiedCount === 1;
+  console.log('task', task); // TODO remove
+  
+  const updateResult = await tasks!.updateOne({ _id: oid }, { $set: { ...task } });
+  console.log('updatedResult', updateResult); // TODO remove
+  
+  if (updateResult.modifiedCount !== 1) {
+    throw new Error(`Modified ${updateResult.matchedCount} documents instead of 1`);
+  }
+  return oid.toString();
 }
 
 export async function deleteTask(id: ObjectId|string): Promise<boolean> {

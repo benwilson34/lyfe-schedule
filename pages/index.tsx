@@ -3,9 +3,10 @@ import type { TaskViewModel as Task } from '@/types/task.viewModel';
 import { Inter } from 'next/font/google';
 import dayjs from 'dayjs';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsis, faCirclePlus } from '@fortawesome/free-solid-svg-icons';
+import { faCirclePlus } from '@fortawesome/free-solid-svg-icons';
 import { useState } from 'react';
-import { AddTaskModal } from '@/components/addTaskModal';
+import { EditTaskModal } from '@/components/editTaskModal';
+import TaskOptionsMenu from '@/components/taskOptionsMenu';
 import { init as initDb, getAllTasks } from '@/services/mongo.service';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -29,8 +30,8 @@ export async function getServerSideProps(context: any) {
 
 export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   const [tasks, setTasks] = useState(initTasks.map(dtoTaskToTask) as Task[]);
-
-  const [isShowingAddModal, setIsShowingAddModal] = useState(false);
+  const [isShowingEditModal, setIsShowingEditModal] = useState(false);
+  const [editTask, setEditTask] = useState<Task|null>(null);
 
   const formatTimeEstimate = (timeEstimateMins: number) => {
     let durationString = '';
@@ -108,7 +109,18 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     }
   };
 
-  const renderTask = ({ id, title, timeEstimateMins, startDate, endDate }: Task) => {
+  const onAddButtonClick = () => {
+    setEditTask(null);
+    setIsShowingEditModal(true);
+  }
+
+  const getEditTaskHandler = (task: Task) => () => {
+    setEditTask(task);
+    setIsShowingEditModal(true);
+  }
+
+  const renderTask = (task: Task) => {
+    const { id, title, timeEstimateMins, startDate, endDate } = task;
     const now = dayjs();
     const normalizedStartDate = startDate || now;
     const normalizedEndDate = endDate || now.add(1, 'day');
@@ -132,7 +144,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
               : null}
           </span>
           {/* <span className="text-sm">({calculatedPriority.toFixed(2)} -&gt; {calculatedPoints} ppts)</span> */}
-          <FontAwesomeIcon icon={faEllipsis} className="text-gray-500" />
+          <TaskOptionsMenu task={task} onEditClick={getEditTaskHandler(task)}/>
         </div>
       </div>
     );
@@ -145,13 +157,13 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       className={`flex min-h-screen flex-col items-center p-6 pt-12 ${inter.className}`}
     >
       <h1 className="mb-12 text-4xl">~ TODO ~</h1>
-      <div onClick={() => setIsShowingAddModal(true)} className="max-w-lg w-full mb-3 p-3 rounded-lg border-2 border-dotted border-gray-500 hover:bg-gray-200 hover:cursor-pointer text-gray-500">
+      <div onClick={onAddButtonClick} className="max-w-lg w-full mb-3 p-3 rounded-lg border-2 border-dotted border-gray-500 hover:bg-gray-200 hover:cursor-pointer text-gray-500">
         <FontAwesomeIcon icon={faCirclePlus} />
         <span className="ml-3">Add</span>
       </div>
       {tasks?.map((item) => renderTask(item))}
 
-      <AddTaskModal isOpen={isShowingAddModal} setIsOpen={setIsShowingAddModal} setTasks={setTasks} />
+      <EditTaskModal isOpen={isShowingEditModal} setIsOpen={setIsShowingEditModal} setTasks={setTasks} task={editTask} />
     </main>
   )
 }

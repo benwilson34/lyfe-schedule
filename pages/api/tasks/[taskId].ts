@@ -9,12 +9,39 @@ async function getTaskById() {
   // TODO
 }
 
-async function updateTask() {
-  // TODO
+async function updateTask(req: NextApiRequest, res: NextApiResponse) {
+  // TODO wrap with try-catch
+  try {
+    const { taskId } = req.query;
+    if (!taskId || Array.isArray(taskId)) {
+      new ErrorResponse({
+        status: 404,
+        responseCode: 'resourceNotFound',
+        title: 'TODO',
+        detail: 'TODO',
+      }).send(res);
+      return;
+    }
+    const task = req.body;
+    // TODO validate task
+    const modifiedId = await updateTaskInDb(taskId, task);
+    if (!modifiedId) {
+      throw new Error(`Failed to update task with id "${taskId}"`);
+    }
+    new SuccessResponse({
+      status: 200,
+      title: 'Successfully updated task',
+      detail: `TODO`,
+      data: { taskId: modifiedId }
+    }).send(res);
+  } catch (error) {
+    console.error(error);
+    internalErrorResponse.send(res);
+  }
 }
 
 async function completeTask(req: NextApiRequest, res: NextApiResponse) {
-  // TODO
+  // TODO wrap with try-catch
   const { taskId } = req.query;
   if (!taskId || Array.isArray(taskId)) {
     new ErrorResponse({
@@ -100,16 +127,16 @@ export default function handler(
 ) {
   switch (req.method?.toUpperCase()) {
     case 'GET':
-      getTaskById();
+      // getTaskById();
       break;
     case 'PATCH':
-      updateTask();
+      updateTask(req, res);
       break;
     case 'PUT':
       operateOnTask(req, res);
       break;
     case 'DELETE':
-      deleteTask();
+      // deleteTask();
       break;
     default:
       new ErrorResponse({

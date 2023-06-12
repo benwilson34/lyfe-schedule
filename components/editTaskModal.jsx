@@ -11,14 +11,23 @@ import dayjs from 'dayjs';
 import 'react-calendar/dist/Calendar.css';
 import { calculateRangeDays } from '@/util/task';
 
-export function AddTaskModal({ isOpen, setIsOpen, setTasks }) {
+export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
+  if (!isOpen) return null; // FIXME I don't think this should be here. May be causing an error on first render.
 
-  const [title, setTitle] = useState('');
-  const [startDate, setStartDate] = useState(dayjs());
-  const [endDate, setEndDate] = useState(dayjs());
-  const [isRepeating, setIsRepeating] = useState(false);
-  const [repeatDays, setRepeatDays] = useState(1);
-  const [rangeDays, setRangeDays] = useState(0);
+  const isNewTask = useMemo(() => !task, [task]);
+  console.log(`edit task modal -> >> TASK:`, task); // TODO remove
+
+  console.log(`edit task modal -> title src: ${task?.title || ''}`); // TODO remove
+  const [title, setTitle] = useState(task?.title || '');
+  console.log(`edit task modal -> title state:`, title); // TODO remove
+  console.log(`edit task modal -> startDate src: "${task?.startDate || dayjs()}"`); // TODO remove
+  const [startDate, setStartDate] = useState(task?.startDate || dayjs());
+  console.log(`edit task modal -> startDate state:`, title); // TODO remove
+  const [endDate, setEndDate] = useState(task?.endDate || dayjs());
+  const [isRepeating, setIsRepeating] = useState(!!task?.isRepeating || false);
+  const [repeatDays, setRepeatDays] = useState(task?.repeatDays || 1);
+  const [rangeDays, setRangeDays] = useState(task?.rangeDays || 0);
+  const [timeEstimateMins, setTimeEstimateMins] = useState(task?.timeEstimateMins || 15);
   const [isLoading, setIsLoading] = useState(false);
 
   // type DateField = 'startDate' | 'endDate' | 'rangeDays';
@@ -41,10 +50,6 @@ export function AddTaskModal({ isOpen, setIsOpen, setTasks }) {
     return isValidTitle;
   }, [title]);
 
-  const onRangeFieldChange = useCallback((event) => {
-    setRangeDays(event.target.value);
-  }, [setRangeDays])
-
   const onAddButtonClick = useCallback(async () => {
     try {
       const taskToAdd = {
@@ -53,6 +58,7 @@ export function AddTaskModal({ isOpen, setIsOpen, setTasks }) {
         endDate: dayjs(endDate),
         rangeDays,
         ...(isRepeating && { repeatDays }),
+        timeEstimateMins,
       };
       console.log('>> about to add task...', taskToAdd);
       
@@ -80,7 +86,53 @@ export function AddTaskModal({ isOpen, setIsOpen, setTasks }) {
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading, setIsOpen, title, isRepeating]);
+  }, [task, setIsOpen, setIsLoading, title, startDate, endDate, rangeDays, isRepeating, timeEstimateMins]);
+
+  const onSaveButtonClick = useCallback(async () => {
+    console.log('onSaveButtonClick');
+    try {
+      const taskToSave = {
+        title,
+        startDate: dayjs(startDate),
+        endDate: dayjs(endDate),
+        rangeDays,
+        ...(isRepeating && { repeatDays }),
+        timeEstimateMins,
+      };
+      console.log(`>> about to save task with id "${task.id}"...`, taskToSave);
+      
+      setIsLoading(true);
+      const result = await fetch(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskToSave),
+      });
+      const body = await result.json();
+      if (result.status === 200) {
+        // console.log('>> Success!!');
+        // taskToAdd.id = body.data.taskId;
+      } else {
+        throw new Error(`>> error: ${JSON.stringify(body)}`);
+      }
+      setTasks((tasks) => {
+        return tasks.map((t) => {
+          if (t.id !== task.id) return t;
+          return { ...taskToSave, id: task.id };
+        });
+      });
+      setIsOpen(false);
+      // TODO show some confimation message
+    } catch (error) {
+      console.error(error);
+      // TODO show some error message
+    } finally {
+      setIsLoading(false);
+    }
+  }, [task, setIsOpen, setIsLoading, title, startDate, endDate, rangeDays, isRepeating, timeEstimateMins]);
+
+  console.log(`edit task modal -> title: "${title}"`);
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -116,7 +168,7 @@ export function AddTaskModal({ isOpen, setIsOpen, setTasks }) {
                     </div>
                     <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
                       <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
-                        Add task
+                        {isNewTask ? 'Add' : 'Edit'} task
                       </Dialog.Title>
                       <div className="mt-2">
                         <div className="mb-4">
@@ -137,15 +189,19 @@ export function AddTaskModal({ isOpen, setIsOpen, setTasks }) {
                         </div>
                         <div className="mb-4">
                           Range:&nbsp;
-                          <input type="number" onChange={onRangeFieldChange}  value={rangeDays} min={0} disabled={isLoading || lockedField === 'rangeDays'} className="w-12"></input> days
+                          <input type="number" onChange={(e) => setRangeDays(e.target.value)}  value={rangeDays} min={0} disabled={isLoading || lockedField === 'rangeDays'} className="w-12"></input> days
                         </div>
                         <div className="mb-4">
-                          <input type="checkbox" onChange={(e) => setIsRepeating(e.target.checked)} className="inline-block"></input>
+                          <input type="checkbox" onChange={(e) => setIsRepeating(e.target.checked)} className="inline-block" checked={isRepeating}></input>
                           <div className="inline-block">
                             <span>&nbsp;Repeat every </span>
                             <input type='number' value={repeatDays} onChange={(e) => setRepeatDays(parseInt(e.target.value, 10))} min={1} step={1} className="w-12" disabled={isLoading || !isRepeating}></input>
                             <span>&nbsp;days</span>
                           </div>
+                        </div>
+                        <div className="mb-4">
+                          Time Estimate:&nbsp;
+                          <input type="number" onChange={(e) => setTimeEstimateMins(parseInt(e.target.value, 10))}  value={timeEstimateMins} min={0} disabled={isLoading} className="w-12"></input> minutes
                         </div>
                       </div>
                     </div>
@@ -154,11 +210,11 @@ export function AddTaskModal({ isOpen, setIsOpen, setTasks }) {
                 <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                   <button
                     type="button"
-                    className="inline-flex w-full justify-center rounded-md bg-green-300 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
-                    onClick={onAddButtonClick}
+                    className="inline-flex w-full justify-center rounded-md bg-green-300 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-400"
+                    onClick={isNewTask ? onAddButtonClick : onSaveButtonClick}
                     disabled={!isValid || isLoading}
                   >
-                    Add
+                    {isNewTask ? 'Add' : 'Save'}
                   </button>
                   <button
                     type="button"
