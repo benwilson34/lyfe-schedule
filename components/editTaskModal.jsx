@@ -15,14 +15,8 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
   if (!isOpen) return null; // FIXME I don't think this should be here. May be causing an error on first render.
 
   const isNewTask = useMemo(() => !task, [task]);
-  console.log(`edit task modal -> >> TASK:`, task); // TODO remove
-
-  console.log(`edit task modal -> title src: ${task?.title || ''}`); // TODO remove
   const [title, setTitle] = useState(task?.title || '');
-  console.log(`edit task modal -> title state:`, title); // TODO remove
-  console.log(`edit task modal -> startDate src: "${task?.startDate || dayjs()}"`); // TODO remove
   const [startDate, setStartDate] = useState(task?.startDate || dayjs());
-  console.log(`edit task modal -> startDate state:`, title); // TODO remove
   const [endDate, setEndDate] = useState(task?.endDate || dayjs());
   const [isRepeating, setIsRepeating] = useState(!!task?.isRepeating || false);
   const [repeatDays, setRepeatDays] = useState(task?.repeatDays || 1);
@@ -60,7 +54,6 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
         ...(isRepeating && { repeatDays }),
         timeEstimateMins,
       };
-      console.log('>> about to add task...', taskToAdd);
       
       setIsLoading(true);
       const result = await fetch(`/api/tasks`, {
@@ -72,7 +65,6 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
       });
       const body = await result.json();
       if (result.status === 200) {
-        // console.log('>> Success!!');
         taskToAdd.id = body.data.taskId;
       } else {
         throw new Error(`>> error: ${JSON.stringify(body)}`);
@@ -89,7 +81,6 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
   }, [task, setIsOpen, setIsLoading, title, startDate, endDate, rangeDays, isRepeating, timeEstimateMins]);
 
   const onSaveButtonClick = useCallback(async () => {
-    console.log('onSaveButtonClick');
     try {
       const taskToSave = {
         title,
@@ -99,7 +90,6 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
         ...(isRepeating && { repeatDays }),
         timeEstimateMins,
       };
-      console.log(`>> about to save task with id "${task.id}"...`, taskToSave);
       
       setIsLoading(true);
       const result = await fetch(`/api/tasks/${task.id}`, {
@@ -131,8 +121,6 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
       setIsLoading(false);
     }
   }, [task, setIsOpen, setIsLoading, title, startDate, endDate, rangeDays, isRepeating, timeEstimateMins]);
-
-  console.log(`edit task modal -> title: "${title}"`);
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>

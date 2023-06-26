@@ -1,13 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
-import dayjs from 'dayjs';
 import ErrorResponse, { internalErrorResponse } from '@/models/ErrorResponse';
-import { getTaskById as getTaskByIdFromDb, updateTask as updateTaskInDb, addTask as addTaskInDb } from '@/services/mongo.service';
+import { getTaskById as getTaskByIdFromDb, updateTask as updateTaskInDb, deleteTask as deleteTaskInDb } from '@/services/mongo.service';
 import SuccessResponse from '@/models/SuccessResponse';
-
-async function getTaskById() {
-  // TODO
-}
 
 async function updateTask(req: NextApiRequest, res: NextApiResponse) {
   // TODO wrap with try-catch
@@ -63,10 +58,7 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
     return;
   }
   task.completedDate = new Date();
-  const didUpdate = await updateTaskInDb(taskId, task);
-  if (!didUpdate) {
-    // TODO send error response
-  }
+  await updateTaskInDb(taskId, task);
   
   // TODO re-enable - create new task if it repeats 
   // if (task.repeatDays) {
@@ -96,6 +88,7 @@ async function operateOnTask(req: NextApiRequest, res: NextApiResponse) {
         title: 'TODO',
         detail: 'TODO',
       }).send(res);
+      return;
     }
     switch(operation.toLowerCase()) {
       case 'complete':
@@ -112,31 +105,47 @@ async function operateOnTask(req: NextApiRequest, res: NextApiResponse) {
         return;
     }
   } catch (maybeError: any) {
-    console.log(maybeError);
+    console.error(maybeError);
     internalErrorResponse.send(res);
   }
 }
 
-async function deleteTask() {
-  // TODO
+async function deleteTask(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const { taskId } = req.query;
+    if (!taskId || Array.isArray(taskId)) {
+      new ErrorResponse({
+        status: 400,
+        responseCode: 'invalidFields',
+        title: 'TODO',
+        detail: 'TODO',
+      }).send(res);
+      return;
+    }
+    await deleteTaskInDb(taskId);
+    new SuccessResponse({
+      title: 'TODO',
+      detail: 'TODO',
+    }).send(res);
+  } catch (maybeError: any) {
+    console.error(maybeError);
+    internalErrorResponse.send(res);
+  }
 }
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   switch (req.method?.toUpperCase()) {
-    case 'GET':
-      // getTaskById();
-      break;
     case 'PATCH':
-      updateTask(req, res);
+      await updateTask(req, res);
       break;
     case 'PUT':
-      operateOnTask(req, res);
+      await operateOnTask(req, res);
       break;
     case 'DELETE':
-      // deleteTask();
+      await deleteTask(req, res);
       break;
     default:
       new ErrorResponse({

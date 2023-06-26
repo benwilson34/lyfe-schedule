@@ -42,24 +42,25 @@ export async function updateTask(id: ObjectId|string, task: TaskUpdateDao): Prom
   await initIfNeeded();
   // TODO validate task
   const oid = id instanceof ObjectId ? id : new ObjectId(id);
-  console.log(task as any);
   // FIXME need to learn how "casting" in Typescript should work
   console.log('task', task); // TODO remove
   
-  const updateResult = await tasks!.updateOne({ _id: oid }, { $set: { ...task } });
-  console.log('updatedResult', updateResult); // TODO remove
+  const { modifiedCount } = await tasks!.updateOne({ _id: oid }, { $set: { ...task } });
   
-  if (updateResult.modifiedCount !== 1) {
-    throw new Error(`Modified ${updateResult.matchedCount} documents instead of 1`);
+  if (modifiedCount !== 1) {
+    throw new Error(`Modified ${modifiedCount} documents instead of 1`);
   }
   return oid.toString();
 }
 
-export async function deleteTask(id: ObjectId|string): Promise<boolean> {
+export async function deleteTask(id: ObjectId|string): Promise<string> {
   await initIfNeeded();
   const oid = id instanceof ObjectId ? id : new ObjectId(id);
-  const deleteResult = await tasks!.deleteOne({ _id: oid });
-  return deleteResult.deletedCount === 1;
+  const { deletedCount } = await tasks!.deleteOne({ _id: oid });
+  if (deletedCount !== 1) {
+    throw new Error(`Deleted ${deletedCount} documents instead of 1`);
+  }
+  return oid.toString();
 }
 
 export async function deleteAllTasks(): Promise<number> {
@@ -70,7 +71,6 @@ export async function deleteAllTasks(): Promise<number> {
 
 export async function init() {
   try {
-    console.log('>> trying to connect to mongo...');
     await client.connect();
     tasks = client.db(DB_NAME).collection<TaskDao>(TASKS_COLLECTION_NAME);
     console.log(`Successfully connected to Mongo server at ${URL}`);

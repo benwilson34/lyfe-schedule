@@ -31,7 +31,7 @@ function handleError(maybeError: any, res: NextApiResponse) {
 
 async function getAllTasks(
   req: NextApiRequest,
-  res: NextApiResponse<ApiResponse> // TODO confirm this type
+  res: NextApiResponse
 ) {
   try {
     const tasks = await getAll();
@@ -47,11 +47,10 @@ async function getAllTasks(
 
 async function addNewTask(
   req: NextApiRequest,
-  res: NextApiResponse<ApiResponse> // TODO confirm this type
+  res: NextApiResponse
 ) {
   try {
     // TODO validate req.body
-    console.log(`taskToAdd:`, req.body); // TODO remove
     const id = await addTask(req.body);
     new SuccessResponse({
       title: 'TODO',
@@ -65,7 +64,7 @@ async function addNewTask(
 
 async function initializeTasks(
   req: NextApiRequest,
-  res: NextApiResponse<ApiResponse>
+  res: NextApiResponse
 ) {
   try {
     await deleteAllTasks();
@@ -81,7 +80,7 @@ async function initializeTasks(
 
 async function operateOnTasks(
   req: NextApiRequest,
-  res: NextApiResponse<ApiResponse>
+  res: NextApiResponse
 ) {
   // TODO validate body?
   const { operation, ...options } = req.body;
@@ -110,7 +109,7 @@ async function operateOnTasks(
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<ApiResponse>
+  res: NextApiResponse
 ) {
   switch (req.method?.toUpperCase()) {
     case 'GET':

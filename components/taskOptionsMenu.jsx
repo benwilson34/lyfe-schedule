@@ -7,9 +7,9 @@
 import { Fragment } from 'react'
 import { Popover, Transition } from '@headlessui/react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsis, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsis, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 
-export default function TaskOptionsMenu({ task, onEditClick }) {
+export default function TaskOptionsMenu({ task, onEditClick, onDeleteClick }) {
   return (
     <Popover className="relative">
       <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900">
@@ -36,6 +36,17 @@ export default function TaskOptionsMenu({ task, onEditClick }) {
                 <div>
                   <span className="font-semibold text-gray-900">
                     Edit
+                  </span>
+                  {/* <p className="mt-1 text-gray-600">{item.description}</p> */}
+                </div>
+              </div>
+              <div onClick={onDeleteClick} className="group relative flex items-center gap-x-6 rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+                {/* <div className="mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white"> */}
+                  <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-gray-600 group-hover:text-indigo-600" aria-hidden="true" />
+                {/* </div> */}
+                <div>
+                  <span className="font-semibold text-gray-900">
+                    Delete
                   </span>
                   {/* <p className="mt-1 text-gray-600">{item.description}</p> */}
                 </div>

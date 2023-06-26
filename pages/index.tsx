@@ -64,7 +64,6 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     const MAX_PRIORITY = 1;
     const rangeHours = endDate.diff(startDate, 'hours');
     const elapsedHours = dayjs().diff(startDate, 'hours');
-    console.log(`elapsed: ${elapsedHours} hours of ${rangeHours}`);
     return lerp(MIN_PRIORITY, MAX_PRIORITY, elapsedHours / rangeHours);
   }
 
@@ -119,12 +118,33 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     setIsShowingEditModal(true);
   }
 
+  const getDeleteTaskHandler = (task: Task) => async () => {
+    try {
+      // TODO show confirmation dialog first
+      const result = await fetch(`/api/tasks/${task.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const body = await result.json();
+      if (result.status === 200) {
+        // console.log('>> Success!!');
+        // taskToAdd.id = body.data.taskId;
+      } else {
+        throw new Error(`>> error: ${JSON.stringify(body)}`);
+      }
+      setTasks((tasks) => tasks.filter((t) => t.id !== task.id));
+    } catch (maybeError: any) {
+      // TODO show some error message
+    }
+  }
+
   const renderTask = (task: Task) => {
     const { id, title, timeEstimateMins, startDate, endDate } = task;
     const now = dayjs();
     const normalizedStartDate = startDate || now;
     const normalizedEndDate = endDate || now.add(1, 'day');
-    console.log(title);
     const calculatedPriority = calculatePriority(normalizedStartDate, normalizedEndDate);
     const priorityStyles = getStylesForPriority(calculatedPriority);
     const calculatedPoints = Math.round(calculatedPriority * timeEstimateMins);
@@ -144,13 +164,11 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
               : null}
           </span>
           {/* <span className="text-sm">({calculatedPriority.toFixed(2)} -&gt; {calculatedPoints} ppts)</span> */}
-          <TaskOptionsMenu task={task} onEditClick={getEditTaskHandler(task)}/>
+          <TaskOptionsMenu task={task} onEditClick={getEditTaskHandler(task)} onDeleteClick={getDeleteTaskHandler(task)}/>
         </div>
       </div>
     );
   }
-
-  console.log('>> tasks:', tasks); // TODO remove
 
   return (
     <main
