@@ -1,5 +1,6 @@
 import type { TaskViewModel as Task } from "@/types/task.viewModel";
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
+import { endOfTheDay, startOfTheDay } from "./date";
 
 /**
  * Check `startDate`, `endDate`, and `rangeDays`. Two of the three should be provided, then the
@@ -28,8 +29,13 @@ export function calculateDates(task: Task): Task {
   throw new Error('Unexpected value'); // Shouldn't get here
 }
 
-export function calculateRangeDays(startDate: Dayjs, endDate: Dayjs): number {
-  return endDate.diff(startDate, 'days');
+export function calculateRangeDays(startDate: Dayjs, endDate: Dayjs, useStartTime: boolean = false, useEndTime: boolean = false): number {
+  // TODO figure out how to calculate when useStartTime === true or useEndTime === true
+  // When `useStartTime === true`, assume the "start time" is the beginning of the day, just after midnight.
+  // When `useEndTime === true`, assume the "end time" is the end of the day, just before midnight.
+  const adjustedStartDate = useStartTime ? startDate : startOfTheDay(startDate);
+  const adjustedEndDate = useEndTime ? endDate : endOfTheDay(endDate).add(2, 'minutes'); // eh it works for now
+  return adjustedEndDate.diff(adjustedStartDate, 'days');
 }
 
 export function calculateEndDate(startDate: Dayjs, rangeDays: number): Dayjs {
@@ -40,7 +46,7 @@ export function calculateStartDate(endDate: Dayjs, rangeDays: number): Dayjs {
   return endDate.subtract(rangeDays, 'days');
 }
 
-export function verififyDateRange(task: Task): boolean {
+export function verifyDateRange(task: Task): boolean {
   // TODO?
   return false;
 }

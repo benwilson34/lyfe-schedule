@@ -8,9 +8,10 @@ import type { Dayjs } from 'dayjs';
 export type TaskViewModel = {
   id: string;
   title: string;
+  timeEstimateMins?: number;
   startDate: Dayjs;
-  endDate: Dayjs;
   rangeDays: number;
-  repeatDays: number;
-  timeEstimateMins: number;
+  endDate: Dayjs;
+  repeatDays?: number;
+  isProjected?: boolean;
 };

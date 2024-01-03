@@ -10,6 +10,13 @@ import { Calendar } from 'react-calendar';
 import dayjs from 'dayjs';
 import 'react-calendar/dist/Calendar.css';
 import { calculateRangeDays } from '@/util/task';
+import { assign } from 'lodash';
+// import './editTaskModal.css';
+
+const Bound = {
+  START: 'start',
+  END: 'end'
+};
 
 export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
   if (!isOpen) return null; // FIXME I don't think this should be here. May be causing an error on first render.
@@ -18,11 +25,12 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
   const [title, setTitle] = useState(task?.title || '');
   const [startDate, setStartDate] = useState(task?.startDate || dayjs());
   const [endDate, setEndDate] = useState(task?.endDate || dayjs());
-  const [isRepeating, setIsRepeating] = useState(!!task?.isRepeating || false);
+  const [isRepeating, setIsRepeating] = useState(!!task?.repeatDays || false);
   const [repeatDays, setRepeatDays] = useState(task?.repeatDays || 1);
   const [rangeDays, setRangeDays] = useState(task?.rangeDays || 0);
   const [timeEstimateMins, setTimeEstimateMins] = useState(task?.timeEstimateMins || 15);
   const [isLoading, setIsLoading] = useState(false);
+  const [mostRecentlySetDate, setMostRecentlySetDate] = useState(Bound.START);
 
   // type DateField = 'startDate' | 'endDate' | 'rangeDays';
   const [lockedField, setLockedField] = useState('rangeDays');
@@ -44,8 +52,53 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
     return isValidTitle;
   }, [title]);
 
+  const handleClickDay = useCallback(
+    (value) => {
+      // TODO might need to strip the time off the dates?
+      if (value < startDate && value < endDate) {
+        console.log('setting start date');
+        setStartDate(dayjs(value));
+        setMostRecentlySetDate(Bound.START);
+        return;
+      }
+      if (value > startDate && value > endDate) {
+        console.log('setting end date');
+        setEndDate(dayjs(value));
+        setMostRecentlySetDate(Bound.END);
+        return;
+      }
+      // Else, the click was within the existing range. Set the clicked date to either the start
+      //   or end date based on which was set last, e.g. if the startDate was the most recet set,
+      //   set the endDate now.
+      if (mostRecentlySetDate === Bound.START) {
+        console.log('setting end date');
+        setEndDate(dayjs(value));
+        setMostRecentlySetDate(Bound.END);
+      } else {
+        console.log('setting start date');
+        setStartDate(dayjs(value));
+        setMostRecentlySetDate(Bound.START);
+      }
+    },
+    [startDate, endDate, mostRecentlySetDate]
+  );
+
+  const tileClassName = useCallback(({ date, view }) => {
+    // return 'blue';
+    // return 'bg-red-600';
+    if (view !== 'month') return;
+    // console.log(date);
+    // console.log(view);
+    // TODO use tailwind classes instead
+    if (dayjs(date).startOf('day') < dayjs().startOf('day')) return 'gray';
+    if (!isRepeating) return;
+    const daysFromStartDate = dayjs(date).diff(startDate, 'days');
+    if (daysFromStartDate % repeatDays === 0) return 'blue';
+  }, [isRepeating, startDate, repeatDays]);
+
   const onAddButtonClick = useCallback(async () => {
     try {
+      /* type: Task */
       const taskToAdd = {
         title,
         startDate: dayjs(startDate),
@@ -54,14 +107,18 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
         ...(isRepeating && { repeatDays }),
         timeEstimateMins,
       };
-      
+
       setIsLoading(true);
       const result = await fetch(`/api/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(taskToAdd),
+        body: JSON.stringify({
+          ...taskToAdd,
+          startDate: dayjs(startDate).toISOString(),
+          endDate: dayjs(endDate).toISOString(),
+        }),
       });
       const body = await result.json();
       if (result.status === 200) {
@@ -78,7 +135,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
     } finally {
       setIsLoading(false);
     }
-  }, [task, setIsOpen, setIsLoading, title, startDate, endDate, rangeDays, isRepeating, timeEstimateMins]);
+  }, [task, setIsOpen, setIsLoading, title, startDate, endDate, rangeDays, isRepeating, repeatDays, timeEstimateMins]);
 
   const onSaveButtonClick = useCallback(async () => {
     try {
@@ -97,7 +154,11 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(taskToSave),
+        body: JSON.stringify({ 
+          ...taskToSave,
+          startDate: dayjs(startDate).toISOString(),
+          endDate: dayjs(endDate).toISOString(),
+        }),
       });
       const body = await result.json();
       if (result.status === 200) {
@@ -120,7 +181,9 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
     } finally {
       setIsLoading(false);
     }
-  }, [task, setIsOpen, setIsLoading, title, startDate, endDate, rangeDays, isRepeating, timeEstimateMins]);
+  }, [task, setIsOpen, setIsLoading, title, startDate, endDate, rangeDays, isRepeating, repeatDays, timeEstimateMins]);
+
+  const formatDate = useCallback((date) => date.format('ddd MMM D, YYYY'), []);
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -165,10 +228,18 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
                         </div>
                         <div className="mb-4">
                           <p>
-                            Start date: {startDate.toString()}
+                            Start date: {formatDate(startDate)}
                           </p>
-                          <Calendar onChange={(d) => setStartDate(dayjs(d))} value={startDate.toDate()} disabled={isLoading || lockedField === 'startDate'}/>
+                          <p>
+                            End date: {formatDate(endDate)}
+                          </p>
+                          <div className="mb-4">
+                            Range:&nbsp;
+                            <input type="number" onChange={(e) => setRangeDays(e.target.value)} value={rangeDays} min={0} disabled={isLoading || lockedField === 'rangeDays'} className="w-12"></input> days
+                          </div>
+                          <Calendar value={[startDate.toDate(), endDate.toDate()]} onClickDay={handleClickDay} tileClassName={tileClassName} disabled={isLoading || lockedField === 'startDate'} />
                         </div>
+                        {/*
                         <div className="mb-4">
                           <p>
                             End date: {endDate.toString()}
@@ -177,8 +248,10 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
                         </div>
                         <div className="mb-4">
                           Range:&nbsp;
-                          <input type="number" onChange={(e) => setRangeDays(e.target.value)}  value={rangeDays} min={0} disabled={isLoading || lockedField === 'rangeDays'} className="w-12"></input> days
+                          <input type="number" onChange={(e) => setRangeDays(e.target.value)} value={rangeDays} min={0} disabled={isLoading || lockedField === 'rangeDays'} className="w-12"></input> days
                         </div>
+  */}
+
                         <div className="mb-4">
                           <input type="checkbox" onChange={(e) => setIsRepeating(e.target.checked)} className="inline-block" checked={isRepeating}></input>
                           <div className="inline-block">
@@ -189,7 +262,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
                         </div>
                         <div className="mb-4">
                           Time Estimate:&nbsp;
-                          <input type="number" onChange={(e) => setTimeEstimateMins(parseInt(e.target.value, 10))}  value={timeEstimateMins} min={0} disabled={isLoading} className="w-12"></input> minutes
+                          <input type="number" onChange={(e) => setTimeEstimateMins(parseInt(e.target.value, 10))} value={timeEstimateMins} min={0} disabled={isLoading} className="w-12"></input> minutes
                         </div>
                       </div>
                     </div>

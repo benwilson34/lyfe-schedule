@@ -26,3 +26,20 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+.gray {
+  background-color: gray !important;
+}
+
+/* .crossed::before {
+  background-color: darkorange !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+} */
+
+.blue {
+  background-color: aqua !important;
+}

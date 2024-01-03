@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import ErrorResponse, { internalErrorResponse } from '@/models/ErrorResponse';
 import { getTaskById as getTaskByIdFromDb, updateTask as updateTaskInDb, deleteTask as deleteTaskInDb } from '@/services/mongo.service';
 import SuccessResponse from '@/models/SuccessResponse';
+import { taskDtoToDao } from '@/types/task.dao';
 
 async function updateTask(req: NextApiRequest, res: NextApiResponse) {
   // TODO wrap with try-catch
@@ -17,7 +18,7 @@ async function updateTask(req: NextApiRequest, res: NextApiResponse) {
       }).send(res);
       return;
     }
-    const task = req.body;
+    const task = taskDtoToDao(req.body);
     // TODO validate task
     const modifiedId = await updateTaskInDb(taskId, task);
     if (!modifiedId) {
