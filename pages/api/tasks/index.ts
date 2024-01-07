@@ -9,6 +9,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { calculateEndDate } from '@/util/task';
 import { TaskDao, taskDaoToDto, taskDtoToDao } from '@/types/task.dao';
 import { startOfTheDay } from '@/util/date';
+import { assign } from 'lodash';
 
 function clearTime(date: Date | Dayjs): Date {
   return dayjs(date).set('hour', 0).set('minute', 0).set('second', 0).set('millisecond', 0).toDate();
@@ -40,24 +41,31 @@ function handleError(maybeError: any, res: NextApiResponse) {
   internalErrorResponse.send(res);
 }
 
-function getProjectedRepeatingTasksForDay(incompleteTasks: TaskDao[], targetDay: Date): TaskDao[] {
-  const numberOfDaysFromNow = dayjs(targetDay).diff(startOfTheDay(dayjs()), 'day') + 1;
+// given list of incomplete tasks (from target day and before) and target day to project onto
+// for each task in list:
+//   - first determine "theoretical complete date" - today for over/due tasks, or the startDate otherwise
+//   - based on the "TCD" above, count days to determine projection. Assume repeat from complete date
+function getProjectedRepeatingTasksForDay(incompleteTasks: TaskDao[], targetDay: Date, currentDay: Date): TaskDao[] {
   return incompleteTasks
     .filter((task) => {
-      const { repeatDays } = task;
-      if (!repeatDays) return false;
+      const { startDate, repeatDays } = task;
+      // theoretical complete date has nothing to do with targetDay!
+      const theoreticalCompleteDate = dayjs(dayjs(startDate).isAfter(dayjs(currentDay), 'day') ? startDate : currentDay).startOf('day');
+      if (!repeatDays) return false; // task.repeatDays must be >= 1 if defined
+      // If the task's TCD is the same as the targetDay, the task is still open, so it doesn't need 
+      //   to be projected.
+      const targetIsSameDay = theoreticalCompleteDate.isSame(targetDay, 'day');
       // Assume for now that repeating tasks are being completed the first day they're open.
       //   Although it might be better to have some configurable "projection threshold value"
       //   that scales on [0,1] for [startDate,endDate].
       //   That could also be automatically tailored to the user by collecting an average over their
       //   previously completed tasks of when in the date range it was completed.
-      return numberOfDaysFromNow % repeatDays === 0;
+      const startOfTargetDay = dayjs(targetDay).startOf('day');
+      const taskRepeatsOnTargetDay = theoreticalCompleteDate.diff(startOfTargetDay, 'day') % repeatDays === 0;
+      return !targetIsSameDay && taskRepeatsOnTargetDay;
     })
     .map((task) => {
-      // handle active, overdue, repeating tasks
-      // TODO revisit this logic
-      const daysOverEndDate = Math.max(0, dayjs().add(2, 'day').diff(task.endDate, 'day'));
-      const offsetDays = numberOfDaysFromNow + daysOverEndDate - 1;
+      const offsetDays = dayjs(targetDay).diff(task.startDate, 'day');
       return {
         ...task,
         startDate: dayjs(task.startDate).add(offsetDays, 'day').toDate(),
@@ -81,18 +89,22 @@ function getProjectedRepeatingTasksForDay(incompleteTasks: TaskDao[], targetDay:
 //   return dayToTasksMap;
 // }
 
-async function getTasksForDay(targetDay?: Date): Promise<TaskDao[]> {
-  const targetDayIsAfterCurrentDay = !targetDay || (() => {
-    const currentDay = startOfTheDay(dayjs());
-    // console.log(`current day: ${currentDay}`);
-    return dayjs(targetDay).isAfter(currentDay);
-  })();
+async function getTasksForDay(targetDay: Date, includeCompleted: boolean = true): Promise<TaskDao[]> {
+  const startOfTargetDay = dayjs(targetDay).startOf('day');
+  const currentDay = dayjs().startOf('day');
+  const targetDayIsAfterCurrentDay = startOfTargetDay.isAfter(currentDay);
   let tasks = await getManyTasks({
-    ...(targetDay && { targetDay }),
+    targetDay,
+    includeCompleted: !targetDayIsAfterCurrentDay,
   });
-  if (targetDay && targetDayIsAfterCurrentDay) {
-    tasks = getProjectedRepeatingTasksForDay(tasks, targetDay);
+  if (targetDayIsAfterCurrentDay) {
+    const tasksThatStartOnTargetDay = tasks.filter((task) => startOfTargetDay.isSame(dayjs(task.startDate), 'day'));
+    tasks = [
+      ...tasksThatStartOnTargetDay,
+      ...getProjectedRepeatingTasksForDay(tasks, targetDay, currentDay.toDate()),
+    ];
   }
+  console.log(`tasks for ${targetDay} (after current day ${targetDayIsAfterCurrentDay}):`, tasks); // TODO remove
   return tasks;
 }
 
@@ -129,10 +141,10 @@ async function getMultipleTasks(
 ) {
   try {
     // TODO validate request :)
-    const { 
-      targetDay: targetDayString, 
-      targetStartDay: targetStartDayString, 
-      targetEndDay: targetEndDayString 
+    const {
+      targetDay: targetDayString,
+      targetStartDay: targetStartDayString,
+      targetEndDay: targetEndDayString
     }: { targetDay?: string, targetStartDay?: string, targetEndDay?: string } = req.query;
     let dayTasks: Record<string, TaskDao[]> = {};
     if (targetDayString) {
@@ -146,8 +158,6 @@ async function getMultipleTasks(
     const dayTasksMapped = Object.fromEntries(Object.entries(dayTasks).map(([day, tasks]) => ([day, tasks.map(taskDaoToDto)])));
 
     new SuccessResponse({
-      title: 'TODO',
-      detail: 'TODO',
       data: { dayTasks: dayTasksMapped },
     }).send(res);
   } catch (maybeError: any) {
@@ -164,8 +174,6 @@ async function addNewTask(
     // console.log(`>> about to add:`, taskDtoToDao(req.body)); // TODO remove
     const id = await addTask(taskDtoToDao(req.body));
     new SuccessResponse({
-      title: 'TODO',
-      detail: 'TODO',
       data: { taskId: id }
     }).send(res);
   } catch (maybeError: any) {

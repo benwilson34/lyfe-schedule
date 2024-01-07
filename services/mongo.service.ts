@@ -27,28 +27,31 @@ export async function getTaskById(id: ObjectId|string): Promise<TaskDao|null> {
   return targetTask;
 }
 
-
 export async function getManyTasks({ targetDay, includeCompleted = false }: { targetDay?: Date; includeCompleted?: boolean; } = {}): Promise<TaskDao[]> {
   await initIfNeeded();
-  if (targetDay) console.log(`Got target day of ${targetDay}`); // TODO remove
 
-  let targetDayFilter = {};
-  if (targetDay) {
-    const adjustedDate = dayjs(targetDay)
-      .add(1, 'day')
-      // TODO use dayjs.startOf('day') instead
-      .set('hour', 0)
-      .set('minute', 0)
-      .set('second', 0)
-      .toDate();
-    targetDayFilter = { startDate: { $lt: adjustedDate }}
-  }
-
+  const adjustedDate = dayjs(targetDay)
+    .startOf('day')
+    .add(1, 'day')
+    // TODO maybe just endOf('day') instead?
+    .toDate();
   const filter = {
-    ...(!includeCompleted && { completedDate: { $exists: false } }),
-    ...targetDayFilter,
+    completedDate: { $exists: false },
+    startDate: { $lt: adjustedDate },
   };
   const tasks = await taskCollection!.find(filter).toArray();
+
+  // TODO maybe there's a way to do this with an aggregate pipeline?
+  if (includeCompleted) {
+    const completedFilter = {
+      completedDate: { 
+        $gte: dayjs(targetDay).startOf('day').toDate(),
+        $lte: adjustedDate,
+      },
+    };
+    tasks.push(...await taskCollection!.find(completedFilter).toArray());
+  }
+
   return tasks;
 }
 

@@ -1,9 +1,10 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
 import ErrorResponse, { internalErrorResponse } from '@/models/ErrorResponse';
-import { getTaskById as getTaskByIdFromDb, updateTask as updateTaskInDb, deleteTask as deleteTaskInDb } from '@/services/mongo.service';
+import { getTaskById as getTaskByIdFromDb, updateTask as updateTaskInDb, deleteTask as deleteTaskInDb, addTask } from '@/services/mongo.service';
 import SuccessResponse from '@/models/SuccessResponse';
 import { taskDtoToDao } from '@/types/task.dao';
+import dayjs from 'dayjs';
 
 async function updateTask(req: NextApiRequest, res: NextApiResponse) {
   // TODO wrap with try-catch
@@ -25,9 +26,6 @@ async function updateTask(req: NextApiRequest, res: NextApiResponse) {
       throw new Error(`Failed to update task with id "${taskId}"`);
     }
     new SuccessResponse({
-      status: 200,
-      title: 'Successfully updated task',
-      detail: `TODO`,
       data: { taskId: modifiedId }
     }).send(res);
   } catch (error) {
@@ -61,21 +59,26 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
   task.completedDate = new Date();
   await updateTaskInDb(taskId, task);
   
-  // TODO re-enable - create new task if it repeats 
-  // if (task.repeatDays) {
-  //   const startDate = dayjs(task.startDate); 
-  //   task.startDate = startDate.add(task.repeatDays, 'days').toDate();
-  //   task.endDate = startDate.add(task.rangeDays!, 'days').toDate(); // TODO calculate rangeDays at insert-time and remove nullable from model
-  //   const didCreateNewTask = await addTaskInDb(task);
-  //   if (!didCreateNewTask) {
-  //     // TODO send error response
-  //   }
-  // }
+  if (task.repeatDays) {
+    delete task._id;
+    // TODO is the logic still this straightforward if the task has useStart/EndTime === true?
+    // for now, assume "repeat from completedDate"
+    const newStartDate = dayjs(task.completedDate).add(task.repeatDays, 'days');
+    task.startDate = newStartDate.toDate();
+    console.log(`about to repeat task on ${task.startDate}`); // TODO remove
+    task.endDate = newStartDate.add(task.rangeDays, 'days').toDate();
+    delete task.completedDate;
+    const createdTaskId = await addTask(task);
+    if (!createdTaskId) {
+      // TODO send error response
+    }
+    new SuccessResponse({
+      data: { createdTaskId }
+    }).send(res);
+    return;
+  }
 
-  new SuccessResponse({
-    title: 'TODO',
-    detail: 'TODO',
-  }).send(res);
+  new SuccessResponse().send(res);
 }
 
 async function operateOnTask(req: NextApiRequest, res: NextApiResponse) {
@@ -124,10 +127,7 @@ async function deleteTask(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
     await deleteTaskInDb(taskId);
-    new SuccessResponse({
-      title: 'TODO',
-      detail: 'TODO',
-    }).send(res);
+    new SuccessResponse().send(res);
   } catch (maybeError: any) {
     console.error(maybeError);
     internalErrorResponse.send(res);
