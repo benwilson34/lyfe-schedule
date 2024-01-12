@@ -14,4 +14,5 @@ export type TaskViewModel = {
   endDate: Dayjs;
   repeatDays?: number;
   isProjected?: boolean;
+  completedDate?: Dayjs;
 };

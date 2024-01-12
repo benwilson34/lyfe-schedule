@@ -31,15 +31,30 @@ body {
   background-color: gray !important;
 }
 
-/* .crossed::before {
-  background-color: darkorange !important;
+.crossed::before {
+  display: inline-block;
+  content: '';
+  border-right: 0.125rem solid rgba(127, 127, 127, 0.25);
+  -webkit-transform: rotate(66deg);
+  -moz-transform: rotate(66deg);
+  transform: rotate(66deg);
+  transform-origin: 0% 0%;
+  margin-left: 1.625rem;
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 10px;
-  height: 10px;
-} */
+  /* left: 2px; */
+  height: 2rem;
+  /* width: .25rem; */
+}
 
 .blue {
   background-color: aqua !important;
+}
+
+/* TODO override default style, see node_modules\react-calendar\dist\Calendar.css */
+.react-calendar__tile {
+  height: 3rem !important;
+}
+
+.react-calendar__tile > abbr {
+  display: none;
 }

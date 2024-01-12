@@ -16,11 +16,14 @@ import { OnArgs, TileContentFunc } from 'react-calendar/dist/cjs/shared/types';
 
 const inter = Inter({ subsets: ['latin'] });
 
+const NUM_DAILY_WORKING_MINS = 4 * 60;
+
 function dtoTaskToTask(taskDto: TaskDto): Task {
   return {
     ...taskDto,
     startDate: dayjs(taskDto.startDate),
     endDate: dayjs(taskDto.endDate),
+    ...(taskDto.completedDate && { completedDate: dayjs(taskDto.completedDate) }),
   } as Task;
 }
 
@@ -100,6 +103,8 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     return durationString;
   }
 
+  const formatPercentage = (float: number) => `${Math.round(float * 100)}%`;
+
   const formatStartDate = (startDate: dayjs.Dayjs) => {
     return startDate.format('MMM DD');
   }
@@ -115,6 +120,21 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   }
 
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+  const renderMonthInfo = useCallback(() => {
+    const allTasks = Object.values(dayTasks).flat();
+    const totalTimeEstimateMins = allTasks.reduce((total, task) => total + (task.timeEstimateMins || 0), 0);
+    const daysInRange = shownDateRange[1].diff(shownDateRange[0], 'day');
+    const dailyAverageTaskCount = Math.round(allTasks.length / daysInRange);
+    const dailyAverageTimeTotal = Math.round(totalTimeEstimateMins / daysInRange);
+    return (
+      <div className="mt-2 text-lg font-light italic">
+        month: {allTasks.length} tasks/{formatTimeEstimate(totalTimeEstimateMins)} 
+        {' '}~{' '}
+        daily avg: {dailyAverageTaskCount} tasks/{formatTimeEstimate(dailyAverageTimeTotal)}/{formatPercentage(dailyAverageTimeTotal / NUM_DAILY_WORKING_MINS)}
+      </div>
+    );
+  }, [dayTasks, shownDateRange]);
 
   const calculatePriority = (startDate: dayjs.Dayjs, endDate: dayjs.Dayjs, currentDay: dayjs.Dayjs) => {
     // TODO handle identical start and end 
@@ -143,7 +163,8 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
 
   const getCompleteTaskHandler = (completedTaskId: string) => async () => {
     // TODO animate
-    const newTasks = tasks.filter(({ id }) => id !== completedTaskId);
+    // accurate completedDate isn't really necessary here
+    const newTasks = tasks.map((task) => task.id === completedTaskId ? { ...task, completedDate: dayjs() } : task); 
     setTasks(newTasks);
     // call service to complete task in db
     const result = await fetch(`/api/tasks/${completedTaskId}`, {
@@ -195,24 +216,33 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   }
 
   const renderTask = (task: Task) => {
-    const { id, title, timeEstimateMins, startDate, rangeDays, endDate, isProjected } = task;
+    const { id, title, timeEstimateMins, startDate, rangeDays, endDate, isProjected, completedDate } = task;
     const calculatedPriority = calculatePriority(startDate, endDate, selectedDay);
     const priorityStyles = getStylesForPriority(calculatedPriority);
+    const bgColor = completedDate ? 'bg-gray-300' : priorityStyles.bgColor;
     const calculatedPoints = Math.round(calculatedPriority * (timeEstimateMins ?? 0));
     const daysOverEndDate = selectedDay.diff(endDate, 'day');
     return (
-      <div key={id} className={`flex justify-between items-center max-w-lg w-full mb-3 p-3 ${priorityStyles.bgColor} shadow-lg rounded-lg text-sm`}>
+      <div key={id} className={`flex justify-between items-center max-w-lg w-full mb-3 p-3 ${bgColor} shadow-lg rounded-lg text-sm`}>
         <div className="flex justify-start items-baseline">
-          <input type='checkbox' className="mr-3" onChange={getCompleteTaskHandler(id)}></input>
-          <span className="mr-3 text-lg">{title}</span>
-          <span className="italic">{formatTimeEstimate(timeEstimateMins ?? 0)}</span>
+          {
+            completedDate
+              ? (<span className='mr-3 text-lg'>✔</span>) // FA icon instead?
+              : (<input type='checkbox' className="mr-3" onChange={getCompleteTaskHandler(id)}></input>)
+          }
+          <div>
+            <span className="mr-3 text-lg">{title}</span>
+            <span className="italic mr-3">{formatTimeEstimate(timeEstimateMins ?? 0)}</span>
+          </div>
         </div>
         <div className="flex justify-end items-center">
           <span className={`mr-3 ${isProjected ? 'underline decoration-dotted' : ''}`}>
-            {formatDateRange(startDate, endDate, rangeDays)}
-            {daysOverEndDate > 0
-              ? <span className="text-red-500">+{daysOverEndDate}</span>
-              : null}
+            <div className="whitespace-nowrap">
+              {formatDateRange(startDate, endDate, rangeDays)}
+              {daysOverEndDate > 0
+                ? <span className="text-red-500">+{daysOverEndDate}</span>
+                : null}
+            </div>
           </span>
           {/* <span className="text-sm">({calculatedPriority.toFixed(2)} -&gt; {calculatedPoints} ppts)</span> */}
           <TaskOptionsMenu task={task} onEditClick={getEditTaskHandler(task)} onDeleteClick={getDeleteTaskHandler(task)} />
@@ -233,27 +263,53 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     const day = dayjs(date);
     const dayKey = day.format('YYYY-MM-DD'); // TODO use same util function as backend
     if (view !== 'month') return null;
+    const dayIsInPast = day.startOf('day').isBefore(dayjs().startOf('day'));
     if (dayTasks?.[dayKey]) {
-      return (<div className='text-xs italic'>
-        {dayTasks[dayKey].length}
-      </div>);
+      const count = dayTasks[dayKey].length;
+      return (
+        <div className='flex flex-col justify-between items-start h-full w-full p-1'>
+          {/* TODO add default classes, see node_modules\react-calendar\dist\Calendar.css */}
+          <div className='grow'>
+            <div className={`${dayIsInPast ? 'crossed text-gray-400' : ''} border-gray-400/25 border-r-2 border-b-2 rounded-br-md pr-1`}>{day.format('DD')}</div>
+          </div>
+          {/* <div className='border-l-2'></div> */}
+          <div className='w-full flex justify-end'>
+            <div className={`${count > 0 ? 'text-black' : 'text-black/25'} text-xs italic text-right align-text-bottom`}>{count}</div>
+          </div>
+        </div>
+      );
     }
   };
 
   const tileClassName = useCallback(({ date, view }: { date: Date, view: string }) => {
-    const commonClasses = 'p-0 h-10';
+    const commonClasses = 'p-0 h-10 rounded-lg text-left align-top shadow-md';
     if (view !== 'month') return commonClasses;
     if (dayjs(date).startOf('day') < dayjs().startOf('day')) {
       return `${commonClasses} bg-gray-300`;
     }
-    return commonClasses;
+    return `${commonClasses} border-black border-1`;
+  }, []);
+
+  const renderTaskCount = useCallback((taskCount: number) => `${taskCount} task${taskCount !== 1 ? 's' : ''}`, []);
+
+  const renderDayInfo = useCallback((tasks: Task[]) => {
+    if (tasks.length === 0) return `0 tasks 😌`;
+
+    const completedTasks = tasks.filter((task) => task.completedDate);
+    const remainingTasks = tasks.filter((task) => !task.completedDate);
+    const completedTimeMins = completedTasks.reduce((total, task) => total + (task.timeEstimateMins || 0), 0);
+    const remainingTimeMins = remainingTasks.reduce((total, task) => total + (task.timeEstimateMins || 0), 0);
+    let string = `remain: ${renderTaskCount(remainingTasks.length)}/${formatTimeEstimate(remainingTimeMins)}/${formatPercentage(remainingTimeMins / NUM_DAILY_WORKING_MINS)}`;
+    if (completedTasks.length > 0) {
+      string +=` ~ done: ${renderTaskCount(completedTasks.length)}/${formatTimeEstimate(completedTimeMins)}/${formatPercentage(completedTimeMins / NUM_DAILY_WORKING_MINS)}`;
+    }
+    return string;
   }, []);
 
   return (
     <main className={`${inter.className}`}>
       <section className={`flex flex-col items-center p-6 pt-12`} >
         {/* TODO mobile layout */}
-        {/* TODO fetch calendar data in onViewChange */}
         <Calendar 
           onChange={(d) => handleSelectedDayChange(d as Date)} 
           value={selectedDay.toDate()}
@@ -262,12 +318,15 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
           tileContent={tileContent} 
           tileClassName={tileClassName} 
         />
+        {renderMonthInfo()}
       </section>
       <section
         className={`flex min-h-screen flex-col items-center p-6 pt-12`}
       >
-        <h1 className="mb-1 text-4xl">~~~ TODO ~~~</h1>
-        <h3 className="mb-12 text-xl font-light italic">{formatShownDate(selectedDay)}</h3>
+        <h1 className="mb-1 text-4xl">~~~ TODO: {formatShownDate(selectedDay)} ~~~</h1>
+        <h3 className="mb-8 text-lg font-light italic">
+          {renderDayInfo(tasks)}
+        </h3>
         <div onClick={onAddButtonClick} className="max-w-lg w-full mb-3 p-3 rounded-lg border-2 border-dotted border-gray-500 hover:bg-gray-200 hover:cursor-pointer text-gray-500">
           <FontAwesomeIcon icon={faCirclePlus} />
           <span className="ml-3">Add</span>
