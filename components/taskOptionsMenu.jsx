@@ -29,17 +29,20 @@ export default function TaskOptionsMenu({ task, onEditClick, onDeleteClick }) {
           <div className="w-screen max-w-xs flex-auto overflow-hidden rounded-lg bg-white text-sm leading-6 shadow-lg ring-1 ring-gray-900/5">
             <div className="p-1">
               {/* Each item */}
-              <div onClick={onEditClick} className="group relative flex items-center gap-x-6 rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
-                {/* <div className="mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white"> */}
-                  <FontAwesomeIcon icon={faPenToSquare} className="h-4 w-4 text-gray-600 group-hover:text-indigo-600" aria-hidden="true" />
-                {/* </div> */}
-                <div>
-                  <span className="font-semibold text-gray-900">
-                    Edit
-                  </span>
-                  {/* <p className="mt-1 text-gray-600">{item.description}</p> */}
-                </div>
-              </div>
+              {task.completedDate 
+                ? null
+                : <div onClick={onEditClick} className="group relative flex items-center gap-x-6 rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+                    {/* <div className="mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white"> */}
+                      <FontAwesomeIcon icon={faPenToSquare} className="h-4 w-4 text-gray-600 group-hover:text-indigo-600" aria-hidden="true" />
+                    {/* </div> */}
+                    <div>
+                      <span className="font-semibold text-gray-900">
+                        Edit
+                      </span>
+                      {/* <p className="mt-1 text-gray-600">{item.description}</p> */}
+                    </div>
+                  </div>
+              }
               <div onClick={onDeleteClick} className="group relative flex items-center gap-x-6 rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
                 {/* <div className="mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white"> */}
                   <FontAwesomeIcon icon={faTrash} className="h-4 w-4 text-gray-600 group-hover:text-indigo-600" aria-hidden="true" />

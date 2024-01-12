@@ -228,7 +228,12 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
           {
             completedDate
               ? (<span className='mr-3 text-lg'>✔</span>) // FA icon instead?
-              : (<input type='checkbox' className="mr-3" onChange={getCompleteTaskHandler(id)}></input>)
+              : (<input 
+                  type='checkbox'
+                  className="mr-3"
+                  onChange={getCompleteTaskHandler(id)} 
+                  disabled={!selectedDay.isSame(dayjs(), 'day')}>
+                  </input>)
           }
           <div>
             <span className="mr-3 text-lg">{title}</span>
