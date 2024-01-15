@@ -17,6 +17,11 @@
   }
 } */
 
+html, body {
+  min-height: 100%;
+  max-height: 100%;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
@@ -31,7 +36,7 @@ body {
   background-color: gray !important;
 }
 
-.crossed::before {
+/* .crossed::before {
   display: inline-block;
   content: '';
   border-right: 0.125rem solid rgba(127, 127, 127, 0.25);
@@ -41,10 +46,8 @@ body {
   transform-origin: 0% 0%;
   margin-left: 1.625rem;
   position: absolute;
-  /* left: 2px; */
   height: 2rem;
-  /* width: .25rem; */
-}
+} */
 
 .blue {
   background-color: aqua !important;
@@ -58,3 +61,41 @@ body {
 .react-calendar__tile > abbr {
   display: none;
 }
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #888888 transparent;
+}
+
+/* Chrome, Edge and Safari */
+*::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+*::-webkit-scrollbar-track {
+  border-radius: 6px;
+  background-color: transparent;
+}
+
+*::-webkit-scrollbar-track:hover {
+  background-color: transparent;
+}
+
+*::-webkit-scrollbar-track:active {
+  background-color: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 6px;
+  background-color: #88888870;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #888888;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: #888888;
+}
+

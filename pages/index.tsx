@@ -1,18 +1,20 @@
 import type { TaskDto } from '@/types/task.dto';
 import type { TaskViewModel as Task } from '@/types/task.viewModel';
+import { useState, useCallback, useEffect } from 'react';
 import { Inter } from 'next/font/google';
 import dayjs, { Dayjs } from 'dayjs';
 import { Calendar } from 'react-calendar';
+import { OnArgs, TileContentFunc } from 'react-calendar/dist/cjs/shared/types';
 import 'react-calendar/dist/Calendar.css';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCirclePlus } from '@fortawesome/free-solid-svg-icons';
-import { useState, useCallback, useEffect } from 'react';
+import { faCirclePlus, faArrowRight, faArrowLeft, faCalendarDays, faList, faTags } from '@fortawesome/free-solid-svg-icons';
 import { EditTaskModal } from '@/components/editTaskModal';
 import TaskOptionsMenu from '@/components/taskOptionsMenu';
 import { init as initDb, getManyTasks } from '@/services/mongo.service';
 import { ApiResponse } from '@/types/apiResponse';
 import { taskDaoToDto } from '@/types/task.dao';
-import { OnArgs, TileContentFunc } from 'react-calendar/dist/cjs/shared/types';
+import { uniq, uniqBy } from 'lodash';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -44,7 +46,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   const [selectedDay, setSelectedDay] = useState<Dayjs>(dayjs());
   const [shownDateRange, setShownDateRange] = useState<[Dayjs, Dayjs]>([dayjs().startOf('month'), dayjs().endOf('month')]);
   const [dayTasks, setDayTasks] = useState<Record<string, TaskDto[]>>({});
-
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,7 +124,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
   const renderMonthInfo = useCallback(() => {
-    const allTasks = Object.values(dayTasks).flat();
+    const allTasks = uniqBy(Object.values(dayTasks).flat(), (task) => task.id && task.startDate);
     const totalTimeEstimateMins = allTasks.reduce((total, task) => total + (task.timeEstimateMins || 0), 0);
     const daysInRange = shownDateRange[1].diff(shownDateRange[0], 'day');
     const dailyAverageTaskCount = Math.round(allTasks.length / daysInRange);
@@ -311,35 +313,66 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     return string;
   }, []);
 
-  return (
-    <main className={`${inter.className}`}>
-      <section className={`flex flex-col items-center p-6 pt-12`} >
-        {/* TODO mobile layout */}
-        <Calendar 
-          onChange={(d) => handleSelectedDayChange(d as Date)} 
-          value={selectedDay.toDate()}
-          minDetail='decade'
-          onActiveStartDateChange={onActiveStartDateChange}
-          tileContent={tileContent} 
-          tileClassName={tileClassName} 
-        />
-        {renderMonthInfo()}
-      </section>
-      <section
-        className={`flex min-h-screen flex-col items-center p-6 pt-12`}
-      >
-        <h1 className="mb-1 text-4xl">~~~ TODO: {formatShownDate(selectedDay)} ~~~</h1>
-        <h3 className="mb-8 text-lg font-light italic">
-          {renderDayInfo(tasks)}
-        </h3>
-        <div onClick={onAddButtonClick} className="max-w-lg w-full mb-3 p-3 rounded-lg border-2 border-dotted border-gray-500 hover:bg-gray-200 hover:cursor-pointer text-gray-500">
-          <FontAwesomeIcon icon={faCirclePlus} />
-          <span className="ml-3">Add</span>
-        </div>
-        {tasks?.map((item) => renderTask(item))}
+  const toggleSidebar = useCallback(() => setIsSidebarVisible(!isSidebarVisible), [isSidebarVisible]);
 
-        <EditTaskModal isOpen={isShowingEditModal} setIsOpen={setIsShowingEditModal} setTasks={setTasks} task={editTask} />
-      </section>
-    </main>
+  return (
+    <PanelGroup direction='horizontal' className={`${inter.className} max-h-screen flex`}>
+      {isSidebarVisible && (
+        <Panel defaultSize={30} minSize={20} order={1}>
+          <div className="max-h-full overflow-auto p-2">
+            <div className="text-4xl mb-2">
+              LyfeScheduler
+            </div>
+            <div className="line-through">
+              <FontAwesomeIcon icon={faCalendarDays} className="mr-2"></FontAwesomeIcon>
+              calendar
+            </div>
+            <div className="line-through">
+              <FontAwesomeIcon icon={faList} className="mr-2"></FontAwesomeIcon>
+              all tasks
+            </div>
+            <div className="line-through">
+              <FontAwesomeIcon icon={faTags} className="mr-2"></FontAwesomeIcon>
+              tags
+            </div>
+          </div>
+        </Panel>
+      )}
+      <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25"/>
+      <Panel minSize={50} order={2}>
+        <div className="max-h-full overflow-auto">
+          <section className="sticky top-0 pl-2 pr-2">
+            <FontAwesomeIcon icon={isSidebarVisible ? faArrowLeft : faArrowRight} onClick={toggleSidebar}></FontAwesomeIcon>
+          </section>
+          <section className={`flex flex-col items-center pr-8 pl-8 mb-8`} >
+            {/* TODO mobile layout */}
+            <Calendar 
+              onChange={(d) => handleSelectedDayChange(d as Date)} 
+              value={selectedDay.toDate()}
+              minDetail='decade'
+              onActiveStartDateChange={onActiveStartDateChange}
+              tileContent={tileContent} 
+              tileClassName={tileClassName} 
+            />
+            {renderMonthInfo()}
+          </section>
+          <section
+            className={`flex min-h-screen flex-col items-center pl-8 pr-8`}
+          >
+            <h1 className="mb-1 text-4xl">~~~ {formatShownDate(selectedDay)} ~~~</h1>
+            <h3 className="mb-8 text-lg font-light italic">
+              {renderDayInfo(tasks)}
+            </h3>
+            <div onClick={onAddButtonClick} className="max-w-lg w-full mb-3 p-3 rounded-lg border-2 border-dotted border-gray-500 hover:bg-gray-200 hover:cursor-pointer text-gray-500">
+              <FontAwesomeIcon icon={faCirclePlus} />
+              <span className="ml-3">Add</span>
+            </div>
+            {tasks?.map((item) => renderTask(item))}
+
+            <EditTaskModal isOpen={isShowingEditModal} setIsOpen={setIsShowingEditModal} setTasks={setTasks} task={editTask} />
+          </section>
+        </div>
+      </Panel>
+    </PanelGroup>
   )
 }
