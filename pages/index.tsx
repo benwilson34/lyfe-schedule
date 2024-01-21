@@ -8,8 +8,9 @@ import { OnArgs, TileContentFunc } from 'react-calendar/dist/cjs/shared/types';
 import 'react-calendar/dist/Calendar.css';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCirclePlus, faArrowRight, faArrowLeft, faCalendarDays, faList, faTags } from '@fortawesome/free-solid-svg-icons';
+import { faCirclePlus, faArrowRight, faArrowLeft, faCalendarDays, faList, faTags, faGear } from '@fortawesome/free-solid-svg-icons';
 import { EditTaskModal } from '@/components/editTaskModal';
+import { SettingsModal } from '@/components/settingsModal';
 import TaskOptionsMenu from '@/components/taskOptionsMenu';
 import { init as initDb, getManyTasks } from '@/services/mongo.service';
 import { ApiResponse } from '@/types/apiResponse';
@@ -42,11 +43,52 @@ export async function getServerSideProps(context: any) {
 export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   const [tasks, setTasks] = useState(initTasks.map(dtoTaskToTask) as Task[]);
   const [isShowingEditModal, setIsShowingEditModal] = useState(false);
+  const [isShowingSettingsModal, setIsShowingSettingsModal] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [selectedDay, setSelectedDay] = useState<Dayjs>(dayjs());
   const [shownDateRange, setShownDateRange] = useState<[Dayjs, Dayjs]>([dayjs().startOf('month'), dayjs().endOf('month')]);
   const [dayTasks, setDayTasks] = useState<Record<string, TaskDto[]>>({});
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+
+  const DEFAULT_MONTH_INFO_SETTINGS = {
+    isShowing: true,
+    monthTotalSection: {
+      isTaskCountShowing: true,
+      isTimeEstimateShowing: true,
+    },
+    dailyAverageSection: {
+      isTaskCountShowing: true,
+      isTimeEstimateShowing: true,
+      isTimePercentageShowing: true,
+    },
+  }
+  // user-configurable settings
+  const [monthInfoSettings, setMonthInfoSettings] = useState(DEFAULT_MONTH_INFO_SETTINGS);
+  const DEFAULT_DAY_INFO_SETTINGS = {
+    isShowing: true,
+    dayTotalSection: {
+      // TODO total regardless of completed or not
+    },
+    remainingTaskSection: {
+      isTaskCountShowing: true,
+      isTimeEstimateShowing: true,
+      isTimePercentageShowing: true,
+    },
+    completedTaskSection: {
+      isTaskCountShowing: true,
+      isTimeEstimateShowing: true,
+      isTimePercentageShowing: true,
+    },
+  };
+  const [dayInfoSettings, setDayInfoSettings] = useState(DEFAULT_DAY_INFO_SETTINGS);
+
+  useEffect(() => {
+    const savedSettings = JSON.parse(localStorage.getItem('settings') || 'null');
+    if (savedSettings) {
+      setMonthInfoSettings(savedSettings.monthInfoSettings);
+      setDayInfoSettings(savedSettings.dayInfoSettings);
+    }
+  }, []); // only read from localStorage on first load
 
   useEffect(() => {
     const fetchData = async () => {
@@ -124,19 +166,29 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
   const renderMonthInfo = useCallback(() => {
+    if (!monthInfoSettings.isShowing) return null;
     const allTasks = uniqBy(Object.values(dayTasks).flat(), (task) => task.id && task.startDate);
     const totalTimeEstimateMins = allTasks.reduce((total, task) => total + (task.timeEstimateMins || 0), 0);
     const daysInRange = shownDateRange[1].diff(shownDateRange[0], 'day');
     const dailyAverageTaskCount = Math.round(allTasks.length / daysInRange);
     const dailyAverageTimeTotal = Math.round(totalTimeEstimateMins / daysInRange);
+    const monthItems = [
+      ...(monthInfoSettings.monthTotalSection.isTaskCountShowing ? [`${allTasks.length} tasks`] : []),
+      ...(monthInfoSettings.monthTotalSection.isTimeEstimateShowing ? [formatTimeEstimate(totalTimeEstimateMins)] : []),
+    ];
+    const dailyAverageItems = [
+      ...(monthInfoSettings.dailyAverageSection.isTaskCountShowing ? [`${dailyAverageTaskCount} tasks`] : []),
+      ...(monthInfoSettings.dailyAverageSection.isTimeEstimateShowing ? [formatTimeEstimate(dailyAverageTimeTotal)] : []),
+      ...(monthInfoSettings.dailyAverageSection.isTimePercentageShowing ? [formatPercentage(dailyAverageTimeTotal / NUM_DAILY_WORKING_MINS)] : []),
+    ];
     return (
       <div className="mt-2 text-lg font-light italic">
-        month: {allTasks.length} tasks/{formatTimeEstimate(totalTimeEstimateMins)} 
-        {' '}~{' '}
-        daily avg: {dailyAverageTaskCount} tasks/{formatTimeEstimate(dailyAverageTimeTotal)}/{formatPercentage(dailyAverageTimeTotal / NUM_DAILY_WORKING_MINS)}
+        {monthItems.length > 0 && `month: ${monthItems.join('/')}`}
+        {monthItems.length > 0 && dailyAverageItems.length > 0 && ` ~ `}
+        {dailyAverageItems.length > 0 && `daily avg: ${dailyAverageItems.join('/')}`}
       </div>
     );
-  }, [dayTasks, shownDateRange]);
+  }, [dayTasks, shownDateRange, monthInfoSettings]);
 
   const calculatePriority = (startDate: dayjs.Dayjs, endDate: dayjs.Dayjs, currentDay: dayjs.Dayjs) => {
     // TODO handle identical start and end 
@@ -189,12 +241,16 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   const onAddButtonClick = () => {
     setEditTask(null);
     setIsShowingEditModal(true);
-  }
+  };
+
+  const onSettingsButtonClick = () => {
+    setIsShowingSettingsModal(true);
+  };
 
   const getEditTaskHandler = (task: Task) => () => {
     setEditTask(task);
     setIsShowingEditModal(true);
-  }
+  };
 
   const getDeleteTaskHandler = (task: Task) => async () => {
     try {
@@ -215,7 +271,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       console.error(maybeError);
       // TODO show some error message
     }
-  }
+  };
 
   const renderTask = (task: Task) => {
     const { id, title, timeEstimateMins, startDate, rangeDays, endDate, isProjected, completedDate } = task;
@@ -232,7 +288,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
               ? (<span className='mr-3 text-lg'>✔</span>) // FA icon instead?
               : (<input 
                   type='checkbox'
-                  className="mr-3"
+                  className="mr-3 cursor-pointer"
                   onChange={getCompleteTaskHandler(id)} 
                   disabled={!selectedDay.isSame(dayjs(), 'day')}>
                   </input>)
@@ -256,7 +312,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
         </div>
       </div>
     );
-  }
+  };
 
   const onActiveStartDateChange = ({ activeStartDate, view }: OnArgs): any => {
     if (view !== 'month') return;
@@ -300,18 +356,32 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   const renderTaskCount = useCallback((taskCount: number) => `${taskCount} task${taskCount !== 1 ? 's' : ''}`, []);
 
   const renderDayInfo = useCallback((tasks: Task[]) => {
+    if (!dayInfoSettings.isShowing) return null;
     if (tasks.length === 0) return `0 tasks 😌`;
 
     const completedTasks = tasks.filter((task) => task.completedDate);
     const remainingTasks = tasks.filter((task) => !task.completedDate);
     const completedTimeMins = completedTasks.reduce((total, task) => total + (task.timeEstimateMins || 0), 0);
     const remainingTimeMins = remainingTasks.reduce((total, task) => total + (task.timeEstimateMins || 0), 0);
-    let string = `remain: ${renderTaskCount(remainingTasks.length)}/${formatTimeEstimate(remainingTimeMins)}/${formatPercentage(remainingTimeMins / NUM_DAILY_WORKING_MINS)}`;
-    if (completedTasks.length > 0) {
-      string +=` ~ done: ${renderTaskCount(completedTasks.length)}/${formatTimeEstimate(completedTimeMins)}/${formatPercentage(completedTimeMins / NUM_DAILY_WORKING_MINS)}`;
-    }
-    return string;
-  }, []);
+    const remainingItems = [
+      ...(dayInfoSettings.remainingTaskSection.isTaskCountShowing ? [`${remainingTasks.length} tasks`] : []),
+      ...(dayInfoSettings.remainingTaskSection.isTimeEstimateShowing ? [formatTimeEstimate(remainingTimeMins)] : []),
+      ...(dayInfoSettings.remainingTaskSection.isTimePercentageShowing ? [formatPercentage(remainingTimeMins / NUM_DAILY_WORKING_MINS)] : []),
+    ];
+    const completedItems = completedTasks.length ? [
+      ...(dayInfoSettings.completedTaskSection.isTaskCountShowing ? [`${completedTasks.length} tasks`] : []),
+      ...(dayInfoSettings.completedTaskSection.isTimeEstimateShowing ? [formatTimeEstimate(completedTimeMins)] : []),
+      ...(dayInfoSettings.completedTaskSection.isTimePercentageShowing ? [formatPercentage(completedTimeMins / NUM_DAILY_WORKING_MINS)] : []),
+    ] : [];
+
+    return (
+      <div className="mt-2 text-lg font-light italic">
+        {remainingItems.length > 0 && `remain: ${remainingItems.join('/')}`}
+        {remainingItems.length > 0 && completedItems.length > 0 && ` ~ `}
+        {completedItems.length > 0 && `done: ${completedItems.join('/')}`}
+      </div>
+    );
+  }, [dayInfoSettings]);
 
   const toggleSidebar = useCallback(() => setIsSidebarVisible(!isSidebarVisible), [isSidebarVisible]);
 
@@ -319,21 +389,29 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     <PanelGroup direction='horizontal' className={`${inter.className} max-h-screen flex`}>
       {isSidebarVisible && (
         <Panel defaultSize={30} minSize={20} order={1}>
-          <div className="max-h-full overflow-auto p-2">
-            <div className="text-4xl mb-2">
-              LyfeScheduler
+          <div className="h-full max-h-full overflow-auto p-2 flex flex-col">
+            <div className='grow'>
+              <div className="text-4xl mb-2">
+                LyfeScheduler
+              </div>
+              <div className="cursor-pointer">
+                <FontAwesomeIcon icon={faCalendarDays} className="mr-2"></FontAwesomeIcon>
+                calendar
+              </div>
+              <div className="line-through">
+                <FontAwesomeIcon icon={faList} className="mr-2"></FontAwesomeIcon>
+                all tasks
+              </div>
+              <div className="line-through">
+                <FontAwesomeIcon icon={faTags} className="mr-2"></FontAwesomeIcon>
+                tags
+              </div>
             </div>
-            <div className="line-through">
-              <FontAwesomeIcon icon={faCalendarDays} className="mr-2"></FontAwesomeIcon>
-              calendar
-            </div>
-            <div className="line-through">
-              <FontAwesomeIcon icon={faList} className="mr-2"></FontAwesomeIcon>
-              all tasks
-            </div>
-            <div className="line-through">
-              <FontAwesomeIcon icon={faTags} className="mr-2"></FontAwesomeIcon>
-              tags
+            <div className='footer'>
+              <div className='cursor-pointer hover:bg-gray-500/25' onClick={onSettingsButtonClick}>
+                <FontAwesomeIcon icon={faGear} className="mr-2"></FontAwesomeIcon>
+                settings
+              </div>
             </div>
           </div>
         </Panel>
@@ -342,7 +420,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       <Panel minSize={50} order={2}>
         <div className="max-h-full overflow-auto">
           <section className="sticky top-0 pl-2 pr-2">
-            <FontAwesomeIcon icon={isSidebarVisible ? faArrowLeft : faArrowRight} onClick={toggleSidebar}></FontAwesomeIcon>
+            <FontAwesomeIcon icon={isSidebarVisible ? faArrowLeft : faArrowRight} className="cursor-pointer hover:bg-gray-500/25" onClick={toggleSidebar}></FontAwesomeIcon>
           </section>
           <section className={`flex flex-col items-center pr-8 pl-8 mb-8`} >
             {/* TODO mobile layout */}
@@ -360,9 +438,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
             className={`flex min-h-screen flex-col items-center pl-8 pr-8`}
           >
             <h1 className="mb-1 text-4xl">~~~ {formatShownDate(selectedDay)} ~~~</h1>
-            <h3 className="mb-8 text-lg font-light italic">
-              {renderDayInfo(tasks)}
-            </h3>
+            {renderDayInfo(tasks)}
             <div onClick={onAddButtonClick} className="max-w-lg w-full mb-3 p-3 rounded-lg border-2 border-dotted border-gray-500 hover:bg-gray-200 hover:cursor-pointer text-gray-500">
               <FontAwesomeIcon icon={faCirclePlus} />
               <span className="ml-3">Add</span>
@@ -370,6 +446,14 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
             {tasks?.map((item) => renderTask(item))}
 
             <EditTaskModal isOpen={isShowingEditModal} setIsOpen={setIsShowingEditModal} setTasks={setTasks} task={editTask} />
+            <SettingsModal 
+              isOpen={isShowingSettingsModal}
+              setIsOpen={setIsShowingSettingsModal} 
+              monthInfoSettings={monthInfoSettings}
+              setMonthInfoSettings={setMonthInfoSettings}
+              dayInfoSettings={dayInfoSettings}
+              setDayInfoSettings={setDayInfoSettings}
+            />
           </section>
         </div>
       </Panel>
