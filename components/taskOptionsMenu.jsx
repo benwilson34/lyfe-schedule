@@ -22,7 +22,7 @@ const Day = {
 };
 
 export default function TaskOptionsMenu({ task, selectedDay, onEditClick, onPostponeClick, onDeleteClick }) {
-  const selectedDayIsToday = selectedDay.isSame(dayjs().startOf('day'));
+  const selectedDayIsToday = selectedDay.isSame(dayjs().startOf('day'), 'day');
   const selectedDayIsWeekend = [Day.SAT, Day.SUN].includes(selectedDay.day());
 
   const getNextDayOfWeek = useCallback((selectedDay, dayOfWeek) => {

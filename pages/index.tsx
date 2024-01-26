@@ -11,7 +11,7 @@ import { faCirclePlus, faArrowRight, faArrowLeft, faCalendarDays, faList, faTags
 import { EditTaskModal } from '@/components/editTaskModal';
 import { SettingsModal } from '@/components/settingsModal';
 import TaskOptionsMenu from '@/components/taskOptionsMenu';
-import { init as initDb, getManyTasks } from '@/services/mongo.service';
+import { getTasksForDay } from './api/tasks';
 import { ApiResponse } from '@/types/apiResponse';
 import { taskDaoToDto } from '@/types/task.dao';
 import { uniq, uniqBy } from 'lodash';
@@ -32,8 +32,8 @@ function dtoTaskToTask(taskDto: TaskDto): Task {
 }
 
 export async function getServerSideProps(context: any) {
-  await initDb();
-  const initTasks: TaskDto[] = (await getManyTasks({ targetDay: new Date() })).map(taskDaoToDto);
+  const today = new Date();
+  const initTasks: TaskDto[] = (await getTasksForDay(today)).map(taskDaoToDto);
   return {
     props: {
       initTasks
@@ -42,7 +42,7 @@ export async function getServerSideProps(context: any) {
 }
 
 export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
-  const [tasks, setTasks] = useState(initTasks.map(dtoTaskToTask) as Task[]);
+  const [selectedDayTasks, setSelectedDayTasks] = useState(initTasks.map(dtoTaskToTask) as Task[]);
   const [isShowingEditModal, setIsShowingEditModal] = useState(false);
   const [isShowingSettingsModal, setIsShowingSettingsModal] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
@@ -128,7 +128,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       }
       const { data } = await result.json() as { data: { dayTasks: Record<string, TaskDto[]> } };
       const newTasks = data.dayTasks[dayjs(date).format('YYYY-MM-DD')].map(dtoTaskToTask);
-      setTasks(newTasks);
+      setSelectedDayTasks(newTasks);
     } catch (maybeError: any) {
       console.error(maybeError);
       // TODO display some error message
@@ -219,8 +219,8 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   const getCompleteTaskHandler = (completedTaskId: string) => async () => {
     // TODO animate
     // accurate completedDate isn't really necessary here
-    const newTasks = tasks.map((task) => task.id === completedTaskId ? { ...task, completedDate: dayjs() } : task); 
-    setTasks(newTasks);
+    const newTasks = selectedDayTasks.map((task) => task.id === completedTaskId ? { ...task, completedDate: dayjs() } : task); 
+    setSelectedDayTasks(newTasks);
     // call service to complete task in db
     const result = await fetch(`/api/tasks/${completedTaskId}`, {
       method: 'PUT',
@@ -273,7 +273,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
         throw new Error(`>> error: ${JSON.stringify(responseBody)}`);
       }
       // TODO update state and/or re-fetch task data
-      setTasks((tasks) => tasks.filter((t) => t.id !== task.id));
+      setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
     } catch (maybeError: any) {
       console.error(maybeError);
       // TODO show some error message
@@ -300,7 +300,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
         throw new Error(`>> error: ${JSON.stringify(body)}`);
         // TODO display some error message
       }
-      setTasks((tasks) => tasks.filter((t) => t.id !== task.id));
+      setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
     } catch (maybeError: any) {
       console.error(maybeError);
       // TODO show some error message
@@ -394,12 +394,12 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     const completedTimeMins = completedTasks.reduce((total, task) => total + (task.timeEstimateMins || 0), 0);
     const remainingTimeMins = remainingTasks.reduce((total, task) => total + (task.timeEstimateMins || 0), 0);
     const remainingItems = [
-      ...(dayInfoSettings.remainingTaskSection.isTaskCountShowing ? [`${remainingTasks.length} tasks`] : []),
+      ...(dayInfoSettings.remainingTaskSection.isTaskCountShowing ? [renderTaskCount(remainingTasks.length)] : []),
       ...(dayInfoSettings.remainingTaskSection.isTimeEstimateShowing ? [formatTimeEstimate(remainingTimeMins)] : []),
       ...(dayInfoSettings.remainingTaskSection.isTimePercentageShowing ? [formatPercentage(remainingTimeMins / NUM_DAILY_WORKING_MINS)] : []),
     ];
     const completedItems = completedTasks.length ? [
-      ...(dayInfoSettings.completedTaskSection.isTaskCountShowing ? [`${completedTasks.length} tasks`] : []),
+      ...(dayInfoSettings.completedTaskSection.isTaskCountShowing ? [renderTaskCount(completedTasks.length)] : []),
       ...(dayInfoSettings.completedTaskSection.isTimeEstimateShowing ? [formatTimeEstimate(completedTimeMins)] : []),
       ...(dayInfoSettings.completedTaskSection.isTimePercentageShowing ? [formatPercentage(completedTimeMins / NUM_DAILY_WORKING_MINS)] : []),
     ] : [];
@@ -465,14 +465,14 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
             className={`flex min-h-screen flex-col items-center pl-8 pr-8`}
           >
             <h1 className="mb-1 text-4xl">~~~ {formatShownDate(selectedDay)} ~~~</h1>
-            {renderDayInfo(tasks)}
+            {renderDayInfo(selectedDayTasks)}
             <div onClick={onAddButtonClick} className="max-w-lg w-full mb-3 p-3 rounded-lg border-2 border-dotted border-gray-500 hover:bg-gray-200 hover:cursor-pointer text-gray-500">
               <FontAwesomeIcon icon={faCirclePlus} />
               <span className="ml-3">Add</span>
             </div>
-            {tasks?.map((item) => renderTask(item))}
+            {selectedDayTasks?.map((item) => renderTask(item))}
 
-            <EditTaskModal isOpen={isShowingEditModal} setIsOpen={setIsShowingEditModal} setTasks={setTasks} task={editTask} />
+            <EditTaskModal isOpen={isShowingEditModal} setIsOpen={setIsShowingEditModal} setTasks={setSelectedDayTasks} task={editTask} />
             <SettingsModal 
               isOpen={isShowingSettingsModal}
               setIsOpen={setIsShowingSettingsModal} 

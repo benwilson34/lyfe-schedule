@@ -57,7 +57,7 @@ function getProjectedRepeatingTasksForDay(incompleteTasks: TaskDao[], targetDay:
     });
 }
 
-async function getTasksForDay(targetDay: Date, { filterOutPostponed = true }: { filterOutPostponed?: boolean } = {}): Promise<TaskDao[]> {
+export async function getTasksForDay(targetDay: Date, { filterOutPostponed = true }: { filterOutPostponed?: boolean } = {}): Promise<TaskDao[]> {
   const startOfTargetDay = dayjs(targetDay).startOf('day');
   const currentDay = dayjs().startOf('day');
   const targetDayIsAfterCurrentDay = startOfTargetDay.isAfter(currentDay);
