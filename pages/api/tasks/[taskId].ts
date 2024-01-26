@@ -65,8 +65,7 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
     // for now, assume "repeat from completedDate"
     const newStartDate = dayjs(task.completedDate).add(task.repeatDays, 'days');
     task.startDate = newStartDate.toDate();
-    console.log(`about to repeat task on ${task.startDate}`); // TODO remove
-    task.endDate = newStartDate.add(task.rangeDays, 'days').toDate();
+    task.endDate = newStartDate.add(task.rangeDays - 1, 'days').toDate(); // minus one because range is [start of startDate, end of endDate]
     delete task.completedDate;
     const createdTaskId = await addTask(task);
     if (!createdTaskId) {
