@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 import 'react-calendar/dist/Calendar.css';
 import { calculateRangeDays } from '@/util/task';
 import { assign } from 'lodash';
+import { CalendarPicker, onTileClassName } from './CalendarPicker';
 // import './editTaskModal.css';
 
 const Bound = {
@@ -84,16 +85,17 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
   );
 
   const tileClassName = useCallback(({ date, view }) => {
-    // return 'blue';
-    // return 'bg-red-600';
-    if (view !== 'month') return;
-    // console.log(date);
-    // console.log(view);
-    // TODO use tailwind classes instead
-    if (dayjs(date).startOf('day') < dayjs().startOf('day')) return 'gray';
-    if (!isRepeating) return;
+    const commonClasses = onTileClassName({ date, view });
+    if (view !== 'month') return commonClasses;
+    if (!isRepeating) return commonClasses;
+    if (dayjs(date).startOf('day') < dayjs().startOf('day')) {
+      return commonClasses;
+    }
     const daysFromStartDate = dayjs(date).diff(startDate, 'days');
-    if (daysFromStartDate % repeatDays === 0) return 'blue';
+    if (daysFromStartDate !== 0 && daysFromStartDate % repeatDays === 0) {
+      return `${commonClasses} bg-blue-100`;
+    }
+    return commonClasses;
   }, [isRepeating, startDate, repeatDays]);
 
   const onAddButtonClick = useCallback(async () => {
@@ -237,7 +239,12 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
                             Range:&nbsp;
                             <input type="number" onChange={(e) => setRangeDays(e.target.value)} value={rangeDays} min={0} disabled={isLoading || lockedField === 'rangeDays'} className="w-12"></input> days
                           </div>
-                          <Calendar value={[startDate.toDate(), endDate.toDate()]} onClickDay={handleClickDay} tileClassName={tileClassName} disabled={isLoading || lockedField === 'startDate'} />
+                          <CalendarPicker
+                            value={[startDate.toDate(), endDate.toDate()]} 
+                            onClickDay={handleClickDay} 
+                            tileClassName={tileClassName} 
+                            disabled={isLoading || lockedField === 'startDate'} 
+                          />
                         </div>
                         {/*
                         <div className="mb-4">

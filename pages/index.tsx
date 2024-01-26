@@ -3,7 +3,6 @@ import type { TaskViewModel as Task } from '@/types/task.viewModel';
 import { useState, useCallback, useEffect } from 'react';
 import { Inter } from 'next/font/google';
 import dayjs, { Dayjs } from 'dayjs';
-import { Calendar } from 'react-calendar';
 import { OnArgs, TileContentFunc } from 'react-calendar/dist/cjs/shared/types';
 import 'react-calendar/dist/Calendar.css';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
@@ -17,6 +16,7 @@ import { ApiResponse } from '@/types/apiResponse';
 import { taskDaoToDto } from '@/types/task.dao';
 import { uniq, uniqBy } from 'lodash';
 import { formatShownDate } from '@/util/format';
+import { CalendarPicker } from '@/components/CalendarPicker';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -360,6 +360,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     setShownDateRange([shownStartDate, shownStartDate.endOf('month')]);
   };
 
+  // TODO make this reuseable, see CalendarPicker.tsx
   const tileContent: TileContentFunc = ({ date, view }) => {
     const day = dayjs(date);
     const dayKey = day.format('YYYY-MM-DD'); // TODO use same util function as backend
@@ -381,15 +382,6 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       );
     }
   };
-
-  const tileClassName = useCallback(({ date, view }: { date: Date, view: string }) => {
-    const commonClasses = 'p-0 h-10 rounded-lg text-left align-top shadow-md';
-    if (view !== 'month') return commonClasses;
-    if (dayjs(date).startOf('day') < dayjs().startOf('day')) {
-      return `${commonClasses} bg-gray-300`;
-    }
-    return `${commonClasses} border-black border-1`;
-  }, []);
 
   const renderTaskCount = useCallback((taskCount: number) => `${taskCount} task${taskCount !== 1 ? 's' : ''}`, []);
 
@@ -461,14 +453,11 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
             <FontAwesomeIcon icon={isSidebarVisible ? faArrowLeft : faArrowRight} className="cursor-pointer hover:bg-gray-500/25" onClick={toggleSidebar}></FontAwesomeIcon>
           </section>
           <section className={`flex flex-col items-center pr-8 pl-8 mb-8`} >
-            {/* TODO mobile layout */}
-            <Calendar 
+            <CalendarPicker 
               onChange={(d) => handleSelectedDayChange(d as Date)} 
               value={selectedDay.toDate()}
-              minDetail='decade'
               onActiveStartDateChange={onActiveStartDateChange}
               tileContent={tileContent} 
-              tileClassName={tileClassName} 
             />
             {renderMonthInfo()}
           </section>
