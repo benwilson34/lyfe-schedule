@@ -81,6 +81,53 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
   new SuccessResponse().send(res);
 }
 
+async function postponeTask(req: NextApiRequest, res: NextApiResponse) {
+  // TODO wrap with try-catch
+  const { taskId } = req.query;
+  if (!taskId || Array.isArray(taskId)) {
+    new ErrorResponse({
+      status: 404,
+      responseCode: 'resourceNotFound',
+      title: 'TODO',
+      detail: 'TODO',
+    }).send(res);
+    return;
+  }
+  const { postponeUntilDate } = req.body;
+  // TODO better validation
+  if (!postponeUntilDate) {
+    new ErrorResponse({
+      status: 400,
+      responseCode: 'invalidFields',
+      title: 'TODO',
+      detail: 'TODO',
+    }).send(res);
+    return;
+  }
+
+  const task = await getTaskByIdFromDb(taskId);
+  if (!task) {
+    new ErrorResponse({
+      status: 404,
+      responseCode: 'resourceNotFound',
+      title: 'TODO',
+      detail: 'TODO',
+    }).send(res);
+    return;
+  }
+  const postponeAction = {
+    timestamp: new Date(),
+    postponeUntilDate: dayjs(postponeUntilDate).toDate(),
+  };
+  if (task.actions) {
+    task.actions.push(postponeAction);
+  } else {
+    task.actions = [postponeAction];
+  }
+  await updateTaskInDb(taskId, task);
+  new SuccessResponse().send(res);
+}
+
 async function operateOnTask(req: NextApiRequest, res: NextApiResponse) {
   try {
     // TODO validate body?
@@ -96,8 +143,11 @@ async function operateOnTask(req: NextApiRequest, res: NextApiResponse) {
     }
     switch(operation.toLowerCase()) {
       case 'complete':
-        completeTask(req, res);
+        await completeTask(req, res);
         // TODO add to history
+        break;
+      case 'postpone':
+        await postponeTask(req, res);
         break;
       default:
         new ErrorResponse({

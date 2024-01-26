@@ -1,5 +1,5 @@
 import type { ObjectId, OptionalId, WithoutId } from 'mongodb';
-import type { TaskDto } from './task.dto';
+import { isPostponeAction, type TaskDto } from './task.dto';
 import dayjs from 'dayjs';
 
 
@@ -24,7 +24,7 @@ export type TaskInsertDao = WithoutId<TaskDao>;
 export type TaskUpdateDao = WithoutId<Partial<TaskDao>>;
 
 export function taskDaoToDto(taskDao: TaskDao): TaskDto {
-  const { _id, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, isProjected, completedDate } = taskDao;
+  const { _id, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, isProjected, completedDate, actions } = taskDao;
   return {
     ...(_id && { id: _id.toString() }),
     title,
@@ -35,11 +35,17 @@ export function taskDaoToDto(taskDao: TaskDao): TaskDto {
     ...(repeatDays && { repeatDays }),
     ...(isProjected && { isProjected }),
     ...(completedDate && { completedDate: completedDate.toISOString() }),
+    ...(actions && { actions: actions.map(
+      (action) => ({
+        timestamp: action.timestamp.toISOString(),
+        ...(isPostponeAction(action) && { postponeUntilDate: action.postponeUntilDate.toISOString() }),
+      })
+    ) }),
   } as TaskDto;
 }
 
 export function taskDtoToDao(taskDto: TaskDto): TaskDao {
-  const { id, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, completedDate } = taskDto;
+  const { id, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, completedDate, actions } = taskDto;
   return {
     ...(id && { _id: id }),
     title,
@@ -49,5 +55,11 @@ export function taskDtoToDao(taskDto: TaskDto): TaskDao {
     endDate: dayjs(endDate).toDate(),
     ...(repeatDays && { repeatDays }),
     ...(completedDate && { completedDate: dayjs(completedDate).toDate() }),
+    ...(actions && { actions: actions.map(
+      (action) => ({
+        timestamp: dayjs(action.timestamp).toDate(),
+        ...(isPostponeAction(action) && { postponeUntilDate: dayjs(action.postponeUntilDate).toDate() }),
+      })
+    ) }),
   } as TaskDao;
 }

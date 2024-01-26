@@ -16,6 +16,7 @@ import { init as initDb, getManyTasks } from '@/services/mongo.service';
 import { ApiResponse } from '@/types/apiResponse';
 import { taskDaoToDto } from '@/types/task.dao';
 import { uniq, uniqBy } from 'lodash';
+import { formatShownDate } from '@/util/format';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -252,7 +253,40 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     setIsShowingEditModal(true);
   };
 
+  const getPostponeTaskHandler = (task: Task) => async (postponeDay: Dayjs) => {
+    console.log(`about to postpone ${task.id} to ${postponeDay.toISOString()}`); // TODO remove
+    try {
+      // TODO call postpone action endpoint
+      const requestBody = {
+        operation: 'postpone',
+        postponeUntilDate: postponeDay.toISOString(),
+      };
+      const result = await fetch(`/api/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+      const responseBody = await result.json();
+      if (result.status !== 200) {
+        throw new Error(`>> error: ${JSON.stringify(responseBody)}`);
+      }
+      // TODO update state and/or re-fetch task data
+      setTasks((tasks) => tasks.filter((t) => t.id !== task.id));
+    } catch (maybeError: any) {
+      console.error(maybeError);
+      // TODO show some error message
+    }
+  };
+
   const getDeleteTaskHandler = (task: Task) => async () => {
+    // TODO disabled for now
+    console.log('delete is disabled for now because it\'s too dangerous'); // TODO remove
+    return;
+
+
+
     try {
       // TODO show confirmation dialog first
       const result = await fetch(`/api/tasks/${task.id}`, {
@@ -281,7 +315,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     const calculatedPoints = Math.round(calculatedPriority * (timeEstimateMins ?? 0));
     const daysOverEndDate = selectedDay.diff(endDate, 'day');
     return (
-      <div key={id} className={`flex justify-between items-center max-w-lg w-full mb-3 p-3 ${bgColor} shadow-lg rounded-lg text-sm`}>
+      <div key={id} className={`group/task flex justify-between items-center max-w-lg w-full mb-3 p-3 ${bgColor} shadow-lg rounded-lg text-sm`}>
         <div className="flex justify-start items-baseline">
           {
             completedDate
@@ -308,7 +342,13 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
             </div>
           </span>
           {/* <span className="text-sm">({calculatedPriority.toFixed(2)} -&gt; {calculatedPoints} ppts)</span> */}
-          <TaskOptionsMenu task={task} onEditClick={getEditTaskHandler(task)} onDeleteClick={getDeleteTaskHandler(task)} />
+          <TaskOptionsMenu 
+            task={task}
+            selectedDay={selectedDay}
+            onEditClick={getEditTaskHandler(task)}
+            onPostponeClick={getPostponeTaskHandler(task)}
+            onDeleteClick={getDeleteTaskHandler(task)}
+          />
         </div>
       </div>
     );
@@ -319,8 +359,6 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     const shownStartDate = dayjs(activeStartDate);
     setShownDateRange([shownStartDate, shownStartDate.endOf('month')]);
   };
-
-  const formatShownDate = (day: Dayjs): string => day.format('ddd MMM D');
 
   const tileContent: TileContentFunc = ({ date, view }) => {
     const day = dayjs(date);

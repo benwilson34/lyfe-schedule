@@ -1,3 +1,15 @@
+export type Action = {
+  timestamp: Date;
+};
+
+export type PostponeAction = Action & {
+  postponeUntilDate: Date;
+};
+
+export function isPostponeAction(action: Action): action is PostponeAction {
+  return (action as PostponeAction).postponeUntilDate !== undefined;
+}
+
 /**
  * The data transfer object for the Todo task model. Note that this contract is used for:
  *   - retrieving task objects (GET)
@@ -19,5 +31,5 @@ export type TaskDto = {
   isProjected?: boolean, // calculated field (not part of the data model)
   // TODO tags?: string[],
   completedDate?: string, // TODO use some IsoDateString type
-  // TODO postponeUntil?: dayjs.Dayjs
+  actions?: Action[];
 }
