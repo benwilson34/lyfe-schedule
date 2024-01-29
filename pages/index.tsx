@@ -9,6 +9,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCirclePlus, faArrowRight, faArrowLeft, faCalendarDays, faList, faTags, faGear } from '@fortawesome/free-solid-svg-icons';
 import { EditTaskModal } from '@/components/editTaskModal';
+import { ConfirmActionModal } from '@/components/ConfirmActionModal';
 import { SettingsModal } from '@/components/settingsModal';
 import TaskOptionsMenu from '@/components/taskOptionsMenu';
 import { getTasksForDay } from './api/tasks';
@@ -45,7 +46,8 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   const [selectedDayTasks, setSelectedDayTasks] = useState(initTasks.map(dtoTaskToTask) as Task[]);
   const [isShowingEditModal, setIsShowingEditModal] = useState(false);
   const [isShowingSettingsModal, setIsShowingSettingsModal] = useState(false);
-  const [editTask, setEditTask] = useState<Task | null>(null);
+  const [isShowingDeleteModal, setIsShowingDeleteModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedDay, setSelectedDay] = useState<Dayjs>(dayjs());
   const [shownDateRange, setShownDateRange] = useState<[Dayjs, Dayjs]>([dayjs().startOf('month'), dayjs().endOf('month')]);
   const [dayTasks, setDayTasks] = useState<Record<string, TaskDto[]>>({});
@@ -240,7 +242,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   };
 
   const onAddButtonClick = () => {
-    setEditTask(null);
+    setSelectedTask(null);
     setIsShowingEditModal(true);
   };
 
@@ -249,7 +251,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   };
 
   const getEditTaskHandler = (task: Task) => () => {
-    setEditTask(task);
+    setSelectedTask(task);
     setIsShowingEditModal(true);
   };
 
@@ -281,15 +283,14 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   };
 
   const getDeleteTaskHandler = (task: Task) => async () => {
-    // TODO disabled for now
-    console.log('delete is disabled for now because it\'s too dangerous'); // TODO remove
-    return;
+    setSelectedTask(task);
+    setIsShowingDeleteModal(true);
+  };
 
-
-
+  const handleConfirmedDelete = useCallback(async () => {
+    if (!selectedTask) return;
     try {
-      // TODO show confirmation dialog first
-      const result = await fetch(`/api/tasks/${task.id}`, {
+      const result = await fetch(`/api/tasks/${selectedTask.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -300,12 +301,12 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
         throw new Error(`>> error: ${JSON.stringify(body)}`);
         // TODO display some error message
       }
-      setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
-    } catch (maybeError: any) {
+      setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== selectedTask.id));
+    } catch (maybeError) {
       console.error(maybeError);
       // TODO show some error message
     }
-  };
+  }, [selectedTask]);
 
   const renderTask = (task: Task) => {
     const { id, title, timeEstimateMins, startDate, rangeDays, endDate, isProjected, completedDate } = task;
@@ -472,7 +473,20 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
             </div>
             {selectedDayTasks?.map((item) => renderTask(item))}
 
-            <EditTaskModal isOpen={isShowingEditModal} setIsOpen={setIsShowingEditModal} setTasks={setSelectedDayTasks} task={editTask} />
+            <EditTaskModal isOpen={isShowingEditModal} setIsOpen={setIsShowingEditModal} setTasks={setSelectedDayTasks} task={selectedTask} />
+            <ConfirmActionModal 
+              isOpen={isShowingDeleteModal}
+              setIsOpen={setIsShowingDeleteModal}
+              onConfirm={handleConfirmedDelete}
+              title="Confirm delete"
+              body={(selectedTask && (
+                <div className='text-md'>
+                  are you sure you want to delete <span className="font-bold">{selectedTask!.title}</span>? This action cannot be undone.
+                </div>
+              ) || undefined)}
+              confirmButtonText='delete'
+              confirmButtonClasses="bg-red-300 hover:bg-red-500"
+            />
             <SettingsModal 
               isOpen={isShowingSettingsModal}
               setIsOpen={setIsShowingSettingsModal} 

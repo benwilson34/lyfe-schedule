@@ -75,11 +75,8 @@ export async function getTasksForDay(targetDay: Date, { filterOutPostponed = tru
       .filter((task) => {
         if (!task.lastPostponeUntilDate) return true;
         const lastPostponeUntilDate = dayjs(task.lastPostponeUntilDate);
-        console.log('lastPostponeUntilDate', lastPostponeUntilDate.toISOString()); // TODO remove
-        console.log('startOfTargetDay', startOfTargetDay.toISOString()); // TODO remove
         return startOfTargetDay.isSame(lastPostponeUntilDate, 'day') || startOfTargetDay.isAfter(lastPostponeUntilDate);
       });
-    console.log(`tasks after filtering:`, tasks.length); // TODO remove
   }
   if (targetDayIsAfterCurrentDay) {
     const tasksThatStartOnTargetDay = tasks.filter((task) => startOfTargetDay.isSame(dayjs(task.startDate), 'day'));
@@ -90,7 +87,6 @@ export async function getTasksForDay(targetDay: Date, { filterOutPostponed = tru
       ...getProjectedRepeatingTasksForDay(tasks, targetDay, currentDay.toDate()),
     ];
   }
-  console.log(`tasks for ${targetDay} (after current day ${targetDayIsAfterCurrentDay}):`, tasks); // TODO remove
   return tasks;
 }
 

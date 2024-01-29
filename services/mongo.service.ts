@@ -96,7 +96,6 @@ export async function init() {
   try {
     await client.connect();
     taskCollection = client.db(DB_NAME).collection<TaskDao>(TASKS_COLLECTION_NAME);
-    console.log(`Successfully connected to Mongo server at ${URL}`);
   } catch (maybeError: any) {
     console.error(maybeError);
   }
