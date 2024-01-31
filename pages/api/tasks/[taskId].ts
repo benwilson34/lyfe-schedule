@@ -13,7 +13,7 @@ async function updateTask(req: NextApiRequest, res: NextApiResponse) {
     if (!taskId || Array.isArray(taskId)) {
       new ErrorResponse({
         status: 404,
-        responseCode: 'resourceNotFound',
+        errorCode: 'resourceNotFound',
         title: 'TODO',
         detail: 'TODO',
       }).send(res);
@@ -40,7 +40,7 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
   if (!taskId || Array.isArray(taskId)) {
     new ErrorResponse({
       status: 404,
-      responseCode: 'resourceNotFound',
+      errorCode: 'resourceNotFound',
       title: 'TODO',
       detail: 'TODO',
     }).send(res);
@@ -50,7 +50,7 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
   if (!task) {
     new ErrorResponse({
       status: 404,
-      responseCode: 'resourceNotFound',
+      errorCode: 'resourceNotFound',
       title: 'TODO',
       detail: 'TODO',
     }).send(res);
@@ -86,7 +86,7 @@ async function postponeTask(req: NextApiRequest, res: NextApiResponse) {
   if (!taskId || Array.isArray(taskId)) {
     new ErrorResponse({
       status: 404,
-      responseCode: 'resourceNotFound',
+      errorCode: 'resourceNotFound',
       title: 'TODO',
       detail: 'TODO',
     }).send(res);
@@ -97,7 +97,7 @@ async function postponeTask(req: NextApiRequest, res: NextApiResponse) {
   if (!postponeUntilDate) {
     new ErrorResponse({
       status: 400,
-      responseCode: 'invalidFields',
+      errorCode: 'invalidFields',
       title: 'TODO',
       detail: 'TODO',
     }).send(res);
@@ -108,7 +108,7 @@ async function postponeTask(req: NextApiRequest, res: NextApiResponse) {
   if (!task) {
     new ErrorResponse({
       status: 404,
-      responseCode: 'resourceNotFound',
+      errorCode: 'resourceNotFound',
       title: 'TODO',
       detail: 'TODO',
     }).send(res);
@@ -134,7 +134,7 @@ async function operateOnTask(req: NextApiRequest, res: NextApiResponse) {
     if (!operation) {
       new ErrorResponse({
         status: 400,
-        responseCode: 'invalidFields',
+        errorCode: 'invalidFields',
         title: 'TODO',
         detail: 'TODO',
       }).send(res);
@@ -151,7 +151,7 @@ async function operateOnTask(req: NextApiRequest, res: NextApiResponse) {
       default:
         new ErrorResponse({
           status: 400,
-          responseCode: 'invalidFields',
+          errorCode: 'invalidFields',
           title: 'Invalid operation',
           detail: `The provided operation "${operation}" is not valid.`,
         }).send(res);
@@ -169,7 +169,7 @@ async function deleteTask(req: NextApiRequest, res: NextApiResponse) {
     if (!taskId || Array.isArray(taskId)) {
       new ErrorResponse({
         status: 400,
-        responseCode: 'invalidFields',
+        errorCode: 'invalidFields',
         title: 'TODO',
         detail: 'TODO',
       }).send(res);
@@ -200,7 +200,7 @@ export default async function handler(
     default:
       new ErrorResponse({
         status: 404,
-        responseCode: 'resourceNotFound',
+        errorCode: 'resourceNotFound',
         title: 'Resource not found',
         detail: `Can not ${req.method} ${req.url}`,
       }).send(res);

@@ -196,7 +196,7 @@ async function operateOnTasks(
   if (!operation) {
     new ErrorResponse({
       status: 400,
-      responseCode: 'invalidFields',
+      errorCode: 'invalidFields',
       title: 'TODO',
       detail: 'TODO',
     }).send(res);
@@ -208,7 +208,7 @@ async function operateOnTasks(
     default:
       new ErrorResponse({
         status: 400,
-        responseCode: 'invalidFields',
+        errorCode: 'invalidFields',
         title: 'Invalid operation',
         detail: `The provided operation "${operation}" is not valid.`,
       }).send(res);
@@ -233,7 +233,7 @@ export default async function handler(
     default:
       new ErrorResponse({
         status: 404,
-        responseCode: 'resourceNotFound',
+        errorCode: 'resourceNotFound',
         title: 'Resource not found',
         detail: `Can not ${req.method} ${req.url}`,
       }).send(res);

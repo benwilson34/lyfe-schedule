@@ -1,6 +1,9 @@
 import type { TaskDao, TaskInsertDao, TaskUpdateDao } from '@/types/task.dao';
 import { MongoClient, Collection, ObjectId, WithoutId, OptionalId } from 'mongodb';
 import dayjs from 'dayjs';
+import { UserDao } from '@/types/user.dao';
+import { SessionDao } from '@/types/session.dao';
+import { randomBytes } from 'crypto';
 
 const URL = `mongodb://127.0.0.1:27017`; // TODO load from env var
 const client = new MongoClient(URL);
@@ -10,6 +13,10 @@ const DB_NAME = 'TodoApp-2'; // TODO load from env var
 // const TASKS_COLLECTION_NAME = 'tasks'; // TODO load from env var
 const TASKS_COLLECTION_NAME = 'task'; // TODO load from env var
 let taskCollection: Collection<TaskDao> | null = null;
+const USERS_COLLECTION_NAME = 'user'; // TODO
+let userCollection: Collection<UserDao> | null = null;
+const SESSION_COLLECTION_NAME = 'session';
+let sessionCollection: Collection<SessionDao> | null = null;
 
 // function taskDaoToDto(taskDao: TaskDao): TaskDto {
 //   let dto: any = { ...taskDao };
@@ -92,10 +99,35 @@ export async function deleteAllTasks(): Promise<number> {
   return deleteResult.deletedCount;
 }
 
+export async function getUserByEmail(email: string): Promise<UserDao|null> {
+  await initIfNeeded();
+  return userCollection!.findOne({ email });
+}
+
+export async function createSession(userId: ObjectId|string): Promise<string> {
+  await initIfNeeded();
+  // userId is assumed to be valid
+  const userOid = userId instanceof ObjectId ? userId : new ObjectId(userId);
+  const token = randomBytes(16).toString('hex');
+  const insertResult = await sessionCollection!.insertOne({ 
+    userId: userOid,
+    token,
+    createdAt: new Date(),
+    ttlMinutes: 60 * 24 * 7, // 7 days
+  });
+  if (!insertResult) {
+    throw new Error('Failed to create session token');
+  }
+  return token;
+}
+
 export async function init() {
   try {
     await client.connect();
-    taskCollection = client.db(DB_NAME).collection<TaskDao>(TASKS_COLLECTION_NAME);
+    const db = client.db(DB_NAME);
+    taskCollection = db.collection<TaskDao>(TASKS_COLLECTION_NAME);
+    userCollection = db.collection<UserDao>(USERS_COLLECTION_NAME);
+    sessionCollection = db.collection<SessionDao>(SESSION_COLLECTION_NAME);
   } catch (maybeError: any) {
     console.error(maybeError);
   }

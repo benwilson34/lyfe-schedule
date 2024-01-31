@@ -1,4 +1,4 @@
-import type { ResponseCode } from "./responseCode";
+import type { ErrorCode } from "./errorCode";
 import { NextApiResponse } from "next";
 
 export default class ErrorResponse {
@@ -6,12 +6,12 @@ export default class ErrorResponse {
   body: Record<string, any>;
 
   constructor(
-    { status, responseCode, title, detail, error }:
-      { status: 400 | 404 | 500, responseCode: ResponseCode, title: string, detail: string, error?: Error | string }
+    { status, errorCode, title, detail, error }:
+      { status: 400 | 401 | 404 | 500, errorCode: ErrorCode, title: string, detail: string, error?: Error | string }
   ) {
     this.status = status;
     this.body = {
-      responseCode,
+      errorCode,
       title,
       detail,
       ...(error && { error }),
@@ -25,7 +25,7 @@ export default class ErrorResponse {
 
 export const internalErrorResponse = new ErrorResponse({
   status: 500,
-  responseCode: 'internalError',
-  title: 'TODO',
-  detail: 'TODO',
+  errorCode: 'internalError',
+  title: 'Internal server error',
+  detail: 'An internal error has occurred. Please try again later or contact the admin.',
 });

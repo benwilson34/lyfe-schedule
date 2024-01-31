@@ -1,10 +1,7 @@
 import type { ObjectId, OptionalId, WithoutId } from 'mongodb';
 import { isPostponeAction, type TaskDto } from './task.dto';
 import dayjs from 'dayjs';
-
-
-// TODO move to helper module
-type Modify<T, R> = Omit<T, keyof R> & R;
+import { Modify } from '@/util/types';
 
 /**
  * Access object for the Todo task model.
