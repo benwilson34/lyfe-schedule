@@ -1,6 +1,7 @@
 import type { TaskDto } from '@/types/task.dto';
 import type { TaskViewModel as Task } from '@/types/task.viewModel';
 import { useState, useCallback, useEffect } from 'react';
+import { getToken } from 'next-auth/jwt';
 import { Inter } from 'next/font/google';
 import dayjs, { Dayjs } from 'dayjs';
 import { OnArgs, TileContentFunc } from 'react-calendar/dist/cjs/shared/types';
@@ -15,13 +16,14 @@ import TaskOptionsMenu from '@/components/taskOptionsMenu';
 import { getTasksForDay } from './api/tasks';
 import { ApiResponse } from '@/types/apiResponse';
 import { taskDaoToDto } from '@/types/task.dao';
-import { uniq, uniqBy } from 'lodash';
+import { uniqBy } from 'lodash';
 import { formatShownDate } from '@/util/format';
 import { CalendarPicker } from '@/components/CalendarPicker';
+import Link from 'next/link';
 
 const inter = Inter({ subsets: ['latin'] });
 
-const NUM_DAILY_WORKING_MINS = 4 * 60;
+const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
 function dtoTaskToTask(taskDto: TaskDto): Task {
   return {
@@ -33,8 +35,18 @@ function dtoTaskToTask(taskDto: TaskDto): Task {
 }
 
 export async function getServerSideProps(context: any) {
+  // TODO this would be better as a util function
+  // auth
+  const token = await getToken({ req: context.req });
+  if (!token) {
+    // shouldn't be possible to get to this point
+    console.error(`Error initializing: authentication error!`);
+    return;
+  }
+  const userId = token.sub!;
+
   const today = new Date();
-  const initTasks: TaskDto[] = (await getTasksForDay(today)).map(taskDaoToDto);
+  const initTasks: TaskDto[] = (await getTasksForDay(userId, today)).map(taskDaoToDto);
   return {
     props: {
       initTasks
@@ -439,10 +451,16 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
               </div>
             </div>
             <div className='footer'>
-              <div className='cursor-pointer hover:bg-gray-500/25' onClick={onSettingsButtonClick}>
-                <FontAwesomeIcon icon={faGear} className="mr-2"></FontAwesomeIcon>
-                settings
-              </div>
+              <Link href="/api/auth/signout">
+                <div className='cursor-pointer hover:bg-gray-500/25'>
+                  <FontAwesomeIcon icon={faGear} className="mr-2"></FontAwesomeIcon>
+                  log out
+                </div>
+                <div className='cursor-pointer hover:bg-gray-500/25' onClick={onSettingsButtonClick}>
+                  <FontAwesomeIcon icon={faGear} className="mr-2"></FontAwesomeIcon>
+                  settings
+                </div>
+              </Link>
             </div>
           </div>
         </Panel>

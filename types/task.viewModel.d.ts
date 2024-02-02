@@ -7,6 +7,7 @@ import type { Dayjs } from 'dayjs';
  */
 export type TaskViewModel = {
   id: string;
+  userId: string;
   title: string;
   timeEstimateMins?: number;
   startDate: Dayjs;

@@ -4,7 +4,7 @@ import { UserDto } from './user.dto';
 
 export type UserDao = OptionalId<Modify<UserDto, {}>>;
 
-export function userDaoToDto(userDao: UserDao, { includeHashedPassword = false }): UserDto {
+export function userDaoToDto(userDao: UserDao, { includeHashedPassword = false } = {}): UserDto {
   const { _id, email, hashedPassword } = userDao;
   return {
     ...(_id && { id: _id.toString() }),

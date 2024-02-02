@@ -2,13 +2,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { isPostponeAction, PostponeAction, type TaskDto } from '@/types/task.dto'
 import type { ApiResponse } from '@/types/apiResponse';
-import { getManyTasks, addTask, deleteAllTasks } from '@/services/mongo.service';
-import ErrorResponse, { internalErrorResponse } from '@/models/ErrorResponse';
+import { getManyTasks, addTask } from '@/services/mongo.service';
+import ErrorResponse, { internalErrorResponse, unauthenticatedErrorResponse } from '@/models/ErrorResponse';
 import SuccessResponse from '@/models/SuccessResponse';
 import dayjs, { Dayjs } from 'dayjs';
 import { calculateEndDate } from '@/util/task';
 import { TaskDao, taskDaoToDto, taskDtoToDao } from '@/types/task.dao';
 import { assign, last } from 'lodash';
+import { getToken } from 'next-auth/jwt';
+import { ObjectId } from 'mongodb';
 
 function handleError(maybeError: any, res: NextApiResponse) {
   console.error(maybeError);
@@ -57,12 +59,12 @@ function getProjectedRepeatingTasksForDay(incompleteTasks: TaskDao[], targetDay:
     });
 }
 
-export async function getTasksForDay(targetDay: Date, { filterOutPostponed = true }: { filterOutPostponed?: boolean } = {}): Promise<TaskDao[]> {
+export async function getTasksForDay(userId: string, targetDay: Date, { filterOutPostponed = true }: { filterOutPostponed?: boolean } = {}): Promise<TaskDao[]> {
   const startOfTargetDay = dayjs(targetDay).startOf('day');
   const currentDay = dayjs().startOf('day');
   const targetDayIsAfterCurrentDay = startOfTargetDay.isAfter(currentDay);
   type CalculatedTaskDao = TaskDao & { lastPostponeUntilDate?: Date; };
-  let tasks: CalculatedTaskDao[] = (await getManyTasks({
+  let tasks: CalculatedTaskDao[] = (await getManyTasks(userId, {
     targetDay,
     includeCompleted: !targetDayIsAfterCurrentDay,
   }))
@@ -90,14 +92,14 @@ export async function getTasksForDay(targetDay: Date, { filterOutPostponed = tru
   return tasks;
 }
 
-async function getTasksForDayRange(targetStartDay: Date, targetEndDay: Date): Promise<Record<string, TaskDao[]>> {
+async function getTasksForDayRange(userId: string, targetStartDay: Date, targetEndDay: Date): Promise<Record<string, TaskDao[]>> {
   const dayDiff = dayjs(targetEndDay).diff(targetStartDay, 'day') + 1; // inclusive bounds, so we'll add one
   const dayToTasksMap: Record<string, TaskDao[]> = {};
   let dayOffset = 0;
   while (dayOffset !== dayDiff) {
     const targetDay = dayjs(targetStartDay).add(dayOffset, 'day');
     const targetDayKey = formatDayKey(targetDay);
-    dayToTasksMap[targetDayKey] = await getTasksForDay(targetDay.toDate());
+    dayToTasksMap[targetDayKey] = await getTasksForDay(userId, targetDay.toDate());
     dayOffset += 1;
   }
   return dayToTasksMap;
@@ -122,6 +124,14 @@ async function getMultipleTasks(
   res: NextApiResponse
 ) {
   try {
+    // auth
+    const token = await getToken({ req });
+    if (!token) {
+      unauthenticatedErrorResponse.send(res);
+      return;
+    }
+    const userId = token.sub!;
+
     // TODO validate request :)
     const {
       targetDay: targetDayString,
@@ -131,10 +141,9 @@ async function getMultipleTasks(
     let dayTasks: Record<string, TaskDao[]> = {};
     if (targetDayString) {
       const dayKey = formatDayKey(dayjs(targetDayString));
-      dayTasks[dayKey] = await getTasksForDay(new Date(targetDayString));
+      dayTasks[dayKey] = await getTasksForDay(userId, new Date(targetDayString));
     } else if (targetStartDayString && targetEndDayString) {
-      // TODO ah type checking makes a good point here. What should the response shape be? If not uniform, break out to separate controller
-      dayTasks = await getTasksForDayRange(new Date(targetStartDayString), new Date(targetEndDayString));
+      dayTasks = await getTasksForDayRange(userId, new Date(targetStartDayString), new Date(targetEndDayString));
     }
 
     const dayTasksMapped = Object.fromEntries(Object.entries(dayTasks).map(([day, tasks]) => ([day, tasks.map(taskDaoToDto)])));
@@ -152,11 +161,22 @@ async function addNewTask(
   res: NextApiResponse
 ) {
   try {
+    // auth
+    const token = await getToken({ req });
+    if (!token) {
+      unauthenticatedErrorResponse.send(res);
+      return;
+    }
+    const userId = token.sub!;
+
+    const taskToAdd = assign(taskDtoToDao(req.body), {
+      userId: new ObjectId(userId),
+    })
+
     // TODO validate req.body
-    // console.log(`>> about to add:`, taskDtoToDao(req.body)); // TODO remove
-    const id = await addTask(taskDtoToDao(req.body));
+    const taskId = await addTask(taskToAdd);
     new SuccessResponse({
-      data: { taskId: id }
+      data: { taskId }
     }).send(res);
   } catch (maybeError: any) {
     handleError(maybeError, res);
@@ -187,34 +207,34 @@ async function addNewTask(
 //   }
 // }
 
-async function operateOnTasks(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  // TODO validate body?
-  const { operation, ...options } = req.body;
-  if (!operation) {
-    new ErrorResponse({
-      status: 400,
-      errorCode: 'invalidFields',
-      title: 'TODO',
-      detail: 'TODO',
-    }).send(res);
-  }
-  switch (operation.toLowerCase()) {
-    // case 'initialize':
-    //   await initializeTasks(req, res);
-    //   break;
-    default:
-      new ErrorResponse({
-        status: 400,
-        errorCode: 'invalidFields',
-        title: 'Invalid operation',
-        detail: `The provided operation "${operation}" is not valid.`,
-      }).send(res);
-      return;
-  }
-}
+// async function operateOnTasks(
+//   req: NextApiRequest,
+//   res: NextApiResponse
+// ) {
+//   // TODO validate body?
+//   const { operation, ...options } = req.body;
+//   if (!operation) {
+//     new ErrorResponse({
+//       status: 400,
+//       errorCode: 'invalidFields',
+//       title: 'TODO',
+//       detail: 'TODO',
+//     }).send(res);
+//   }
+//   switch (operation.toLowerCase()) {
+//     // case 'initialize':
+//     //   await initializeTasks(req, res);
+//     //   break;
+//     default:
+//       new ErrorResponse({
+//         status: 400,
+//         errorCode: 'invalidFields',
+//         title: 'Invalid operation',
+//         detail: `The provided operation "${operation}" is not valid.`,
+//       }).send(res);
+//       return;
+//   }
+// }
 
 export default async function handler(
   req: NextApiRequest,
@@ -227,9 +247,9 @@ export default async function handler(
     case 'POST':
       await addNewTask(req, res);
       break;
-    case 'PUT':
-      await operateOnTasks(req, res);
-      break;
+    // case 'PUT':
+    //   await operateOnTasks(req, res);
+    //   break;
     default:
       new ErrorResponse({
         status: 404,

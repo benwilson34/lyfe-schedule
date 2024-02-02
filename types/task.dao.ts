@@ -1,4 +1,4 @@
-import type { ObjectId, OptionalId, WithoutId } from 'mongodb';
+import { ObjectId, OptionalId, WithoutId } from 'mongodb';
 import { isPostponeAction, type TaskDto } from './task.dto';
 import dayjs from 'dayjs';
 import { Modify } from '@/util/types';
@@ -11,6 +11,7 @@ import { Modify } from '@/util/types';
  */
 
 export type TaskDao = OptionalId<Modify<TaskDto, {
+  userId: ObjectId,
   startDate: Date,
   endDate: Date,
   completedDate?: Date,
@@ -21,9 +22,10 @@ export type TaskInsertDao = WithoutId<TaskDao>;
 export type TaskUpdateDao = WithoutId<Partial<TaskDao>>;
 
 export function taskDaoToDto(taskDao: TaskDao): TaskDto {
-  const { _id, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, isProjected, completedDate, actions } = taskDao;
+  const { _id, userId, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, isProjected, completedDate, actions } = taskDao;
   return {
     ...(_id && { id: _id.toString() }),
+    userId: userId.toString(),
     title,
     ...(timeEstimateMins && { timeEstimateMins }),
     startDate: startDate.toISOString(),
@@ -42,9 +44,10 @@ export function taskDaoToDto(taskDao: TaskDao): TaskDto {
 }
 
 export function taskDtoToDao(taskDto: TaskDto): TaskDao {
-  const { id, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, completedDate, actions } = taskDto;
+  const { id, userId, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, completedDate, actions } = taskDto;
   return {
     ...(id && { _id: id }),
+    userId: new ObjectId(userId),
     title,
     ...(timeEstimateMins && { timeEstimateMins }),
     startDate: dayjs(startDate).toDate(),

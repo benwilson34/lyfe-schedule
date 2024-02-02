@@ -19,6 +19,7 @@ export function isPostponeAction(action: Action): action is PostponeAction {
  */
 export type TaskDto = {
   id?: string,
+  userId: string,
   title: string,
   timeEstimateMins?: number,
   startDate: string, // TODO use some IsoDateString type
