@@ -21,14 +21,14 @@ export function ConfirmActionModal({
   confirmButtonText = "confirm",
   confirmButtonClasses = 'bg-green-300 hover:bg-green-500',
 }) {
-  if (!isOpen) return null; // FIXME I don't think this should be here. May be causing an error on first render.
-
   const cancelButtonRef = useRef(null);
 
   const onConfirmButtonClick = useCallback(() => {
     setIsOpen(false);
     onConfirm();
-  }, [onConfirm])
+  }, [onConfirm, setIsOpen])
+
+  if (!isOpen) return null;
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>

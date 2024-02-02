@@ -20,8 +20,6 @@ const Bound = {
 };
 
 export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
-  if (!isOpen) return null; // FIXME I don't think this should be here. May be causing an error on first render.
-
   const isNewTask = useMemo(() => !task, [task]);
   const [title, setTitle] = useState(task?.title || '');
   const [startDate, setStartDate] = useState(task?.startDate || dayjs());
@@ -45,7 +43,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
     }
     // TODO calculate other locked fields startDate and endDate
     throw new Error('Not implemented yet');
-  });
+  }, [lockedField, startDate, endDate]);
 
   const isValid = useMemo(() => {
     // TODO validate new task
@@ -137,7 +135,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
     } finally {
       setIsLoading(false);
     }
-  }, [task, setIsOpen, setIsLoading, title, startDate, endDate, rangeDays, isRepeating, repeatDays, timeEstimateMins]);
+  }, [title, startDate, endDate, rangeDays, isRepeating, repeatDays, timeEstimateMins, setTasks, setIsOpen]);
 
   const onSaveButtonClick = useCallback(async () => {
     try {
@@ -183,9 +181,11 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
     } finally {
       setIsLoading(false);
     }
-  }, [task, setIsOpen, setIsLoading, title, startDate, endDate, rangeDays, isRepeating, repeatDays, timeEstimateMins]);
+  }, [title, startDate, endDate, rangeDays, isRepeating, repeatDays, timeEstimateMins, task.id, setTasks, setIsOpen]);
 
   const formatDate = useCallback((date) => date.format('ddd MMM D, YYYY'), []);
+
+  if (!isOpen) return null;
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>

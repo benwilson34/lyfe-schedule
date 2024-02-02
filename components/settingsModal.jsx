@@ -13,8 +13,6 @@ import { calculateRangeDays } from '@/util/task';
 import { assign } from 'lodash';
 
 export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthInfoSettings, dayInfoSettings, setDayInfoSettings }) {
-  if (!isOpen) return null; // FIXME I don't think this should be here. May be causing an error on first render.
-
   const [isLoading, setIsLoading] = useState(false);
 
   const onSaveButtonClick = useCallback(() => {
@@ -25,6 +23,8 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
   }, [monthInfoSettings, dayInfoSettings]);
 
   const cancelButtonRef = useRef(null);
+
+  if (!isOpen) return null;
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>

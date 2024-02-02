@@ -424,7 +424,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
         {completedItems.length > 0 && `done: ${completedItems.join('/')}`}
       </div>
     );
-  }, [dayInfoSettings]);
+  }, [dayInfoSettings, renderTaskCount]);
 
   const toggleSidebar = useCallback(() => setIsSidebarVisible(!isSidebarVisible), [isSidebarVisible]);
 
