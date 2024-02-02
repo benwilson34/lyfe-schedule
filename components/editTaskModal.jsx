@@ -181,7 +181,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
     } finally {
       setIsLoading(false);
     }
-  }, [title, startDate, endDate, rangeDays, isRepeating, repeatDays, timeEstimateMins, task.id, setTasks, setIsOpen]);
+  }, [title, startDate, endDate, rangeDays, isRepeating, repeatDays, timeEstimateMins, task, setTasks, setIsOpen]);
 
   const formatDate = useCallback((date) => date.format('ddd MMM D, YYYY'), []);
 
