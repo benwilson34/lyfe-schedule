@@ -11,9 +11,11 @@ import dayjs from 'dayjs';
 import 'react-calendar/dist/Calendar.css';
 import { calculateRangeDays } from '@/util/task';
 import { assign } from 'lodash';
+import { ConfirmActionModal } from './ConfirmActionModal';
 
 export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthInfoSettings, dayInfoSettings, setDayInfoSettings }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isShowingDeleteAllModal, setIsShowingDeleteAllModal] = useState(false);
 
   const onSaveButtonClick = useCallback(() => {
     localStorage.setItem('settings', JSON.stringify({
@@ -21,6 +23,23 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
       dayInfoSettings,
     }))
   }, [monthInfoSettings, dayInfoSettings]);
+
+  const onDeleteAllTasksButtonClick = useCallback(() => {
+    setIsShowingDeleteAllModal(true);
+  }, []);
+
+  const onConfirmDeleteAllTasksButtonClick = useCallback(async () => {
+    const result = await fetch(`/api/tasks`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    if (result.status !== 200) {
+      throw new Error('Failed to delete tasks.');
+    }
+    const { data } = await result.json();
+  }, []);
 
   const cancelButtonRef = useRef(null);
 
@@ -279,6 +298,16 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                           </div>
                         </div>
 
+                        <div>
+                        <button
+                          type="button"
+                          className="inline-flex w-full justify-center rounded-md bg-red-300 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-400"
+                          onClick={onDeleteAllTasksButtonClick}
+                        >
+                          Delete all tasks
+                        </button>
+                        </div>
+
                       </div>
                     </div>
                   </div>
@@ -301,7 +330,22 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                     Cancel
                   </button>
                 </div>
+                
+                <ConfirmActionModal 
+                  isOpen={isShowingDeleteAllModal}
+                  setIsOpen={setIsShowingDeleteAllModal}
+                  onConfirm={onConfirmDeleteAllTasksButtonClick}
+                  title="Confirm delete"
+                  body={(
+                    <div className='text-md'>
+                      are you sure you want to delete <span className="font-bold text-red-500">all tasks</span>? This action cannot be undone.
+                    </div>
+                  )}
+                  confirmButtonText='delete'
+                  confirmButtonClasses="bg-red-300 hover:bg-red-500"
+                />
               </Dialog.Panel>
+
             </Transition.Child>
           </div>
         </div>

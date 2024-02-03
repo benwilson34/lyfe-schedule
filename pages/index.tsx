@@ -8,7 +8,7 @@ import { OnArgs, TileContentFunc } from 'react-calendar/dist/cjs/shared/types';
 import 'react-calendar/dist/Calendar.css';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCirclePlus, faArrowRight, faArrowLeft, faCalendarDays, faList, faTags, faGear } from '@fortawesome/free-solid-svg-icons';
+import { faCirclePlus, faArrowRight, faArrowLeft, faCalendarDays, faList, faTags, faArrowRightFromBracket, faGear } from '@fortawesome/free-solid-svg-icons';
 import { EditTaskModal } from '@/components/editTaskModal';
 import { ConfirmActionModal } from '@/components/ConfirmActionModal';
 import { SettingsModal } from '@/components/settingsModal';
@@ -453,14 +453,14 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
             <div className='footer'>
               <Link href="/api/auth/signout">
                 <div className='cursor-pointer hover:bg-gray-500/25'>
-                  <FontAwesomeIcon icon={faGear} className="mr-2"></FontAwesomeIcon>
+                  <FontAwesomeIcon icon={faArrowRightFromBracket} className="mr-2"></FontAwesomeIcon>
                   log out
                 </div>
-                <div className='cursor-pointer hover:bg-gray-500/25' onClick={onSettingsButtonClick}>
-                  <FontAwesomeIcon icon={faGear} className="mr-2"></FontAwesomeIcon>
-                  settings
-                </div>
               </Link>
+              <div className='cursor-pointer hover:bg-gray-500/25' onClick={onSettingsButtonClick}>
+                <FontAwesomeIcon icon={faGear} className="mr-2"></FontAwesomeIcon>
+                settings
+              </div>
             </div>
           </div>
         </Panel>

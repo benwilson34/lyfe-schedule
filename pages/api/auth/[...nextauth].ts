@@ -15,7 +15,6 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials, req) {
         try {
-          console.log('>> starting to authorize creds!'); // TODO remove
           if (!credentials) return null;
           const { email, password } = credentials;
           const foundUser = await getUserByEmail(email);
@@ -23,9 +22,7 @@ export const authOptions: NextAuthOptions = {
           if (!foundUser) {
             return null;
           }
-          console.log('>> about to verify creds!'); // TODO remove
           const passwordDoesMatch = await argon2.verify(foundUser.hashedPassword!, password);
-          console.log('>> done, match:', passwordDoesMatch); // TODO remove
           if (!passwordDoesMatch) {
             return null;
           }

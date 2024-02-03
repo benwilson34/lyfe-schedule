@@ -77,9 +77,10 @@ export async function deleteTask(id: ObjectId|string): Promise<string> {
   return oid.toString();
 }
 
-export async function deleteAllTasks(): Promise<number> {
+export async function deleteAllTasks(userId: string|ObjectId): Promise<number> {
   await initIfNeeded();
-  const deleteResult = await taskCollection!.deleteMany();
+  const userOid = userId instanceof ObjectId ? userId : new ObjectId(userId);
+  const deleteResult = await taskCollection!.deleteMany({ userId: userOid });
   return deleteResult.deletedCount;
 }
 

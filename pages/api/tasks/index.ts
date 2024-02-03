@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { isPostponeAction, PostponeAction, type TaskDto } from '@/types/task.dto'
 import type { ApiResponse } from '@/types/apiResponse';
-import { getManyTasks, addTask } from '@/services/mongo.service';
+import { getManyTasks, addTask, deleteAllTasks as deleteAllTasksInDb } from '@/services/mongo.service';
 import ErrorResponse, { internalErrorResponse, unauthenticatedErrorResponse } from '@/models/ErrorResponse';
 import SuccessResponse from '@/models/SuccessResponse';
 import dayjs, { Dayjs } from 'dayjs';
@@ -183,58 +183,26 @@ async function addNewTask(
   }
 }
 
-// async function initializeTasks(
-//   req: NextApiRequest,
-//   res: NextApiResponse
-// ) {
-//   try {
-//     await deleteAllTasks();
-//     await Promise.all(
-//       sampleTasks.map(async (task) => {
-//         const t = task;
-//         if (!t.endDate) {
-//           t.endDate = calculateEndDate(dayjs(t.startDate || '' as string), t.rangeDays!).toDate();
-//         }
-//         return await addTask(task);
-//       })
-//     );
-//     new SuccessResponse({
-//       title: 'TODO',
-//       detail: 'TODO',
-//     }).send(res);
-//   } catch (maybeError: any) {
-//     handleError(maybeError, res);
-//   }
-// }
+async function deleteAllTasks(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
+  try {
+    // auth
+    const token = await getToken({ req });
+    if (!token) {
+      unauthenticatedErrorResponse.send(res);
+      return;
+    }
+    const userId = token.sub!;
 
-// async function operateOnTasks(
-//   req: NextApiRequest,
-//   res: NextApiResponse
-// ) {
-//   // TODO validate body?
-//   const { operation, ...options } = req.body;
-//   if (!operation) {
-//     new ErrorResponse({
-//       status: 400,
-//       errorCode: 'invalidFields',
-//       title: 'TODO',
-//       detail: 'TODO',
-//     }).send(res);
-//   }
-//   switch (operation.toLowerCase()) {
-//     // case 'initialize':
-//     //   await initializeTasks(req, res);
-//     //   break;
-//     default:
-//       new ErrorResponse({
-//         status: 400,
-//         errorCode: 'invalidFields',
-//         title: 'Invalid operation',
-//         detail: `The provided operation "${operation}" is not valid.`,
-//       }).send(res);
-//       return;
-//   }
-// }
+    const deletedCount = await deleteAllTasksInDb(userId);
+    new SuccessResponse({ data: { deletedCount } }).send(res);
+  } catch (maybeError) {
+    console.error(maybeError);
+    internalErrorResponse.send(res);
+  }
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -250,6 +218,9 @@ export default async function handler(
     // case 'PUT':
     //   await operateOnTasks(req, res);
     //   break;
+    case 'DELETE':
+      await deleteAllTasks(req, res);
+      break;
     default:
       new ErrorResponse({
         status: 404,
