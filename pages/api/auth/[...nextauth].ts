@@ -15,6 +15,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials, req) {
         try {
+          console.log('>> about to authorize creds!');
           if (!credentials) return null;
           const { email, password } = credentials;
           const foundUser = await getUserByEmail(email);
