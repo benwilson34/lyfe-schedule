@@ -11,6 +11,7 @@ import { TaskDao, taskDaoToDto, taskDtoToDao } from '@/types/task.dao';
 import { assign, last } from 'lodash';
 import { getToken } from 'next-auth/jwt';
 import { ObjectId } from 'mongodb';
+import { formatDayKey } from '@/util/format';
 
 function handleError(maybeError: any, res: NextApiResponse) {
   console.error(maybeError);
@@ -103,10 +104,6 @@ async function getTasksForDayRange(userId: string, targetStartDay: Date, targetE
     dayOffset += 1;
   }
   return dayToTasksMap;
-}
-
-function formatDayKey(date: dayjs.Dayjs): string {
-  return date.format('YYYY-MM-DD');
 }
 
 /**

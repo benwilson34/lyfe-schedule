@@ -3,9 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --on-light-rgb: 0, 97, 206;
+  --on-dark-rgb: 245, 243, 222;
+  --on-disabled-rgb: 0, 0, 0;
+  --background-rgb: 245, 243, 222;
+  --disabled-100-rgb: 218, 215, 196;
+  --disabled-200-rgb: 183, 183, 173;
+  --general-500-rgb: 0, 97, 206;
+  --general-200-rgb: 164, 192, 215;
+  --general-100-rgb: 213, 222, 219;
+  --accent-rgb: 87, 207, 126;
+  --warning-rgb: 255, 210, 109;
+  --attention-rgb: 255, 110, 103;
 }
 
 /* TODO support dark theme */
@@ -23,43 +32,8 @@ html, body {
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-}
-
-.gray {
-  background-color: gray !important;
-}
-
-/* .crossed::before {
-  display: inline-block;
-  content: '';
-  border-right: 0.125rem solid rgba(127, 127, 127, 0.25);
-  -webkit-transform: rotate(66deg);
-  -moz-transform: rotate(66deg);
-  transform: rotate(66deg);
-  transform-origin: 0% 0%;
-  margin-left: 1.625rem;
-  position: absolute;
-  height: 2rem;
-} */
-
-.blue {
-  background-color: aqua !important;
-}
-
-/* TODO override default style, see node_modules\react-calendar\dist\Calendar.css */
-.react-calendar__tile {
-  height: 3rem !important;
-}
-
-.react-calendar__tile > abbr {
-  display: none;
+  color: rgb(var(--on-light-rgb));
+  background: rgb(var(--background-rgb));
 }
 
 /* Firefox */
@@ -99,3 +73,34 @@ body {
   background-color: #888888;
 }
 
+
+/* TODO move to own file? */
+
+.task__completed {
+  @apply bg-disabled-100 text-ondisabled;
+}
+
+.task__completed .task__checkbox {
+  @apply bg-disabled-200;
+}
+
+.task__priority-low {
+  @apply bg-general-100 text-onlight;
+}
+
+.task__priority-low .task__checkbox {
+  @apply bg-general-200;
+}
+
+.task__priority-med {
+  @apply bg-warning text-ondark;
+}
+
+.task__priority-high {
+  @apply bg-attention text-ondark;
+}
+
+.task__priority-med .task__checkbox,
+.task__priority-high .task__checkbox {
+  @apply bg-ondark;
+}

@@ -2,6 +2,8 @@ import type { CalendarProps, TileContentFunc } from "react-calendar";
 import dayjs from "dayjs";
 import Calendar from "react-calendar";
 
+export const emptyDayTileContent = (<div className="h-full"></div>);
+
 export const onTileContent: TileContentFunc = ({ date, view }) => {
   const day = dayjs(date);
   if (view !== 'month') return null;
@@ -9,9 +11,9 @@ export const onTileContent: TileContentFunc = ({ date, view }) => {
   return (
     <div className='flex flex-col justify-between items-start h-full w-full p-1'>
       {/* TODO add default classes, see node_modules\react-calendar\dist\Calendar.css */}
-      <div className='grow'>
+      {/* <div className='grow'>
         <div className={`${dayIsInPast ? 'crossed text-gray-400' : ''} border-gray-400/25 border-r-2 border-b-2 rounded-br-md pr-1`}>{day.format('DD')}</div>
-      </div>
+      </div> */}
       {/* <div className='border-l-2'></div> */}
       {/* <div className='w-full flex justify-end'>
         <div className={`${count > 0 ? 'text-black' : 'text-black/25'} text-xs italic text-right align-text-bottom`}>{count}</div>
@@ -21,20 +23,43 @@ export const onTileContent: TileContentFunc = ({ date, view }) => {
 }
 
 export const onTileClassName = ({ date, view }: { date: Date, view: string }) => {
-  const commonClasses = 'p-0 h-10 rounded-lg text-left align-top shadow-md';
-  if (view !== 'month') return commonClasses;
-  if (dayjs(date).startOf('day') < dayjs().startOf('day')) {
-    return `${commonClasses} bg-gray-300`;
+  let classes = 'p-0 h-10 rounded-lg text-xs align-top';
+  if (view === 'month') {
+    classes += ' text-left';
   }
-  return `${commonClasses} border-black border-1`;
+  if (dayjs(date).startOf('day') < dayjs().startOf('day')) {
+    return `${classes} bg-general-100 border-2 border-general-100`;
+  }
+  return `${classes} bg-general-200 border-2 border-general-200`;
 }
+
+const formatWeekday = (locale: string | undefined, date: Date): string => {
+  // TODO handle other locales
+  if (locale && locale !== 'en-us') {
+    return date.toLocaleDateString(locale, { weekday: 'short' });
+  }
+  const shortWeekdayName = date.toLocaleDateString(locale, { weekday: 'short' });
+  switch(dayjs(date).day()) {
+    case 0:
+    case 2:
+    case 4:
+    case 6:
+      return shortWeekdayName.substring(0, 2);
+    default:
+      return shortWeekdayName.substring(0, 1);
+  }
+};
 
 export function CalendarPicker(props: CalendarProps) {
   return (
-    <Calendar 
+    <Calendar
+      calendarType="gregory"
       minDetail='decade'
+      prev2Label={null}
+      next2Label={null}
       tileContent={onTileContent}
       tileClassName={onTileClassName}
+      formatShortWeekday={formatWeekday}
       {...props}
     />
   );

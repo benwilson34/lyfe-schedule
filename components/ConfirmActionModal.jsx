@@ -6,7 +6,6 @@
 
 import { Fragment, useCallback, useRef } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import 'react-calendar/dist/Calendar.css';
 
 export function ConfirmActionModal({ 
   isOpen, 

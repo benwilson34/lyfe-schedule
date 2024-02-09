@@ -6,9 +6,7 @@
 
 import { Fragment, useCallback, useRef, useState, useMemo, useEffect } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { Calendar } from 'react-calendar';
 import dayjs from 'dayjs';
-import 'react-calendar/dist/Calendar.css';
 import { calculateRangeDays } from '@/util/task';
 import { assign } from 'lodash';
 import { CalendarPicker, onTileClassName } from './CalendarPicker';

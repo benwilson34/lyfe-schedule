@@ -21,7 +21,7 @@ const Day = {
   SAT: 6,
 };
 
-export default function TaskOptionsMenu({ task, selectedDay, onEditClick, onPostponeClick, onDeleteClick }) {
+export default function TaskOptionsMenu({ task, buttonClasses = '', selectedDay, onEditClick, onPostponeClick, onDeleteClick }) {
   const selectedDayIsToday = selectedDay.isSame(dayjs().startOf('day'), 'day');
   const selectedDayIsWeekend = [Day.SAT, Day.SUN].includes(selectedDay.day());
 
@@ -124,8 +124,9 @@ export default function TaskOptionsMenu({ task, selectedDay, onEditClick, onPost
 
   return (
     <Popover className="relative">
-      <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900">
-        <FontAwesomeIcon icon={faEllipsis} className="text-transparent group-hover/task:text-gray-500" />
+      <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6">
+        {/* <FontAwesomeIcon icon={faEllipsis} className="text-transparent group-hover/task:text-gray-500" /> */}
+        <FontAwesomeIcon icon={faEllipsis} className={buttonClasses} />
       </Popover.Button>
 
       <Transition

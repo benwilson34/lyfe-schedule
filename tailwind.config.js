@@ -8,10 +8,25 @@ module.exports = {
   ],
   theme: {
     extend: {
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic':
-          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      colors: {
+        background: 'rgb(var(--background-rgb))',
+        general: {
+          500: 'rgb(var(--general-500-rgb))',
+          DEFAULT: 'rgb(var(--general-500-rgb))',
+          200: 'rgb(var(--general-200-rgb))',
+          100: 'rgb(var(--general-100-rgb))',
+        },
+        accent: 'rgb(var(--accent-rgb))',
+        warning: 'rgb(var(--warning-rgb))',
+        attention: 'rgb(var(--attention-rgb))',
+        onlight: 'rgb(var(--on-light-rgb))',
+        ondark: 'rgb(var(--on-dark-rgb))',
+        disabled: {
+          100: 'rgb(var(--disabled-100-rgb))',
+          DEFAULT: 'rgb(var(--disabled-200-rgb))',
+          200: 'rgb(var(--disabled-200-rgb))',
+        },
+        ondisabled: 'rgb(var(--on-disabled-rgb))',
       },
     },
   },
