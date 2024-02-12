@@ -2,21 +2,7 @@ import type { TaskViewModel as Task } from "@/types/task.viewModel";
 import dayjs, { Dayjs } from "dayjs";
 import TaskOptionsMenu from "./taskOptionsMenu";
 import { formatTimeEstimate } from "@/util/format";
-
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-
-const calculatePriority = (
-  startDate: dayjs.Dayjs,
-  endDate: dayjs.Dayjs,
-  currentDay: dayjs.Dayjs
-) => {
-  // TODO handle identical start and end
-  const MIN_PRIORITY = 0;
-  const MAX_PRIORITY = 1;
-  const rangeHours = endDate.diff(startDate, "hours");
-  const elapsedHours = currentDay.diff(startDate, "hours");
-  return lerp(MIN_PRIORITY, MAX_PRIORITY, elapsedHours / rangeHours);
-};
+import { calculatePriority } from "@/util/date";
 
 const getTaskClass = (task: Task, priority: number) => {
   if (task.completedDate) {
@@ -123,7 +109,7 @@ export default function TaskCard({
             )}
           </div>
         </span>
-        {/* <span className="text-sm">({calculatedPriority.toFixed(2)} -&gt; {calculatedPoints} ppts)</span> */}
+        {/* <span className="text-sm">({calculatedPriority.toFixed(2)})</span> */}
         <TaskOptionsMenu
           task={task}
           selectedDay={selectedDay}

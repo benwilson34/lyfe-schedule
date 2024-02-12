@@ -33,4 +33,5 @@ export type TaskDto = {
   // TODO tags?: string[],
   completedDate?: string, // TODO use some IsoDateString type
   actions?: Action[];
+  priority?: number; // calculated field (not part of the data model)
 }

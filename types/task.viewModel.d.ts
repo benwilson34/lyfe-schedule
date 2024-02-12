@@ -17,4 +17,5 @@ export type TaskViewModel = {
   isProjected?: boolean;
   completedDate?: Dayjs;
   // TODO add `actions` here?
+  priority?: number;
 };
