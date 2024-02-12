@@ -3,6 +3,8 @@ import dayjs, { Dayjs } from "dayjs";
 import TaskOptionsMenu from "./taskOptionsMenu";
 import { formatTimeEstimate } from "@/util/format";
 import { calculatePriority } from "@/util/date";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
 
 const getTaskClass = (task: Task, priority: number) => {
   if (task.completedDate) {
@@ -82,7 +84,7 @@ export default function TaskCard({
           }}
         >
           {isCompleted && (
-            <span className="text-2xl absolute top-[-.75rem]">✔</span> // FA icon instead?
+            <FontAwesomeIcon icon={faCheck} className="text-2xl absolute top-[-.35rem]"></FontAwesomeIcon>
           )}
         </div>
         <div>
@@ -102,7 +104,7 @@ export default function TaskCard({
             {formatDateRange(startDate, endDate, rangeDays)}
             {daysOverEndDate > 0 && (
               <span
-                className={`border rounded-md ml-1 pl-1 pr-1`}
+                className={`task__overdue-chip border rounded-md ml-1 pl-1 pr-1`}
               >
                 +{daysOverEndDate}
               </span>

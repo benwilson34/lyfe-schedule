@@ -21,6 +21,7 @@ module.exports = {
         attention: 'rgb(var(--attention-rgb))',
         onlight: 'rgb(var(--on-light-rgb))',
         ondark: 'rgb(var(--on-dark-rgb))',
+        onwarning: 'rgb(var(--on-warning-rgb))',
         disabled: {
           100: 'rgb(var(--disabled-100-rgb))',
           DEFAULT: 'rgb(var(--disabled-200-rgb))',

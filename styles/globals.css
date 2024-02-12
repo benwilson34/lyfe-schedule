@@ -5,6 +5,7 @@
 :root {
   --on-light-rgb: 0, 97, 206;
   --on-dark-rgb: 245, 243, 222;
+  --on-warning-rgb: 178, 146, 76;
   --on-disabled-rgb: 0, 0, 0;
   --background-rgb: 245, 243, 222;
   --disabled-100-rgb: 218, 215, 196;
@@ -84,6 +85,10 @@ body {
   @apply bg-disabled-200;
 }
 
+.task__completed .task__overdue-chip {
+  @apply border-ondisabled;
+}
+
 .task__priority-low {
   @apply bg-general-100 text-onlight;
 }
@@ -93,14 +98,21 @@ body {
 }
 
 .task__priority-med {
-  @apply bg-warning text-ondark;
+  @apply bg-warning text-onwarning;
+}
+
+.task__priority-med .task__checkbox {
+  @apply bg-ondark;
 }
 
 .task__priority-high {
   @apply bg-attention text-ondark;
 }
 
-.task__priority-med .task__checkbox,
+.task__priority-high .task__overdue-chip {
+  @apply bg-attention border-ondark;
+}
+
 .task__priority-high .task__checkbox {
   @apply bg-ondark;
 }
