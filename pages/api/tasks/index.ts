@@ -17,7 +17,7 @@ import ErrorResponse, {
 } from "@/models/ErrorResponse";
 import SuccessResponse from "@/models/SuccessResponse";
 import dayjs, { Dayjs } from "dayjs";
-import { calculateEndDate } from "@/util/task";
+import { calculateEndDate, sortTasks } from "@/util/task";
 import { TaskDao, taskDaoToDto, taskDtoToDao } from "@/types/task.dao";
 import { assign, last } from "lodash";
 import { getToken } from "next-auth/jwt";
@@ -103,7 +103,7 @@ export async function getTasksForDay(
       priority: calculatePriority(task.startDate, task.endDate, dayjs()),
     })
   // TODO support other sort methods - or shouldn't we sort on the server side?
-  ).sort((a, b) => (b.priority || 0) - (a.priority || 0));
+  ).sort(sortTasks);
   if (filterOutPostponed) {
     tasks = tasks.filter((task) => {
       if (!task.lastPostponeUntilDate) return true;

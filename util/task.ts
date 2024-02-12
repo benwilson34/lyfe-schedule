@@ -1,4 +1,5 @@
 import type { TaskViewModel as Task } from "@/types/task.viewModel";
+import type { TaskDao } from "@/types/task.dao";
 import dayjs, { Dayjs } from "dayjs";
 
 /**
@@ -48,4 +49,11 @@ export function calculateStartDate(endDate: Dayjs, rangeDays: number): Dayjs {
 export function verifyDateRange(task: Task): boolean {
   // TODO?
   return false;
+}
+
+export function sortTasks(a: Partial<TaskDao>, b: Partial<TaskDao>): number {
+  if (!!a.completedDate !== !!b.completedDate) {
+    return a.completedDate ? 1 : -1;
+  }
+  return (b.priority || 0) - (a.priority || 0)
 }
