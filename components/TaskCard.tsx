@@ -5,20 +5,21 @@ import { formatTimeEstimate } from "@/util/format";
 import { calculatePriority } from "@/util/date";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { useState } from "react";
 
 const getTaskClass = (task: Task, priority: number) => {
   if (task.completedDate) {
-    return 'task__completed';
+    return "task__completed";
   }
   if (priority < 0.5) {
-    return 'task__priority-low';
+    return "task__priority-low";
   }
   if (priority < 1) {
-    return 'task__priority-med';
+    return "task__priority-med";
   }
   // else overdue
-  return 'task__priority-high';
-}
+  return "task__priority-high";
+};
 
 const formatStartDate = (startDate: dayjs.Dayjs) => {
   return startDate.format("MMM DD");
@@ -65,15 +66,16 @@ export default function TaskCard({
     isProjected,
     completedDate,
   } = task;
+  const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
   const calculatedPriority = calculatePriority(startDate, endDate, selectedDay);
   const taskClass = getTaskClass(task, calculatedPriority);
   // const calculatedPoints = Math.round(calculatedPriority * (timeEstimateMins ?? 0));
   const daysOverEndDate = selectedDay.diff(endDate, "day");
   const isCompleted = !!completedDate;
   const isCheckboxDisabled = isCompleted || !selectedDay.isSame(dayjs(), "day");
-  return (
+  return (<>
     <div
-      className={`group/task flex justify-between items-center max-w-lg w-full mb-2 px-3 py-2 ${taskClass} shadow-lg rounded-xl text-sm`}
+      className={`group/task relative flex justify-between items-center max-w-lg w-full mb-2 px-3 py-2 ${taskClass} shadow-lg rounded-xl text-sm ${isOptionsMenuOpen ? 'z-20' : ''}`}
     >
       <div className="flex justify-start items-center">
         <div
@@ -84,11 +86,16 @@ export default function TaskCard({
           }}
         >
           {isCompleted && (
-            <FontAwesomeIcon icon={faCheck} className="text-2xl absolute top-[-.35rem]"></FontAwesomeIcon>
+            <FontAwesomeIcon
+              icon={faCheck}
+              className="text-2xl absolute top-[-.35rem]"
+            ></FontAwesomeIcon>
           )}
         </div>
         <div>
-          <span className="mr-3 text-base font-semibold leading-none">{title}</span>
+          <span className="mr-3 text-base font-semibold leading-none">
+            {title}
+          </span>
           <span className="mr-3 text-sm italic">
             {formatTimeEstimate(timeEstimateMins ?? 0)}
           </span>
@@ -115,11 +122,18 @@ export default function TaskCard({
         <TaskOptionsMenu
           task={task}
           selectedDay={selectedDay}
+          onMenuOpenChange={(isOpen: boolean) => setIsOptionsMenuOpen(isOpen)}
           onEditClick={() => onEdit(task)}
-          onPostponeClick={(postponeDay: Dayjs) => onPostpone(task, postponeDay)}
+          onPostponeClick={(postponeDay: Dayjs) =>
+            onPostpone(task, postponeDay)
+          }
           onDeleteClick={() => onDelete(task)}
         />
       </div>
     </div>
+    {isOptionsMenuOpen && (
+      <div className="task__overlay fixed inset-0 bg-disabled-100/75 z-10"></div>
+    )}
+  </>
   );
 }
