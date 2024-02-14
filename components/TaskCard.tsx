@@ -6,6 +6,7 @@ import { calculatePriority } from "@/util/date";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
+import { autoPlacement, useFloating } from "@floating-ui/react";
 
 const getTaskClass = (task: Task, priority: number) => {
   if (task.completedDate) {
@@ -67,6 +68,13 @@ export default function TaskCard({
     completedDate,
   } = task;
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
+  const floating = useFloating({
+    middleware: [
+      autoPlacement({
+        allowedPlacements: ['top-end', 'bottom-end'],
+      }),
+    ],
+  });
   const calculatedPriority = calculatePriority(startDate, endDate, selectedDay);
   const taskClass = getTaskClass(task, calculatedPriority);
   // const calculatedPoints = Math.round(calculatedPriority * (timeEstimateMins ?? 0));
@@ -75,6 +83,7 @@ export default function TaskCard({
   const isCheckboxDisabled = isCompleted || !selectedDay.isSame(dayjs(), "day");
   return (<>
     <div
+      ref={floating.refs.setReference}
       className={`group/task relative flex justify-between items-center max-w-lg w-full mb-2 px-3 py-2 ${taskClass} shadow-lg rounded-xl text-sm ${isOptionsMenuOpen ? 'z-20' : ''}`}
     >
       <div className="flex justify-start items-center">
@@ -128,11 +137,12 @@ export default function TaskCard({
             onPostpone(task, postponeDay)
           }
           onDeleteClick={() => onDelete(task)}
+          floating={floating}
         />
       </div>
     </div>
     {isOptionsMenuOpen && (
-      <div className="task__overlay fixed inset-0 bg-disabled-100/75 z-10"></div>
+      <div className="task__overlay fixed inset-0 bg-disabled-200/75 z-10"></div>
     )}
   </>
   );

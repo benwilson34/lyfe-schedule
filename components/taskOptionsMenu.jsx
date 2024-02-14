@@ -16,6 +16,7 @@ import {
   faPersonWalkingArrowRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatShownDate } from "@/util/format";
+import { useFloating } from "@floating-ui/react";
 
 const Day = {
   SUN: 0,
@@ -47,7 +48,9 @@ export default function TaskOptionsMenu({
   onEditClick,
   onPostponeClick,
   onDeleteClick,
+  floating,
 }) {
+  const { refs, floatingStyles } = floating;
   const selectedDayIsToday = selectedDay.isSame(dayjs().startOf("day"), "day");
   const selectedDayIsWeekend = [Day.SAT, Day.SUN].includes(selectedDay.day());
 
@@ -86,7 +89,11 @@ export default function TaskOptionsMenu({
   );
 
   const renderMenuBody = (close) => (
-    <div className="max-w-xs flex-auto overflow-hidden rounded-2xl bg-background text-xs leading-6 shadow-lg ring-1 ring-gray-900/5 text-general">
+    <div
+      ref={refs.setFloating}
+      style={floatingStyles}
+      className="flex-auto overflow-hidden rounded-2xl bg-background text-xs leading-6 shadow-lg ring-1 ring-gray-900/5 text-general"
+    >
       {task.isProjected ? (
         renderProjectedMenuBody(close)
       ) : (
@@ -200,30 +207,32 @@ export default function TaskOptionsMenu({
         // eslint-disable-next-line react-hooks/rules-of-hooks
         useEffect(() => {
           onMenuOpenChange(open);
-        }, [open])
-        return (
-        <>
-          <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6">
-            {/* <FontAwesomeIcon icon={faEllipsis} className="text-transparent group-hover/task:text-gray-500" /> */}
-            <FontAwesomeIcon icon={faEllipsis} className={buttonClasses} />
-          </Popover.Button>
+        }, [open]);
 
-          {/* <Popover.Overlay className="fixed inset-0 bg-black opacity-50 -z-50"></Popover.Overlay> */}
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-200"
-            enterFrom="opacity-0 translate-y-1"
-            enterTo="opacity-100 translate-y-0"
-            leave="transition ease-in duration-150"
-            leaveFrom="opacity-100 translate-y-0"
-            leaveTo="opacity-0 translate-y-1"
-          >
-            <Popover.Panel className="absolute z-10 center-0 mt-5 flex w-screen max-w-max -translate-x-full px-4">
-              {({ close }) => renderMenuBody(close)}
-            </Popover.Panel>
-          </Transition>
-        </>
-      )}}
+        return (
+          <>
+            <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6">
+              {/* <FontAwesomeIcon icon={faEllipsis} className="text-transparent group-hover/task:text-gray-500" /> */}
+              <FontAwesomeIcon icon={faEllipsis} className={buttonClasses} />
+            </Popover.Button>
+
+            {/* <Popover.Overlay></Popover.Overlay> */}
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-200"
+              enterFrom="opacity-0 translate-y-1"
+              enterTo="opacity-100 translate-y-0"
+              leave="transition ease-in duration-150"
+              leaveFrom="opacity-100 translate-y-0"
+              leaveTo="opacity-0 translate-y-1"
+            >
+              <Popover.Panel className="absolute z-10 center-0 mt-5 flex w-screen min-w-max -translate-x-full px-4">
+                {({ close }) => renderMenuBody(close)}
+              </Popover.Panel>
+            </Transition>
+          </>
+        );
+      }}
     </Popover>
   );
 }
