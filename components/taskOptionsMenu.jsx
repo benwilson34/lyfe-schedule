@@ -16,7 +16,6 @@ import {
   faPersonWalkingArrowRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatShownDate } from "@/util/format";
-import { useFloating } from "@floating-ui/react";
 
 const Day = {
   SUN: 0,

@@ -2,7 +2,6 @@ import type { TaskDto } from '@/types/task.dto';
 import type { TaskViewModel as Task } from '@/types/task.viewModel';
 import { useState, useCallback, useEffect } from 'react';
 import { getToken } from 'next-auth/jwt';
-import { Exo_2 } from 'next/font/google';
 import dayjs, { Dayjs } from 'dayjs';
 import { OnArgs, TileContentFunc } from 'react-calendar/dist/cjs/shared/types';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
@@ -20,8 +19,6 @@ import { formatDayKey, formatPercentage, formatShownDate, formatTimeEstimate } f
 import { CalendarPicker, emptyDayTileContent } from '@/components/CalendarPicker';
 import Link from 'next/link';
 import TaskCard from '@/components/TaskCard';
-
-const exo2 = Exo_2({ subsets: ['latin'] });
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
@@ -166,9 +163,9 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       ...(monthInfoSettings.dailyAverageSection.isTimePercentageShowing ? [formatPercentage(dailyAverageTimeTotal / NUM_DAILY_WORKING_MINS)] : []),
     ];
     return (
-      <div className="mt-2 text-xs text-center font-light italic">
+      <div className="mt-2 text-xs text-left font-light italic">
         {monthItems.length > 0 && `month: ${monthItems.join('/')}`}
-        {monthItems.length > 0 && dailyAverageItems.length > 0 && ` ~ `}
+        {monthItems.length > 0 && dailyAverageItems.length > 0 && (<br />)}
         {dailyAverageItems.length > 0 && `daily avg: ${dailyAverageItems.join('/')}`}
       </div>
     );
@@ -318,7 +315,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     return (
       <div className="mt-2 text-xs font-light italic">
         {remainingItems.length > 0 && `remain: ${remainingItems.join('/')}`}
-        {remainingItems.length > 0 && completedItems.length > 0 && ` ~ `}
+        {remainingItems.length > 0 && completedItems.length > 0 && (<br />)}
         {completedItems.length > 0 && `done: ${completedItems.join('/')}`}
       </div>
     );
@@ -327,7 +324,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   const toggleSidebar = useCallback(() => setIsSidebarVisible(!isSidebarVisible), [isSidebarVisible]);
 
   return (
-    <PanelGroup direction='horizontal' className={`${exo2.className} max-h-screen flex`}>
+    <PanelGroup direction='horizontal' className={`max-h-screen flex`}>
       {isSidebarVisible && (
         <Panel defaultSize={30} minSize={20} order={1}>
           <div className="h-full max-h-full overflow-auto p-2 flex flex-col">
@@ -407,12 +404,14 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
               onConfirm={handleConfirmedDelete}
               title="Confirm delete"
               body={(selectedTask && (
-                <div className='text-base'>
-                  are you sure you want to delete <span className="font-bold">{selectedTask!.title}</span>? This action cannot be undone.
+                <div>
+                  Are you sure you want to delete <span className="font-bold">{selectedTask!.title}</span>?
+                  <br />
+                  This action cannot be undone.
                 </div>
               ) || undefined)}
               confirmButtonText='delete'
-              confirmButtonClasses="bg-red-300 hover:bg-red-500"
+              confirmButtonClasses="bg-attention text-ondark"
             />
             <SettingsModal 
               isOpen={isShowingSettingsModal}
