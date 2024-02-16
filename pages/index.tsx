@@ -187,50 +187,6 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     }
   };
 
-  const renderMonthInfo = useCallback(() => {
-    if (!monthInfoSettings.isShowing) return null;
-    const allTasks = uniqBy(
-      Object.values(dayTasks).flat(),
-      (task) => task.id && task.startDate
-    );
-    const totalTimeEstimateMins = allTasks.reduce(
-      (total, task) => total + (task.timeEstimateMins || 0),
-      0
-    );
-    const daysInRange = shownDateRange[1].diff(shownDateRange[0], "day");
-    const dailyAverageTaskCount = Math.round(allTasks.length / daysInRange);
-    const dailyAverageTimeTotal = Math.round(
-      totalTimeEstimateMins / daysInRange
-    );
-    const monthItems = [
-      ...(monthInfoSettings.monthTotalSection.isTaskCountShowing
-        ? [`${allTasks.length} tasks`]
-        : []),
-      ...(monthInfoSettings.monthTotalSection.isTimeEstimateShowing
-        ? [formatTimeEstimate(totalTimeEstimateMins)]
-        : []),
-    ];
-    const dailyAverageItems = [
-      ...(monthInfoSettings.dailyAverageSection.isTaskCountShowing
-        ? [`${dailyAverageTaskCount} tasks`]
-        : []),
-      ...(monthInfoSettings.dailyAverageSection.isTimeEstimateShowing
-        ? [formatTimeEstimate(dailyAverageTimeTotal)]
-        : []),
-      ...(monthInfoSettings.dailyAverageSection.isTimePercentageShowing
-        ? [formatPercentage(dailyAverageTimeTotal / NUM_DAILY_WORKING_MINS)]
-        : []),
-    ];
-    return (
-      <div className="mt-2 text-xs text-left font-light italic">
-        {monthItems.length > 0 && `month: ${monthItems.join("/")}`}
-        {monthItems.length > 0 && dailyAverageItems.length > 0 && <br />}
-        {dailyAverageItems.length > 0 &&
-          `daily avg: ${dailyAverageItems.join("/")}`}
-      </div>
-    );
-  }, [dayTasks, shownDateRange, monthInfoSettings]);
-
   const handleCompleteTask = async (completedTaskId: string) => {
     // TODO animate
     // accurate completedDate isn't really necessary here
@@ -342,7 +298,9 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     }
     const count = dayTasks[dayKey].length;
     return (
-      <div className={`${contentClassName} flex justify-center items-end w-full`}>
+      <div
+        className={`${contentClassName} flex justify-center items-end w-full`}
+      >
         <div
           className={`${
             dayIsInPast ? "text-general-200" : "text-general"
@@ -358,6 +316,65 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     (taskCount: number) => `${taskCount} task${taskCount !== 1 ? "s" : ""}`,
     []
   );
+
+  const renderMonthInfo = useCallback(() => {
+    if (!monthInfoSettings.isShowing) return null;
+    const allTasks = uniqBy(
+      Object.values(dayTasks).flat(),
+      (task) => task.id && task.startDate
+    );
+    const totalTimeEstimateMins = allTasks.reduce(
+      (total, task) => total + (task.timeEstimateMins || 0),
+      0
+    );
+    const daysInRange = shownDateRange[1].diff(shownDateRange[0], "day");
+    const dailyAverageTaskCount = Math.round(allTasks.length / daysInRange);
+    const dailyAverageTimeTotal = Math.round(
+      totalTimeEstimateMins / daysInRange
+    );
+    const monthItems = [
+      ...(monthInfoSettings.monthTotalSection.isTaskCountShowing
+        ? [`${allTasks.length} tasks`]
+        : []),
+      ...(monthInfoSettings.monthTotalSection.isTimeEstimateShowing
+        ? [formatTimeEstimate(totalTimeEstimateMins)]
+        : []),
+    ];
+    const dailyAverageItems = [
+      ...(monthInfoSettings.dailyAverageSection.isTaskCountShowing
+        ? [`${dailyAverageTaskCount} tasks`]
+        : []),
+      ...(monthInfoSettings.dailyAverageSection.isTimeEstimateShowing
+        ? [formatTimeEstimate(dailyAverageTimeTotal)]
+        : []),
+      ...(monthInfoSettings.dailyAverageSection.isTimePercentageShowing
+        ? [formatPercentage(dailyAverageTimeTotal / NUM_DAILY_WORKING_MINS)]
+        : []),
+    ];
+    return (
+      <div className="flex flex-col items-center text-xs font-light">
+        <div className="font-semibold bg-general-100 rounded-full w-fit px-3">
+          Month:
+        </div>
+        <table className="table-auto">
+          <tbody>
+            {monthItems.length > 0 && (
+              <tr>
+                <td className="text-right font-semibold">Total:</td>
+                <td>{monthItems.join("/")}</td>
+              </tr>
+            )}
+            {dailyAverageItems.length > 0 && (
+              <tr>
+                <td className="text-right font-semibold">Daily avg:</td>
+                <td>{dailyAverageItems.join("/")}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  }, [dayTasks, shownDateRange, monthInfoSettings]);
 
   const renderDayInfo = useCallback(
     (tasks: Task[]) => {
@@ -400,10 +417,26 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
         : [];
 
       return (
-        <div className="mt-2 text-xs font-light italic">
-          {remainingItems.length > 0 && `remain: ${remainingItems.join("/")}`}
-          {remainingItems.length > 0 && completedItems.length > 0 && <br />}
-          {completedItems.length > 0 && `done: ${completedItems.join("/")}`}
+        <div className="flex flex-col items-center text-xs font-light">
+          <div className="font-semibold bg-general-100 rounded-full w-fit px-3">
+            Day:
+          </div>
+          <table className="table-auto">
+            <tbody>
+              {remainingItems.length > 0 && (
+                <tr>
+                  <td className="text-right font-semibold">To Do:</td>
+                  <td>{remainingItems.join("/")}</td>
+                </tr>
+              )}
+              {completedItems.length > 0 && (
+                <tr>
+                  <td className="text-right font-semibold">Done:</td>
+                  <td>{completedItems.join("/")}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       );
     },
@@ -479,7 +512,8 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
               onClick={toggleSidebar}
             ></FontAwesomeIcon>
           </section>
-          <section className={`flex flex-col items-center pr-8 pl-8`}>
+
+          <section className={`flex flex-col items-center pr-8 pl-8 mb-6`}>
             <h1 className="mb-1 mt-10 text-4xl font-bold">
               {formatShownDate(selectedDay)}
             </h1>
@@ -489,15 +523,21 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
               onActiveStartDateChange={onActiveStartDateChange}
               tileContent={tileContent}
             />
-            {renderMonthInfo()}
           </section>
+
+          <section>
+            <div className="flex flex-row justify-evenly mb-6">
+              <div className="w-1/2">{renderMonthInfo()}</div>
+              <div className="w-1/2">{renderDayInfo(selectedDayTasks)}</div>
+            </div>
+          </section>
+
           <section
             className={`flex min-h-screen flex-col items-center pl-8 pr-8`}
           >
-            {renderDayInfo(selectedDayTasks)}
             <div
               onClick={onAddButtonClick}
-              className="mt-4 max-w-lg w-full mb-2 px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
+              className="max-w-lg w-full mb-2 px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
             >
               <FontAwesomeIcon icon={faCirclePlus} className="ml-0.5 mr-3" />
               <span>Add task</span>
