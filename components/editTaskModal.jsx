@@ -18,8 +18,8 @@ import { calculateRangeDays } from "@/util/task";
 import { assign } from "lodash";
 import {
   CalendarPicker,
+  contentClassName,
   emptyDayTileContent,
-  onTileClassName,
 } from "./CalendarPicker";
 // import './editTaskModal.css';
 import { Exo_2 } from "next/font/google";
@@ -102,8 +102,8 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
       const daysFromStartDate = dayjs(date).diff(startDate, "days");
       if (daysFromStartDate !== 0 && daysFromStartDate % repeatDays === 0) {
         return (
-          <div className="flex flex-col justify-between items-start h-full w-full p-1">
-            <span className="mx-auto text-base relative -top-1">
+          <div className={`${contentClassName} flex justify-center items-end w-full`}>
+            <span className="text-base leading-none">
               <FontAwesomeIcon icon={faArrowsRotate}></FontAwesomeIcon>
             </span>
           </div>

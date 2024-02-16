@@ -32,6 +32,7 @@ import {
 } from "@/util/format";
 import {
   CalendarPicker,
+  contentClassName,
   emptyDayTileContent,
 } from "@/components/CalendarPicker";
 import Link from "next/link";
@@ -341,20 +342,13 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     }
     const count = dayTasks[dayKey].length;
     return (
-      <div className="flex flex-col justify-between items-start w-full p-1">
-        {/* TODO add default classes, see node_modules\react-calendar\dist\Calendar.css */}
-        {/* <div className='grow'>
-          <div className={`${dayIsInPast ? 'crossed text-gray-400' : ''} border-gray-400/25 border-r-2 border-b-2 rounded-br-md pr-1`}>{day.format('DD')}</div>
-        </div> */}
-        {/* <div className='border-l-2'></div> */}
-        <div className="w-full flex justify-end">
-          <div
-            className={`${
-              dayIsInPast ? "text-general-200" : "text-general"
-            } text-2xs italic text-right align-text-bottom`}
-          >
-            {count}
-          </div>
+      <div className={`${contentClassName} flex justify-center items-end w-full`}>
+        <div
+          className={`${
+            dayIsInPast ? "text-general-200" : "text-general"
+          } text-2xs italic mr-0.5 relative -bottom-0.5`}
+        >
+          {count}
         </div>
       </div>
     );

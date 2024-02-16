@@ -1,6 +1,11 @@
 /* see: https://nextjs.org/docs/messages/css-global */
 /* depends on vars defined in `global.css` */
 
+:root {
+  --day-label-left-pos: .35rem;
+  --day-label-top-pos: .15rem;
+}
+
 .react-calendar {
   width: 350px;
   max-width: 100%;
@@ -98,7 +103,12 @@
 }
 
 .react-calendar__month-view__days__day {
-  /* border: 1px solid rgb(var(--general-200-rgb)) !important; */
+  position: relative;
+}
+
+.react-calendar__month-view__days__day__content {
+  height: 100%;
+  padding: .35rem;
 }
 
 .react-calendar__month-view__days__day--weekend {
@@ -107,9 +117,9 @@
 
 .react-calendar__month-view__days__day > abbr {
   /* padding: .5rem 0 0 .5rem; */
-  position: relative;
-  left: .35rem;
-  top: .15rem;
+  position: absolute;
+  left: var(--day-label-left-pos);
+  top: var(--day-label-top-pos);
   font-weight: bold !important;
 }
 
@@ -156,11 +166,15 @@
 
 .react-calendar__tile--now > abbr {
   border: .0625rem solid rgb(var(--background-rgb)) !important;
-  padding-left: .125rem;
-  padding-right: .125rem;
+  padding: 0 .125rem .1rem .125rem;
   border-radius: .25rem;
-  position: relative;
-  left: 0;
+  left: calc(var(--day-label-left-pos) - .15rem);
+  top: calc(var(--day-label-top-pos) - .0625rem);
+}
+
+.react-calendar__tile--now.react-calendar__tile--active > abbr {
+  left: calc(var(--day-label-left-pos) - .15rem - .125rem);
+  top: calc(var(--day-label-top-pos) - .0625rem - .125rem);
 }
 
 .react-calendar__tile--now:enabled:hover,
@@ -178,7 +192,31 @@
 }
 
 .react-calendar__tile--active {
+  position: relative;
   border: .125rem solid rgb(var(--accent-rgb)) !important;
+  padding: 0 !important;
+}
+
+/* "double border", see https://css-tricks.com/snippets/css/multiple-borders/ */
+.react-calendar__tile--active:before {
+  content: " ";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  
+  border: .125rem solid black;
+  @apply border-background rounded-md;
+}
+
+.react-calendar__tile--active > abbr { 
+  left: calc(var(--day-label-left-pos) - .125rem);
+  top: calc(var(--day-label-top-pos) - .125rem);
+}
+
+.react-calendar__tile--active > .react-calendar__month-view__days__day__content {
+  padding: calc(.35rem - .125rem);
 }
 
 .react-calendar__tile--active:enabled:hover,
