@@ -116,3 +116,11 @@ body {
 .task__priority-high .task__checkbox {
   @apply bg-ondark;
 }
+
+input[type=number] {
+  @apply rounded bg-background ring-2 ring-general-200 font-semibold;
+}
+
+input[type=number][disabled] {
+  @apply bg-disabled-200 ring-1 ring-ondisabled;
+}
