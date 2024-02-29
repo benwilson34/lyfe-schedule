@@ -77,18 +77,23 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartD
 
   const handleClickDay = useCallback(
     (value) => {
+      const chosenDate = dayjs(value);
       if (mostRecentlySetDate === Bound.END) {
-        console.log("setting start date", value);
-        setStartDate(dayjs(value));
-        setEndDate(dayjs(value));
+        setStartDate(chosenDate);
+        setEndDate(chosenDate);
         setMostRecentlySetDate(Bound.START);
         return;
       }
-      console.log("setting end date");
-      setEndDate(dayjs(value));
+      if (chosenDate.isBefore(startDate)) {
+        // swap bounds
+        setEndDate(startDate)
+        setStartDate(chosenDate);
+      } else {
+        setEndDate(chosenDate);
+      }
       setMostRecentlySetDate(Bound.END);
     },
-    [mostRecentlySetDate]
+    [mostRecentlySetDate, startDate]
   );
 
   const tileContent = useCallback(
@@ -285,8 +290,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartD
                           <div className="font-semibold">Schedule:</div>
                           <div className="text-sm text-general-200 leading-none italic">
                             {/* TODO this would be better as a tooltip */}
-                            Click once to set start date, then click again to
-                            set end date.
+                            Click once to choose a single day. Click again to choose a range.
                           </div>
                           <CalendarPicker
                             value={[
