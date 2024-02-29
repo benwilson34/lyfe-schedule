@@ -14,6 +14,7 @@ import {
   faTrash,
   faArrowTurnRight,
   faPersonWalkingArrowRight,
+  faCircleLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatShownDate } from "@/util/format";
 
@@ -46,6 +47,7 @@ export default function TaskOptionsMenu({
   onMenuOpenChange = (isOpen) => {},
   onEditClick,
   onPostponeClick,
+  onCompleteOnAnotherDayClick,
   onDeleteClick,
   floating,
 }) {
@@ -87,116 +89,139 @@ export default function TaskOptionsMenu({
     </div>
   );
 
-  const renderMenuBody = (close) => (
-    <div
-      ref={refs.setFloating}
-      style={floatingStyles}
-      className="flex-auto overflow-hidden rounded-2xl bg-background text-xs leading-6 shadow-lg ring-1 ring-gray-900/5 text-general"
-    >
-      {task.isProjected ? (
-        renderProjectedMenuBody(close)
-      ) : (
-        <div className="px-4 py-1">
-          {!task.completedDate && (
+  const renderMenuBody = (close) => {
+    return (
+      <div
+        ref={refs.setFloating}
+        style={floatingStyles}
+        className="flex-auto overflow-hidden rounded-2xl bg-background text-xs leading-6 shadow-lg ring-1 ring-gray-900/5 text-general"
+      >
+        {task.isProjected ? (
+          renderProjectedMenuBody(close)
+        ) : (
+          <div className="px-4 py-1">
+            {!task.completedDate && (
+              <>
+                <div
+                  onClick={() => {
+                    onEditClick();
+                    close();
+                  }}
+                  className="group relative flex items-center gap-x-2 rounded-lg p-1 hover:bg-gray-50 cursor-pointer"
+                >
+                  {/* <div className="mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white"> */}
+                  <FontAwesomeIcon
+                    icon={faPenToSquare}
+                    className="h-4 w-4  group-hover:text-indigo-600"
+                    aria-hidden="true"
+                  />
+                  {/* </div> */}
+                  <div>
+                    <span className="font-semibold">Edit</span>
+                    {/* <p className="mt-1 text-gray-600">{item.description}</p> */}
+                  </div>
+                </div>
+
+                <div className="border-t-[1px] border-general" />
+
+                <div
+                  className={`relative flex flex-col gap-x-6 p-1 ${
+                    task.isProjected && "bg-gray-200"
+                  }`}
+                >
+                  <div
+                    className={`relative flex items-center gap-x-2 ${
+                      task.isProjected && "line-through"
+                    }`}
+                  >
+                    <FontAwesomeIcon
+                      icon={faArrowTurnRight}
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    />
+                    <span className="">Postpone to</span>
+                  </div>
+                  <div className="group relative flex flex-col pl-6 font-semibold">
+                    <div
+                      onClick={() => {
+                        onPostponeClick(nextDay);
+                        close();
+                      }}
+                      className="hover:bg-gray-50 cursor-pointer"
+                    >
+                      {selectedDayIsToday ? "Tomorrow" : "Next day"} (
+                      {formatShownDate(nextDay)})
+                    </div>
+                    <div
+                      onClick={() => {
+                        onPostponeClick(weekendDay);
+                        close();
+                      }}
+                      className="hover:bg-gray-50 cursor-pointer"
+                    >
+                      {selectedDayIsWeekend ? "Next weekend" : "Weekend"} (
+                      {formatShownDate(weekendDay)})
+                    </div>
+                    <div
+                      onClick={() => {
+                        onPostponeClick(nextWeekDay);
+                        close();
+                      }}
+                      className="hover:bg-gray-50 cursor-pointer"
+                    >
+                      Next week ({formatShownDate(nextWeekDay)})
+                    </div>
+                    <div className="hover:bg-gray-50 line-through">
+                      Another day (TODO)
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t-[1px] border-general" />
+
+                <div
+                  onClick={() => {
+                    onCompleteOnAnotherDayClick();
+                    close();
+                  }}
+                  className="group relative flex items-center gap-x-2 rounded-lg p-1 hover:bg-gray-50 cursor-pointer"
+                >
+                  <FontAwesomeIcon
+                    icon={faCircleLeft}
+                    className="h-4 w-4  group-hover:text-indigo-600"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <span className="font-semibold">Complete on a previous day</span>
+                  </div>
+                </div>
+
+                <div className="border-t-[1px] border-general" />
+              </>
+            )}
+
             <div
               onClick={() => {
-                onEditClick();
+                onDeleteClick();
                 close();
               }}
               className="group relative flex items-center gap-x-2 rounded-lg p-1 hover:bg-gray-50 cursor-pointer"
             >
-              {/* <div className="mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white"> */}
               <FontAwesomeIcon
-                icon={faPenToSquare}
-                className="h-4 w-4  group-hover:text-indigo-600"
+                icon={faTrash}
+                className="h-4 w-4 group-hover:text-indigo-600"
                 aria-hidden="true"
               />
-              {/* </div> */}
               <div>
-                <span className="font-semibold">Edit</span>
+                <span className="font-semibold">Delete</span>
                 {/* <p className="mt-1 text-gray-600">{item.description}</p> */}
               </div>
             </div>
-          )}
-
-          <div className="border-t-[1px] border-general" />
-
-          <div
-            className={`relative flex flex-col gap-x-6 p-1 ${
-              task.isProjected && "bg-gray-200"
-            }`}
-          >
-            <div
-              className={`relative flex items-center gap-x-2 ${
-                task.isProjected && "line-through"
-              }`}
-            >
-              <FontAwesomeIcon
-                icon={faArrowTurnRight}
-                className="h-4 w-4"
-                aria-hidden="true"
-              />
-              <span className="">Postpone to</span>
-            </div>
-            <div className="group relative flex flex-col pl-6 font-semibold">
-              <div
-                onClick={() => {
-                  onPostponeClick(nextDay);
-                  close();
-                }}
-                className="hover:bg-gray-50 cursor-pointer"
-              >
-                {selectedDayIsToday ? "Tomorrow" : "Next day"} (
-                {formatShownDate(nextDay)})
-              </div>
-              <div
-                onClick={() => {
-                  onPostponeClick(weekendDay);
-                  close();
-                }}
-                className="hover:bg-gray-50 cursor-pointer"
-              >
-                {selectedDayIsWeekend ? "Next weekend" : "Weekend"} (
-                {formatShownDate(weekendDay)})
-              </div>
-              <div
-                onClick={() => {
-                  onPostponeClick(nextWeekDay);
-                  close();
-                }}
-                className="hover:bg-gray-50 cursor-pointer"
-              >
-                Next week ({formatShownDate(nextWeekDay)})
-              </div>
-              <div className="hover:bg-gray-50 line-through">
-                Another day (TODO)
-              </div>
-            </div>
           </div>
-
-          <div className="border-t-[1px] border-general" />
-
-          <div
-            onClick={() => {
-              onDeleteClick();
-              close();
-            }}
-            className="group relative flex items-center gap-x-2 rounded-lg p-1 hover:bg-gray-50 cursor-pointer"
-          >
-            <FontAwesomeIcon
-              icon={faTrash}
-              className="h-4 w-4 group-hover:text-indigo-600"
-              aria-hidden="true"
-            />
-            <div>
-              <span className="font-semibold">Delete</span>
-              {/* <p className="mt-1 text-gray-600">{item.description}</p> */}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
+  };
 
   return (
     <Popover className="relative">

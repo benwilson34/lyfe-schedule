@@ -37,6 +37,7 @@ import {
 } from "@/components/CalendarPicker";
 import Link from "next/link";
 import TaskCard from "@/components/TaskCard";
+import { CalendarPickerModal } from "@/components/CalendarPickerModal";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
@@ -79,6 +80,10 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   );
   const [isShowingEditModal, setIsShowingEditModal] = useState(false);
   const [isShowingSettingsModal, setIsShowingSettingsModal] = useState(false);
+  const [
+    isShowingCompleteOnAnotherDayModal,
+    setIsShowingCompleteOnAnotherDayModal,
+  ] = useState(false);
   const [isShowingDeleteModal, setIsShowingDeleteModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedDay, setSelectedDay] = useState<Dayjs>(dayjs());
@@ -187,13 +192,11 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     }
   };
 
-  const handleCompleteTask = async (completedTaskId: string) => {
-    // TODO animate
-    // accurate completedDate isn't really necessary here
-    const newTasks = selectedDayTasks.map((task) =>
-      task.id === completedTaskId ? { ...task, completedDate: dayjs() } : task
-    );
-    setSelectedDayTasks(newTasks);
+  // TODO move to service module
+  const handleCompleteTask = async (
+    completedTaskId: string,
+    completedDate?: Date
+  ) => {
     // call service to complete task in db
     const result = await fetch(`/api/tasks/${completedTaskId}`, {
       method: "PUT",
@@ -202,6 +205,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       },
       body: JSON.stringify({
         operation: "complete",
+        ...(completedDate && { completedDate: completedDate.toISOString() }),
       }),
     });
 
@@ -210,6 +214,34 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       console.error(`>> error: ${JSON.stringify(body)}`);
       // TODO display some error message
     }
+  };
+
+  const handleCompleteTaskOnAnotherDay = async (task: Task) => {
+    setSelectedTask(task);
+    setIsShowingCompleteOnAnotherDayModal(true);
+  };
+
+  const handleConfirmedCompleteTaskOnAnotherDay = useCallback(
+    async (completedDate: Date) => {
+      // TODO animate
+      const selectedId = selectedTask!.id;
+      const newTasks = selectedDayTasks.filter(
+        (task) => task.id !== selectedId
+      );
+      setSelectedDayTasks(newTasks);
+      await handleCompleteTask(selectedId, completedDate);
+    },
+    [selectedTask, selectedDayTasks, setSelectedDayTasks]
+  );
+
+  const handleCompleteTaskToday = async (completedTaskId: string) => {
+    // TODO animate
+    // accurate completedDate isn't really necessary here
+    const newTasks = selectedDayTasks.map((task) =>
+      task.id === completedTaskId ? { ...task, completedDate: dayjs() } : task
+    );
+    setSelectedDayTasks(newTasks);
+    await handleCompleteTask(completedTaskId);
   };
 
   const onAddButtonClick = () => {
@@ -547,7 +579,8 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
                 key={task.id}
                 task={task}
                 selectedDay={selectedDay}
-                onComplete={handleCompleteTask}
+                onComplete={handleCompleteTaskToday}
+                onCompleteOnAnotherDay={handleCompleteTaskOnAnotherDay}
                 onEdit={handleEditTask}
                 onPostpone={handlePostponeTask}
                 onDelete={handleDeleteTask}
@@ -560,6 +593,29 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
                 setIsOpen={setIsShowingEditModal}
                 setTasks={setSelectedDayTasks}
                 task={selectedTask}
+              />
+            )}
+            {isShowingCompleteOnAnotherDayModal && (
+              <CalendarPickerModal
+                isOpen={isShowingCompleteOnAnotherDayModal}
+                setIsOpen={setIsShowingCompleteOnAnotherDayModal}
+                onConfirm={handleConfirmedCompleteTaskOnAnotherDay}
+                title="Complete on another day"
+                body={<>
+                  <div>
+                    Forgot to mark this task complete the other day? No problem.
+                  </div>
+                  <div>
+                    Select a day to complete{" "}
+                    <span className="font-semibold">{selectedTask!.title}</span>.
+                  </div>
+                  {selectedTask!.repeatDays && (
+                    <div>
+                      This task will repeat {selectedTask!.repeatDays} days after the chosen day.
+                    </div>
+                  )}
+                </>}
+                confirmButtonText="Complete"
               />
             )}
             {isShowingDeleteModal && (

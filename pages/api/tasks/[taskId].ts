@@ -74,7 +74,12 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
 
-    task.completedDate = new Date();
+    // TODO check if task was already completed - or should we support changing the complete date after the fact?
+
+    const { completedDate: completedDateFromReq } = req.body;
+    // TODO validate :)
+
+    task.completedDate = completedDateFromReq ? new Date(completedDateFromReq) : new Date();
     await updateTaskInDb(taskId, task);
     
     if (task.repeatDays) {
