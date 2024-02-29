@@ -36,13 +36,13 @@ const Bound = {
   END: "end",
 };
 
-export function EditTaskModal({ isOpen, setIsOpen, task, setTasks }) {
+export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartDate } = { initialStartDate: dayjs() }) {
   const isNewTask = useMemo(() => !task, [task]);
   const [title, setTitle] = useState(task?.title || "");
   // TODO handle `useStartTime === true`
-  const [startDate, setStartDate] = useState(task?.startDate || dayjs());
+  const [startDate, setStartDate] = useState(task?.startDate || initialStartDate);
   // TODO handle `useEndTime === true`
-  const [endDate, setEndDate] = useState(task?.endDate || dayjs());
+  const [endDate, setEndDate] = useState(task?.endDate || initialStartDate);
   const [rangeDays, setRangeDays] = useState(task?.rangeDays || 0);
   const [isRepeating, setIsRepeating] = useState(!!task?.repeatDays || false);
   const [repeatDays, setRepeatDays] = useState(task?.repeatDays || 1);

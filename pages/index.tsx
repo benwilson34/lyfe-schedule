@@ -593,6 +593,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
                 setIsOpen={setIsShowingEditModal}
                 setTasks={setSelectedDayTasks}
                 task={selectedTask}
+                initialStartDate={selectedDay}
               />
             )}
             {isShowingCompleteOnAnotherDayModal && (
