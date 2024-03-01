@@ -20,10 +20,20 @@ export function CalendarPickerModal({
   onConfirm,
   confirmButtonText = "confirm",
   confirmButtonClasses = "bg-accent hover:bg-green-500 text-background",
+  isDayValid = (day) => true,
+  dayFeedback = (day) => <></>,
 }) {
-  const [selectedDay, setSelectedDay] = useState(new Date());
-  const selectedDayIsInFuture = useMemo(() => dayjs(selectedDay).startOf('day').isAfter(dayjs().startOf('day')), [selectedDay]);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const selectedDayFeedback = useMemo(() => dayFeedback(selectedDay) || <></>, [selectedDay, dayFeedback]);
   const cancelButtonRef = useRef(null);
+
+  // TODO also style the in/valid tiles?
+
+  const handleSelectedDayChange = useCallback((day) => {
+    const isValid = isDayValid(day);
+    if (!isValid) return;
+    setSelectedDay(day);
+  }, [isDayValid, setSelectedDay]);
 
   const onConfirmButtonClick = useCallback(() => {
     setIsOpen(false);
@@ -78,16 +88,11 @@ export function CalendarPickerModal({
                     </div>
 
                     <CalendarPicker
-                      onChange={(d) => setSelectedDay(d)}
+                      onChange={handleSelectedDayChange}
                       value={selectedDay}
                     />
 
-                    {/* TODO generalize this - maybe pass a prop like `selectedDayWarning = { condition: 'future', message: 'The selected day is in the future...' }` */}
-                    {selectedDayIsInFuture && 
-                      <div className="text-attention leading-tight">
-                        The selected day in the future - it&apos;s recommended only to complete tasks on past days.
-                      </div>
-                    }
+                    {selectedDayFeedback}
                   </div>
                 </div>
 
@@ -96,6 +101,7 @@ export function CalendarPickerModal({
                     type="button"
                     className={`inline-flex justify-center items-center rounded-full px-5 py-1 text-sm font-semibold shadow-md ml-3 w-auto disabled:bg-gray-400 uppercase ${confirmButtonClasses}`}
                     onClick={onConfirmButtonClick}
+                    disabled={!selectedDay}
                   >
                     {confirmButtonText}
                   </button>

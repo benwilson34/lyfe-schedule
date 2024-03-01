@@ -49,6 +49,7 @@ export default function TaskCard({
   onCompleteOnAnotherDay,
   onEdit,
   onPostpone,
+  onPostponeToAnotherDay,
   onDelete,
 }: {
   task: Task;
@@ -57,6 +58,7 @@ export default function TaskCard({
   onCompleteOnAnotherDay: Function;
   onEdit: Function;
   onPostpone: Function;
+  onPostponeToAnotherDay: Function;
   onDelete: Function;
 }) {
   const {
@@ -138,6 +140,7 @@ export default function TaskCard({
           onPostponeClick={(postponeDay: Dayjs) =>
             onPostpone(task, postponeDay)
           }
+          onPostponeToAnotherDayClick={() => onPostponeToAnotherDay(task)}
           onCompleteOnAnotherDayClick={() => onCompleteOnAnotherDay(task)}
           onDeleteClick={() => onDelete(task)}
           floating={floating}

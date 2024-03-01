@@ -38,6 +38,7 @@ import {
 import Link from "next/link";
 import TaskCard from "@/components/TaskCard";
 import { CalendarPickerModal } from "@/components/CalendarPickerModal";
+import { getLastPostponeUntilDate } from "@/util/task";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
@@ -84,6 +85,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     isShowingCompleteOnAnotherDayModal,
     setIsShowingCompleteOnAnotherDayModal,
   ] = useState(false);
+  const [isShowingPostponeModal, setIsShowingPostponeModal] = useState(false);
   const [isShowingDeleteModal, setIsShowingDeleteModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedDay, setSelectedDay] = useState<Dayjs>(dayjs());
@@ -193,7 +195,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   };
 
   // TODO move to service module
-  const handleCompleteTask = async (
+  const completeTask = async (
     completedTaskId: string,
     completedDate?: Date
   ) => {
@@ -229,7 +231,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
         (task) => task.id !== selectedId
       );
       setSelectedDayTasks(newTasks);
-      await handleCompleteTask(selectedId, completedDate);
+      await completeTask(selectedId, completedDate);
     },
     [selectedTask, selectedDayTasks, setSelectedDayTasks]
   );
@@ -241,7 +243,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       task.id === completedTaskId ? { ...task, completedDate: dayjs() } : task
     );
     setSelectedDayTasks(newTasks);
-    await handleCompleteTask(completedTaskId);
+    await completeTask(completedTaskId);
   };
 
   const onAddButtonClick = () => {
@@ -258,13 +260,14 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     setIsShowingEditModal(true);
   };
 
-  const handlePostponeTask = async (task: Task, postponeDay: Dayjs) => {
-    console.log(`about to postpone ${task.id} to ${postponeDay.toISOString()}`); // TODO remove
+  // TODO move to service module
+  const postponeTask = async (task: Task, postponeUntilDate: Dayjs) => {
+    console.log(`about to postpone ${task.id} to ${postponeUntilDate.toISOString()}`); // TODO remove
     try {
       // TODO call postpone action endpoint
       const requestBody = {
         operation: "postpone",
-        postponeUntilDate: postponeDay.toISOString(),
+        postponeUntilDate: postponeUntilDate.toISOString(),
       };
       const result = await fetch(`/api/tasks/${task.id}`, {
         method: "PUT",
@@ -277,13 +280,41 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       if (result.status !== 200) {
         throw new Error(`>> error: ${JSON.stringify(responseBody)}`);
       }
-      // TODO update state and/or re-fetch task data
-      setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
     } catch (maybeError: any) {
       console.error(maybeError);
       // TODO show some error message
     }
   };
+  
+  const handlePostponeTask = async (task: Task, postponeDay: Dayjs) => {
+    await postponeTask(task, postponeDay);
+    // TODO update state and/or re-fetch task data
+    setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
+  };
+
+  // TODO move to util module and also use on backend
+  const isPostponeDayValid = useCallback((day: Date) => {
+    // Three conditions need to be met:
+    // 1. Is the day after the current date?
+    // 2. Is the day after the task startDate?
+    // 3. If the task has been postponed before, is the day after the last poneponeUntilDate?
+    const taskEffectiveDay = dayjs(getLastPostponeUntilDate(selectedTask!) || selectedTask!.startDate).startOf('day');
+    const startOfTargetDay = dayjs(day).startOf('day');
+    return startOfTargetDay.isAfter(dayjs().startOf('day')) &&
+      startOfTargetDay.isAfter(taskEffectiveDay);
+  }, [selectedTask]);
+
+  const handlePostponeTaskToAnotherDay = async (task: Task) => {
+    setSelectedTask(task);
+    setIsShowingPostponeModal(true);
+  };
+
+  const handleConfirmedPostponeTask = useCallback(async (postponeUntilDate: Date) => {
+    // TODO animate
+    const selectedId = selectedTask!.id;
+    setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== selectedId));
+    await postponeTask(selectedTask!, dayjs(postponeUntilDate));
+  }, [selectedTask, setSelectedDayTasks]);
 
   const handleDeleteTask = async (task: Task) => {
     setSelectedTask(task);
@@ -583,6 +614,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
                 onCompleteOnAnotherDay={handleCompleteTaskOnAnotherDay}
                 onEdit={handleEditTask}
                 onPostpone={handlePostponeTask}
+                onPostponeToAnotherDay={handlePostponeTaskToAnotherDay}
                 onDelete={handleDeleteTask}
               />
             ))}
@@ -594,6 +626,27 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
                 setTasks={setSelectedDayTasks}
                 task={selectedTask}
                 initialStartDate={selectedDay}
+              />
+            )}
+            {isShowingPostponeModal && (
+              <CalendarPickerModal
+                isOpen={isShowingPostponeModal}
+                setIsOpen={setIsShowingPostponeModal}
+                onConfirm={handleConfirmedPostponeTask}
+                title="Postpone to"
+                body={<>
+                  <div>
+                    Select a day to postpone{" "}
+                    <span className="font-semibold">{selectedTask!.title}</span>{" "}
+                    to.
+                  </div>
+                  <div className="text-xs">
+                    Note that the selected day must be after the current day, the task&apos;s start date,
+                    AND the task&apos;s last postponement.
+                  </div>
+                </>}
+                confirmButtonText="Postpone"
+                isDayValid={isPostponeDayValid}
               />
             )}
             {isShowingCompleteOnAnotherDayModal && (
@@ -617,6 +670,15 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
                   )}
                 </>}
                 confirmButtonText="Complete"
+                dayFeedback={(day: Date) => {
+                  const dayIsAfterToday = dayjs(day).startOf('day').isAfter(dayjs().startOf('day'));
+                  if (!dayIsAfterToday) {
+                    return <></>;
+                  }
+                  return (<div className="text-attention leading-tight">
+                    The selected day in the future - it&apos;s recommended only to complete tasks on past days.
+                  </div>);
+                }}
               />
             )}
             {isShowingDeleteModal && (

@@ -1,5 +1,6 @@
 import type TaskDto from './task.dto';
 import type { Dayjs } from 'dayjs';
+import { Action } from './task.dto';
 
 /**
  * @TODO override required fields - fields that are expected to be calculated and populated 
@@ -16,6 +17,6 @@ export type TaskViewModel = {
   repeatDays?: number;
   isProjected?: boolean;
   completedDate?: Dayjs;
-  // TODO add `actions` here?
+  actions: Action[];
   priority?: number;
 };

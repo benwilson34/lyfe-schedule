@@ -17,7 +17,7 @@ import ErrorResponse, {
 } from "@/models/ErrorResponse";
 import SuccessResponse from "@/models/SuccessResponse";
 import dayjs, { Dayjs } from "dayjs";
-import { calculateEndDate, sortTasks } from "@/util/task";
+import { calculateEndDate, getLastPostponeUntilDate, sortTasks } from "@/util/task";
 import { TaskDao, taskDaoToDto, taskDtoToDao } from "@/types/task.dao";
 import { assign, last } from "lodash";
 import { getToken } from "next-auth/jwt";
@@ -28,13 +28,6 @@ import { calculatePriority } from "@/util/date";
 function handleError(maybeError: any, res: NextApiResponse) {
   console.error(maybeError);
   internalErrorResponse.send(res);
-}
-
-function getLastPostponeUntilDate(task: TaskDao): Date | undefined {
-  // task.postponeActions are in chronological order
-  return last(
-    task.actions?.filter((a) => isPostponeAction(a)) as PostponeAction[]
-  )?.postponeUntilDate;
 }
 
 // given list of incomplete tasks (from target day and before) and target day to project onto

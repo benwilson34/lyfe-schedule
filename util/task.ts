@@ -1,6 +1,8 @@
-import type { TaskViewModel as Task } from "@/types/task.viewModel";
+import type { TaskViewModel as Task, TaskViewModel } from "@/types/task.viewModel";
 import type { TaskDao } from "@/types/task.dao";
 import dayjs, { Dayjs } from "dayjs";
+import { last } from "lodash";
+import { PostponeAction, isPostponeAction } from "@/types/task.dto";
 
 /**
  * Check `startDate`, `endDate`, and `rangeDays`. Two of the three should be provided, then the
@@ -56,4 +58,11 @@ export function sortTasks(a: Partial<TaskDao>, b: Partial<TaskDao>): number {
     return a.completedDate ? 1 : -1;
   }
   return (b.priority || 0) - (a.priority || 0)
+}
+
+export function getLastPostponeUntilDate(task: TaskDao | TaskViewModel): Date | undefined {
+  // task.postponeActions are in chronological order
+  return last(
+    task.actions?.filter((a) => isPostponeAction(a)) as PostponeAction[]
+  )?.postponeUntilDate;
 }

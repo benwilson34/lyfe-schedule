@@ -47,6 +47,7 @@ export default function TaskOptionsMenu({
   onMenuOpenChange = (isOpen) => {},
   onEditClick,
   onPostponeClick,
+  onPostponeToAnotherDayClick,
   onCompleteOnAnotherDayClick,
   onDeleteClick,
   floating,
@@ -171,8 +172,14 @@ export default function TaskOptionsMenu({
                     >
                       Next week ({formatShownDate(nextWeekDay)})
                     </div>
-                    <div className="hover:bg-gray-50 line-through">
-                      Another day (TODO)
+                    <div 
+                      onClick={() => {
+                        onPostponeToAnotherDayClick();
+                        close();
+                      }}
+                      className="hover:bg-gray-50"
+                    >
+                      Another day
                     </div>
                   </div>
                 </div>
