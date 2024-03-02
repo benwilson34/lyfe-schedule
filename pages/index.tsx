@@ -39,6 +39,7 @@ import Link from "next/link";
 import TaskCard from "@/components/TaskCard";
 import { CalendarPickerModal } from "@/components/CalendarPickerModal";
 import { getLastPostponeUntilDate } from "@/util/task";
+import { PulseLoader } from "react-spinners";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
@@ -93,6 +94,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     dayjs().startOf("month"),
     dayjs().endOf("month"),
   ]);
+  const [isDayTasksLoading, setIsDayTasksLoading] = useState(false);
   const [dayTasks, setDayTasks] = useState<Record<string, TaskDto[]>>({});
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
@@ -170,9 +172,11 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     fetchData();
   }, [shownDateRange]);
 
+
   const handleSelectedDayChange = async (date: Date) => {
     try {
       setSelectedDay(dayjs(date));
+      setIsDayTasksLoading(true);
       const result = await fetch(`/api/tasks?targetDay=${date.toISOString()}`, {
         method: "GET",
         headers: {
@@ -188,6 +192,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       const newTasks =
         data.dayTasks[dayjs(date).format("YYYY-MM-DD")].map(dtoTaskToTask);
       setSelectedDayTasks(newTasks);
+      setIsDayTasksLoading(false);
     } catch (maybeError: any) {
       console.error(maybeError);
       // TODO display some error message
@@ -262,7 +267,9 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
 
   // TODO move to service module
   const postponeTask = async (task: Task, postponeUntilDate: Dayjs) => {
-    console.log(`about to postpone ${task.id} to ${postponeUntilDate.toISOString()}`); // TODO remove
+    console.log(
+      `about to postpone ${task.id} to ${postponeUntilDate.toISOString()}`
+    ); // TODO remove
     try {
       // TODO call postpone action endpoint
       const requestBody = {
@@ -285,7 +292,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
       // TODO show some error message
     }
   };
-  
+
   const handlePostponeTask = async (task: Task, postponeDay: Dayjs) => {
     await postponeTask(task, postponeDay);
     // TODO update state and/or re-fetch task data
@@ -293,28 +300,38 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
   };
 
   // TODO move to util module and also use on backend
-  const isPostponeDayValid = useCallback((day: Date) => {
-    // Three conditions need to be met:
-    // 1. Is the day after the current date?
-    // 2. Is the day after the task startDate?
-    // 3. If the task has been postponed before, is the day after the last poneponeUntilDate?
-    const taskEffectiveDay = dayjs(getLastPostponeUntilDate(selectedTask!) || selectedTask!.startDate).startOf('day');
-    const startOfTargetDay = dayjs(day).startOf('day');
-    return startOfTargetDay.isAfter(dayjs().startOf('day')) &&
-      startOfTargetDay.isAfter(taskEffectiveDay);
-  }, [selectedTask]);
+  const isPostponeDayValid = useCallback(
+    (day: Date) => {
+      // Three conditions need to be met:
+      // 1. Is the day after the current date?
+      // 2. Is the day after the task startDate?
+      // 3. If the task has been postponed before, is the day after the last poneponeUntilDate?
+      const taskEffectiveDay = dayjs(
+        getLastPostponeUntilDate(selectedTask!) || selectedTask!.startDate
+      ).startOf("day");
+      const startOfTargetDay = dayjs(day).startOf("day");
+      return (
+        startOfTargetDay.isAfter(dayjs().startOf("day")) &&
+        startOfTargetDay.isAfter(taskEffectiveDay)
+      );
+    },
+    [selectedTask]
+  );
 
   const handlePostponeTaskToAnotherDay = async (task: Task) => {
     setSelectedTask(task);
     setIsShowingPostponeModal(true);
   };
 
-  const handleConfirmedPostponeTask = useCallback(async (postponeUntilDate: Date) => {
-    // TODO animate
-    const selectedId = selectedTask!.id;
-    setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== selectedId));
-    await postponeTask(selectedTask!, dayjs(postponeUntilDate));
-  }, [selectedTask, setSelectedDayTasks]);
+  const handleConfirmedPostponeTask = useCallback(
+    async (postponeUntilDate: Date) => {
+      // TODO animate
+      const selectedId = selectedTask!.id;
+      setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== selectedId));
+      await postponeTask(selectedTask!, dayjs(postponeUntilDate));
+    },
+    [selectedTask, setSelectedDayTasks]
+  );
 
   const handleDeleteTask = async (task: Task) => {
     setSelectedTask(task);
@@ -605,19 +622,24 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
               <FontAwesomeIcon icon={faCirclePlus} className="ml-0.5 mr-3" />
               <span>Add task</span>
             </div>
-            {selectedDayTasks?.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                selectedDay={selectedDay}
-                onComplete={handleCompleteTaskToday}
-                onCompleteOnAnotherDay={handleCompleteTaskOnAnotherDay}
-                onEdit={handleEditTask}
-                onPostpone={handlePostponeTask}
-                onPostponeToAnotherDay={handlePostponeTaskToAnotherDay}
-                onDelete={handleDeleteTask}
-              />
-            ))}
+            {isDayTasksLoading ? (
+              // TODO take tailwind classes instead
+              <PulseLoader color="#d5dedb" className="mt-4"/>
+            ) : (
+              selectedDayTasks?.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  selectedDay={selectedDay}
+                  onComplete={handleCompleteTaskToday}
+                  onCompleteOnAnotherDay={handleCompleteTaskOnAnotherDay}
+                  onEdit={handleEditTask}
+                  onPostpone={handlePostponeTask}
+                  onPostponeToAnotherDay={handlePostponeTaskToAnotherDay}
+                  onDelete={handleDeleteTask}
+                />
+              ))
+            )}
 
             {isShowingEditModal && (
               <EditTaskModal
@@ -634,17 +656,22 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
                 setIsOpen={setIsShowingPostponeModal}
                 onConfirm={handleConfirmedPostponeTask}
                 title="Postpone to"
-                body={<>
-                  <div>
-                    Select a day to postpone{" "}
-                    <span className="font-semibold">{selectedTask!.title}</span>{" "}
-                    to.
-                  </div>
-                  <div className="text-xs">
-                    Note that the selected day must be after the current day, the task&apos;s start date,
-                    AND the task&apos;s last postponement.
-                  </div>
-                </>}
+                body={
+                  <>
+                    <div>
+                      Select a day to postpone{" "}
+                      <span className="font-semibold">
+                        {selectedTask!.title}
+                      </span>{" "}
+                      to.
+                    </div>
+                    <div className="text-xs">
+                      Note that the selected day must be after the current day,
+                      the task&apos;s start date, AND the task&apos;s last
+                      postponement.
+                    </div>
+                  </>
+                }
                 confirmButtonText="Postpone"
                 isDayValid={isPostponeDayValid}
               />
@@ -655,29 +682,41 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
                 setIsOpen={setIsShowingCompleteOnAnotherDayModal}
                 onConfirm={handleConfirmedCompleteTaskOnAnotherDay}
                 title="Complete on another day"
-                body={<>
-                  <div>
-                    Forgot to mark this task complete the other day? No problem.
-                  </div>
-                  <div>
-                    Select a day to complete{" "}
-                    <span className="font-semibold">{selectedTask!.title}</span>.
-                  </div>
-                  {selectedTask!.repeatDays && (
+                body={
+                  <>
                     <div>
-                      This task will repeat {selectedTask!.repeatDays} days after the chosen day.
+                      Forgot to mark this task complete the other day? No
+                      problem.
                     </div>
-                  )}
-                </>}
+                    <div>
+                      Select a day to complete{" "}
+                      <span className="font-semibold">
+                        {selectedTask!.title}
+                      </span>
+                      .
+                    </div>
+                    {selectedTask!.repeatDays && (
+                      <div>
+                        This task will repeat {selectedTask!.repeatDays} days
+                        after the chosen day.
+                      </div>
+                    )}
+                  </>
+                }
                 confirmButtonText="Complete"
                 dayFeedback={(day: Date) => {
-                  const dayIsAfterToday = dayjs(day).startOf('day').isAfter(dayjs().startOf('day'));
+                  const dayIsAfterToday = dayjs(day)
+                    .startOf("day")
+                    .isAfter(dayjs().startOf("day"));
                   if (!dayIsAfterToday) {
                     return <></>;
                   }
-                  return (<div className="text-attention leading-tight">
-                    The selected day in the future - it&apos;s recommended only to complete tasks on past days.
-                  </div>);
+                  return (
+                    <div className="text-attention leading-tight">
+                      The selected day in the future - it&apos;s recommended
+                      only to complete tasks on past days.
+                    </div>
+                  );
                 }}
               />
             )}
