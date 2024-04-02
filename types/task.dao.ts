@@ -47,7 +47,7 @@ export function taskDtoToDao(taskDto: TaskDto): TaskDao {
   const { id, userId, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, completedDate, actions } = taskDto;
   return {
     ...(id && { _id: id }),
-    userId: new ObjectId(userId),
+    userId: new ObjectId(userId), // TODO should this just be removed?
     title,
     ...(timeEstimateMins && { timeEstimateMins }),
     startDate: dayjs(startDate).toDate(),

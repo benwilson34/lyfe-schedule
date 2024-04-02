@@ -4,7 +4,7 @@ import { getToken } from 'next-auth/jwt';
 import ErrorResponse, { internalErrorResponse, unauthenticatedErrorResponse, notFoundErrorResponse } from '@/models/ErrorResponse';
 import { getTaskById as getTaskByIdFromDb, updateTask as updateTaskInDb, deleteTask as deleteTaskInDb, addTask } from '@/services/mongo.service';
 import SuccessResponse from '@/models/SuccessResponse';
-import { taskDtoToDao } from '@/types/task.dao';
+import { TaskDao, taskDtoToDao } from '@/types/task.dao';
 import dayjs from 'dayjs';
 
 async function updateTask(req: NextApiRequest, res: NextApiResponse) {
@@ -32,7 +32,9 @@ async function updateTask(req: NextApiRequest, res: NextApiResponse) {
       unauthenticatedErrorResponse.send(res);
       return;
     }
-    const updateTask = taskDtoToDao(req.body);
+    const updateTask: Partial<TaskDao> = taskDtoToDao(req.body);
+    // should never be overwriting `userId`
+    delete updateTask.userId;
     // TODO validate updateTask
     const modifiedId = await updateTaskInDb(taskId, updateTask);
     if (!modifiedId) {
