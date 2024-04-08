@@ -128,7 +128,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartD
         endDate: dayjs(endDate),
         rangeDays,
         ...(isRepeating && { repeatDays }),
-        timeEstimateMins,
+        ...(hasTimeEstimate && { timeEstimateMins }),
       };
 
       setIsLoading(true);
@@ -165,6 +165,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartD
     rangeDays,
     isRepeating,
     repeatDays,
+    hasTimeEstimate,
     timeEstimateMins,
     setTasks,
     setIsOpen,
@@ -178,7 +179,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartD
         endDate: dayjs(endDate),
         rangeDays,
         ...(isRepeating && { repeatDays }),
-        timeEstimateMins,
+        ...(hasTimeEstimate && { timeEstimateMins }),
       };
 
       setIsLoading(true);
@@ -221,6 +222,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartD
     rangeDays,
     isRepeating,
     repeatDays,
+    hasTimeEstimate,
     timeEstimateMins,
     task,
     setTasks,
