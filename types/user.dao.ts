@@ -13,7 +13,7 @@ export function userDaoToDto(userDao: UserDao, { includeHashedPassword = false }
   } as UserDto;
 }
 
-export function taskDtoToDao(userDto: UserDto): UserDao {
+export function userDtoToDao(userDto: UserDto): UserDao {
   const { id, email, hashedPassword } = userDto;
   return {
     ...(id && { _id: id }),

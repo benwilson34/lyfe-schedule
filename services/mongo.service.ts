@@ -2,11 +2,13 @@ import type { TaskDao, TaskInsertDao, TaskUpdateDao } from '@/types/task.dao';
 import { MongoClient, Collection, ObjectId, WithoutId, OptionalId } from 'mongodb';
 import dayjs from 'dayjs';
 import { UserDao } from '@/types/user.dao';
-import { DB_NAME, DB_URL, TASK_COLLECTION_NAME, USER_COLLECTION_NAME } from '@/util/env';
+import { TokenPayloadDao } from '@/types/tokenPayload.dao';
+import { DB_NAME, DB_URL, TASK_COLLECTION_NAME, USER_COLLECTION_NAME, TOKEN_PAYLOAD_COLLECTION_NAME } from '@/util/env';
 
 const client = new MongoClient(DB_URL);
 let taskCollection: Collection<TaskDao> | null = null;
 let userCollection: Collection<UserDao> | null = null;
+let tokenPayloadCollection: Collection<TokenPayloadDao> | null = null;
 
 // TODO require userId?
 export async function getTaskById(id: ObjectId|string): Promise<TaskDao|null> {
@@ -89,12 +91,54 @@ export async function getUserByEmail(email: string): Promise<UserDao|null> {
   return userCollection!.findOne({ email });
 }
 
+export async function getUser(id: string|ObjectId): Promise<UserDao|null> {
+  await initIfNeeded();
+  const oid = id instanceof ObjectId ? id : new ObjectId(id);
+  return userCollection!.findOne({ _id: oid });
+}
+
+export async function updateUser(id: ObjectId|string, user: WithoutId<Partial<UserDao>>): Promise<string> {
+  await initIfNeeded();
+  // TODO validate task
+  const oid = id instanceof ObjectId ? id : new ObjectId(id);
+  // FIXME need to learn how "casting" in Typescript should work
+  delete user.id; // just to make sure
+  
+  const { modifiedCount } = await userCollection!.updateOne({ _id: oid }, { $set: { ...user } });
+  
+  if (modifiedCount !== 1) {
+    throw new Error(`Modified ${modifiedCount} documents instead of 1. Maybe there weren't any actual changes in the set?`);
+  }
+  return oid.toString();
+}
+
+export async function addTokenPayload(tokenPayload: OptionalId<TokenPayloadDao>): Promise<string> {
+  await initIfNeeded();
+  const insertResult = await tokenPayloadCollection!.insertOne(tokenPayload);
+  return insertResult.insertedId.toString();
+}
+
+export async function getTokenPayloadByToken(token: string): Promise<TokenPayloadDao|null> {
+  await initIfNeeded();
+  return tokenPayloadCollection!.findOne({ token });
+}
+
+// TODO should take _id instead?
+export async function deleteTokenPayload(token: string): Promise<string> {
+  const { deletedCount } = await tokenPayloadCollection!.deleteOne({ token });
+  if (deletedCount !== 1) {
+    throw new Error(`Deleted ${deletedCount} documents instead of 1`);
+  }
+  return token;
+}
+
 export async function init() {
   try {
     await client.connect();
     const db = client.db(DB_NAME);
     taskCollection = db.collection<TaskDao>(TASK_COLLECTION_NAME || 'task');
     userCollection = db.collection<UserDao>(USER_COLLECTION_NAME || 'user');
+    tokenPayloadCollection = db.collection<TokenPayloadDao>(TOKEN_PAYLOAD_COLLECTION_NAME || 'tokenPayload');
   } catch (maybeError: any) {
     console.error(maybeError);
   }
