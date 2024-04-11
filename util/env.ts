@@ -1,8 +1,10 @@
 export const DB_URL = process.env.DB_URL!;
 export const DB_NAME = process.env.DB_NAME!;
+// TODO move other defaults here?
 export const TASK_COLLECTION_NAME = process.env.TASK_COLLECTION_NAME;
 export const USER_COLLECTION_NAME = process.env.USER_COLLECTION_NAME;
 export const TOKEN_PAYLOAD_COLLECTION_NAME = process.env.TOKEN_COLLECTION_NAME;
+export const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 export const SMTP_HOST_URL = process.env.SMTP_HOST_URL!;
 export const SMTP_PORT = parseInt(process.env.SMTP_PORT!);
 export const SMTP_USER = process.env.SMTP_USER!;

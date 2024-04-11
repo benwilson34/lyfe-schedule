@@ -12,8 +12,10 @@ import SuccessResponse from "@/models/SuccessResponse";
 import { addTokenPayload, deleteTokenPayload, getTokenPayloadByToken, getUser, getUserByEmail, updateUser } from "@/services/mongo.service";
 import { userDaoToDto } from "@/types/user.dao";
 import { sendMail } from "@/services/email.service";
-import { PASSWORD_RESET_TOKEN_TTL_MINS } from "@/util/env";
+import { BASE_URL, PASSWORD_RESET_TOKEN_TTL_MINS } from "@/util/env";
 import { formatFriendlyFullDate } from "@/util/format";
+import { TokenPayloadDao, tokenPayloadDaoToDto } from "@/types/tokenPayload.dao";
+import { TokenPayloadDto } from "@/types/tokenPayload.dto";
 
 
 async function hashPassword(password: string) { 
@@ -61,7 +63,7 @@ async function hashPassword(password: string) {
 //   }
 // }
 
-async function resetPassword(
+async function requestResetPassword(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -104,13 +106,15 @@ async function resetPassword(
 
     DO NOT forward this email or send the link to anyone. This link will be valid until ${formatFriendlyFullDate(expiresDate)}.
     
-    Click here to reset your password: (TODO link) -> ${token}`,
+    Click here to reset your password: ${BASE_URL}/auth/reset-password?token=${token}`,
   });
   new SuccessResponse().send(res);
 }
 
-async function getTokenPayload(token: string) {
-  const tokenPayload = await getTokenPayloadByToken(token);
+// TODO move to different module
+export async function getTokenPayload(token: string, doesConvertToDto: boolean = false) {
+  // TODO refactor or fix type here
+  let tokenPayload: any = await getTokenPayloadByToken(token);
   if (!tokenPayload) {
     return null;
   }
@@ -118,9 +122,12 @@ async function getTokenPayload(token: string) {
   if (isExpired) {
     return null;
   }
+  if (doesConvertToDto) {
+    tokenPayload = tokenPayloadDaoToDto(tokenPayload);
+  }
   const user = await getUser(tokenPayload.userId);
   // TODO handle missing/deleted user?
-  return assign(tokenPayload, { email: user?.email })
+  return assign(tokenPayload, { email: user?.email });
 }
 
 async function checkToken(
@@ -217,8 +224,8 @@ async function operateOnTasks(
     // case 'login':
       // await loginUser(req, res);
       // break;
-    case 'reset-password':
-      await resetPassword(req, res);
+    case 'request-reset-password':
+      await requestResetPassword(req, res);
       break;
     case 'check-token':
       await checkToken(req, res);
