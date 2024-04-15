@@ -17,6 +17,7 @@ export const authOptions: NextAuthOptions = {
         try {
           if (!credentials) return null;
           const { email, password } = credentials;
+          console.log(`about to sign in ${email}`); // TODO remove
           const foundUser = await getUserByEmail(email);
           
           if (!foundUser) {
@@ -38,6 +39,9 @@ export const authOptions: NextAuthOptions = {
       }
     }),
   ],
+  pages: {
+    signIn: '/auth/sign-in',
+  },
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60,
