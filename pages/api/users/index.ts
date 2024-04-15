@@ -201,7 +201,7 @@ async function setNewPassword(
     subject: 'Your password was reset',
     text: `This is a confirmation that the password for ${tokenPayload.email} was successfully reset at ${formatFriendlyFullDate(dayjs())}.
     
-    If you didn't reset your password, please reset it again here: TODO link`,
+    If you didn't reset your password, please reset it again here: ${BASE_URL}/auth/request-reset-password?email=${encodeURIComponent(tokenPayload.email)}`,
   });
   new SuccessResponse().send(res);
 }

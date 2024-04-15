@@ -1,11 +1,26 @@
 import { delay } from "@/util/delay";
+import { GetServerSideProps } from "next";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 
-export default function RequestResetPassword() {
+export const getServerSideProps = (async (context) => {
+  const { email: initialEmail } = context.query;
+  return {
+    props: {
+      initialEmail,
+    },
+  };
+}) satisfies GetServerSideProps;
+
+export default function RequestResetPassword({
+  initialEmail,
+}: {
+  initialEmail: string;
+}) {
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState<string|null>(null);
+  const [email, setEmail] = useState(initialEmail || "");
+  const [message, setMessage] = useState<string | null>(null);
 
   const handleSubmitButtonClick = async () => {
     // prevent multiple simultaneous requests
@@ -14,7 +29,7 @@ export default function RequestResetPassword() {
       setMessage(null);
       // TODO validate email
       if (!email) {
-        setMessage('Email is required');
+        setMessage("Email is required");
         return;
       }
       setIsLoading(true);
@@ -32,10 +47,14 @@ export default function RequestResetPassword() {
       if (result.status !== 200 && result.status !== 401) {
         throw new Error("Failed to complete operation.");
       }
-      setMessage(`If ${email} was in our system, a password reset email was sent to that address. Check your inbox and/or spam folder.`);
+      setMessage(
+        `If ${email} was in our system, a password reset email was sent to that address. Check your inbox and/or spam folder.`
+      );
     } catch (maybeError: any) {
       // TODO print generic error
-      setMessage('The operation could not be completed. Please try again later or send a message to Ben if it keeps happening.');
+      setMessage(
+        "The operation could not be completed. Please try again later or send a message to Ben if it keeps happening."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +73,10 @@ export default function RequestResetPassword() {
           {/* <form className="space-y-6" action="#" method="POST"> */}
           <div className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium leading-6 text-gray-900"
+              >
                 Email
               </label>
               <div className="mt-2">
@@ -87,15 +109,11 @@ export default function RequestResetPassword() {
               </div>
             )}
 
-            {message && (
-              <div>
-                {message}
-              </div>
-            )}
-          {/* </form> */}
+            {message && <div>{message}</div>}
+            {/* </form> */}
           </div>
         </div>
       </div>
     </>
-  )
+  );
 }
