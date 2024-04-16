@@ -86,6 +86,13 @@ export async function deleteAllTasks(userId: string|ObjectId): Promise<number> {
   return deleteResult.deletedCount;
 }
 
+export async function addUser(newUser: WithoutId<Partial<UserDao>>): Promise<string> {
+  await initIfNeeded();
+  // TODO validate user? or trust caller?
+  const insertResult = await userCollection!.insertOne(newUser as OptionalId<UserDao>);
+  return insertResult.insertedId.toString();
+}
+
 export async function getUserByEmail(email: string): Promise<UserDao|null> {
   await initIfNeeded();
   return userCollection!.findOne({ email });
@@ -99,7 +106,7 @@ export async function getUser(id: string|ObjectId): Promise<UserDao|null> {
 
 export async function updateUser(id: ObjectId|string, user: WithoutId<Partial<UserDao>>): Promise<string> {
   await initIfNeeded();
-  // TODO validate task
+  // TODO validate user? or trust caller?
   const oid = id instanceof ObjectId ? id : new ObjectId(id);
   // FIXME need to learn how "casting" in Typescript should work
   delete user.id; // just to make sure

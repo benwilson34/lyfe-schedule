@@ -1,4 +1,3 @@
-import { tokenPayloadDaoToDto } from "@/types/tokenPayload.dao";
 import { TokenPayloadDto } from "@/types/tokenPayload.dto";
 import { GetServerSideProps } from "next";
 import { getTokenPayload } from "../api/users";
@@ -14,7 +13,7 @@ export const getServerSideProps = (async (context) => {
     return { props: {} };
   }
 
-  const tokenPayload = await getTokenPayload(token, true);
+  const tokenPayload = await getTokenPayload(token) as TokenPayloadDto | null;
   if (!tokenPayload) {
     // TODO handle invalid/expired token
     return { props: {} };
@@ -30,7 +29,7 @@ export const getServerSideProps = (async (context) => {
 export default function ResetPasswordPage({
   tokenPayload,
 }: {
-  tokenPayload?: TokenPayloadDto & { email: string };
+  tokenPayload?: TokenPayloadDto;
 }) {
   const [password1, setPassword1] = useState("");
   const [password2, setPassword2] = useState("");
@@ -130,7 +129,7 @@ export default function ResetPasswordPage({
             type="email"
             autoComplete="email"
             className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            value={tokenPayload!.email}
+            value={tokenPayload!.payload.userEmail}
             readOnly
             disabled
           />

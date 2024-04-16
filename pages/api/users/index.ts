@@ -9,13 +9,14 @@ import dayjs from "dayjs";
 import { assign } from "lodash";
 import ErrorResponse, { internalErrorResponse, unauthenticatedErrorResponse } from "@/models/ErrorResponse";
 import SuccessResponse from "@/models/SuccessResponse";
-import { addTokenPayload, deleteTokenPayload, getTokenPayloadByToken, getUser, getUserByEmail, updateUser } from "@/services/mongo.service";
+import { addTokenPayload, addUser, deleteTokenPayload, getTokenPayloadByToken, getUser, getUserByEmail, updateUser } from "@/services/mongo.service";
 import { userDaoToDto } from "@/types/user.dao";
 import { sendMail } from "@/services/email.service";
-import { BASE_URL, PASSWORD_RESET_TOKEN_TTL_MINS } from "@/util/env";
+import { ADMIN_USER_ID, BASE_URL, INVITATION_TOKEN_TTL_MINS, PASSWORD_RESET_TOKEN_TTL_MINS } from "@/util/env";
 import { formatFriendlyFullDate } from "@/util/format";
 import { TokenPayloadDao, tokenPayloadDaoToDto } from "@/types/tokenPayload.dao";
 import { TokenPayloadDto } from "@/types/tokenPayload.dto";
+import { getToken } from "next-auth/jwt";
 
 
 async function hashPassword(password: string) { 
@@ -68,8 +69,8 @@ async function requestResetPassword(
   res: NextApiResponse
 ) {
   // TODO wrap with try-catch
-  const { email: toEmail } = req.body;
-  if (!toEmail) {
+  const { email } = req.body;
+  if (!email) {
     new ErrorResponse({
       status: 400,
       errorCode: 'invalidFields',
@@ -78,19 +79,22 @@ async function requestResetPassword(
     }).send(res);
     return;
   }
-  const foundUser = await getUserByEmail(toEmail);
+  const foundUser = await getUserByEmail(email);
   if (!foundUser) {
     unauthenticatedErrorResponse.send(res);
     return;
   }
 
   // generate token payload
-  const token = randomBytes(16).toString('hex');
-  const expiresDate = dayjs().add(PASSWORD_RESET_TOKEN_TTL_MINS || 120, 'minutes');
+  const token = generateToken();
+  const expiresDate = dayjs().add(PASSWORD_RESET_TOKEN_TTL_MINS, 'minutes');
   const insertedId = await addTokenPayload({
     token,
-    userId: foundUser._id!,
     expiresDate: expiresDate.toDate(),
+    payload: JSON.stringify({ 
+      userId: foundUser._id!,
+      userEmail: email,
+    }),
   });
   if (!insertedId) {
     internalErrorResponse.send(res);
@@ -100,9 +104,9 @@ async function requestResetPassword(
 
   console.log('about to send email...'); // TODO remove
   await sendMail({
-    to: toEmail,
+    to: email,
     subject: "Password reset request",
-    text: `A password reset has been requested for ${toEmail}. If you did not request this, feel free to ignore this email.
+    text: `A password reset has been requested for ${email}. If you did not request this, feel free to ignore this email.
 
     DO NOT forward this email or send the link to anyone. This link will be valid until ${formatFriendlyFullDate(expiresDate)}.
     
@@ -111,10 +115,13 @@ async function requestResetPassword(
   new SuccessResponse().send(res);
 }
 
+function generateToken() {
+  return randomBytes(16).toString('hex');
+}
+
 // TODO move to different module
-export async function getTokenPayload(token: string, doesConvertToDto: boolean = false) {
-  // TODO refactor or fix type here
-  let tokenPayload: any = await getTokenPayloadByToken(token);
+export async function getTokenPayload(token: string, doesConvertToDto: boolean = true) {
+  const tokenPayload = await getTokenPayloadByToken(token);
   if (!tokenPayload) {
     return null;
   }
@@ -123,11 +130,9 @@ export async function getTokenPayload(token: string, doesConvertToDto: boolean =
     return null;
   }
   if (doesConvertToDto) {
-    tokenPayload = tokenPayloadDaoToDto(tokenPayload);
+    return tokenPayloadDaoToDto(tokenPayload);
   }
-  const user = await getUser(tokenPayload.userId);
-  // TODO handle missing/deleted user?
-  return assign(tokenPayload, { email: user?.email });
+  return tokenPayload;
 }
 
 async function checkToken(
@@ -173,7 +178,7 @@ async function setNewPassword(
     }).send(res);
     return;
   }
-  const tokenPayload = await getTokenPayload(token);
+  const tokenPayload = await getTokenPayload(token) as TokenPayloadDto | null;
   if (!tokenPayload) {
     new ErrorResponse({
       status: 400,
@@ -183,8 +188,9 @@ async function setNewPassword(
     }).send(res);
     return;
   }
+  const { userId, userEmail } = tokenPayload.payload;
   const hashedPassword = await hashPassword(password);
-  const updateUserResult = await updateUser(tokenPayload.userId, { hashedPassword });
+  const updateUserResult = await updateUser(userId, { hashedPassword });
   if (!updateUserResult) {
     // TODO log
     internalErrorResponse.send(res);
@@ -197,16 +203,138 @@ async function setNewPassword(
     return;
   }
   await sendMail({
-    to: tokenPayload.email,
+    to: userEmail,
     subject: 'Your password was reset',
-    text: `This is a confirmation that the password for ${tokenPayload.email} was successfully reset at ${formatFriendlyFullDate(dayjs())}.
+    text: `This is a confirmation that the password for ${userEmail} was successfully reset at ${formatFriendlyFullDate(dayjs())}.
     
-    If you didn't reset your password, please reset it again here: ${BASE_URL}/auth/request-reset-password?email=${encodeURIComponent(tokenPayload.email)}`,
+    If you didn't reset your password, please reset it again here: ${BASE_URL}/auth/request-reset-password?email=${encodeURIComponent(userEmail)}`,
   });
   new SuccessResponse().send(res);
 }
 
-async function operateOnTasks(
+async function sendInvitation(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    // auth
+    const authToken = await getToken({ req });
+    if (!authToken) {
+      unauthenticatedErrorResponse.send(res);
+      return;
+    }
+    const userId = authToken.sub!;
+    console.log('>> userId', userId);
+    
+    // check session token to confirm it's an admin
+    if (!ADMIN_USER_ID || userId !== ADMIN_USER_ID) {
+      new ErrorResponse({
+        status: 403,
+        errorCode: 'unauthorized',
+        title: 'Could not send invite',
+        detail: `You are not authorized to send invitations in this environment.`,
+      }).send(res);
+      return;
+    }
+
+    const { inviteeEmail } = req.body;
+    // TODO validate
+    if (!inviteeEmail) {
+      new ErrorResponse({
+        status: 400,
+        errorCode: 'invalidFields',
+        title: 'Could not send invite: one or more invalid fields',
+        detail: `Could not send invite because one or more required fields are invalid. TODO more details.`,
+      }).send(res);
+      return;
+    }
+    // TODO check to see if invitee email is already in system?
+
+    const token = generateToken();
+    const expiresDate = dayjs().add(INVITATION_TOKEN_TTL_MINS, 'minutes');
+    const insertedId = await addTokenPayload({
+      token,
+      expiresDate: expiresDate.toDate(),
+      payload: JSON.stringify({ userEmail: inviteeEmail }),
+    });
+    if (!insertedId) {
+      internalErrorResponse.send(res);
+      return;
+    }
+
+    await sendMail({
+      to: inviteeEmail,
+      subject: "You're invited to use LyfeSchedule!",
+      text: `Hello! You've been invited to LyfeSchedule, the todo app for people who get things done eventually™.
+
+      This invite code will be valid until ${formatFriendlyFullDate(expiresDate)}.
+      
+      Click here to activate your account: ${BASE_URL}/auth/register?token=${token}`,
+    });
+    new SuccessResponse().send(res);
+  } catch (maybeError: any) {
+    // TODO log error
+    internalErrorResponse.send(res);
+  }
+}
+
+async function registerFromInvitation(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const { token, password } = req.body;
+    // TODO validate
+    if (!token || !password) {
+      new ErrorResponse({
+        status: 400,
+        errorCode: 'invalidFields',
+        title: 'Could not set password: invalid fields',
+        detail: `The password could not be set because one or more fields were invalid. TODO more details.`,
+      }).send(res);
+      return;
+    }
+    const tokenPayload = await getTokenPayload(token) as TokenPayloadDto | null;
+    if (!tokenPayload) {
+      new ErrorResponse({
+        status: 400,
+        errorCode: 'invalidFields',
+        title: 'Could not set password: invalid fields',
+        detail: `The password could not be set because one or more fields were invalid. TODO more details.`,
+      }).send(res);
+      return;
+    }
+    const { userEmail: email } = tokenPayload.payload;
+    // insert user
+    const hashedPassword = await hashPassword(password);
+    const insertedId = await addUser({ email, hashedPassword });
+    if (!insertedId) {
+      throw new Error(`Could not insert new user!`);
+    }
+    // delete token
+    const deleteTokenResult = await deleteTokenPayload(token);
+    if (!deleteTokenResult) {
+      // TODO is this a critical error? Or can we just log and roll with it?
+      throw new Error('Could not delete token')
+    }
+
+    await sendMail({
+      to: email,
+      subject: "Welcome to LyfeSchedule!",
+      text: `Welcome to LyfeSchedule!! Thanks for your interest in my little productivity app 😁
+
+      Please remember that this app is somewhere between alpha and beta and is being actively developed. I'm accepting any and all feedback at this time.
+
+      TODO info about feedback/reporting bugs
+
+      TODO link to docs/guide/manual
+      
+      You can now sign in and start using it immediately! ${BASE_URL}
+      
+      💚 Ben`,
+    });
+    new SuccessResponse().send(res);
+  } catch (maybeError) {
+    // TODO log error
+    internalErrorResponse.send(res);
+  }
+}
+
+async function operateOnUsers(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -233,6 +361,12 @@ async function operateOnTasks(
     case 'set-new-password':
       await setNewPassword(req, res);
       break;
+    case 'send-invitation':
+      await sendInvitation(req, res);
+      break;
+    case 'register-from-invitation':
+      await registerFromInvitation(req, res);
+      break;
     default:
       new ErrorResponse({
         status: 400,
@@ -253,7 +387,7 @@ export default async function handler(
       // TODO register new user?
       break;
     case 'PUT':
-      await operateOnTasks(req, res);
+      await operateOnUsers(req, res);
       break;
     default:
       new ErrorResponse({

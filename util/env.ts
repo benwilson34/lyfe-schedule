@@ -1,6 +1,6 @@
 export const DB_URL = process.env.DB_URL!;
 export const DB_NAME = process.env.DB_NAME!;
-// TODO move other defaults here?
+// TODO move other defaults here
 export const TASK_COLLECTION_NAME = process.env.TASK_COLLECTION_NAME;
 export const USER_COLLECTION_NAME = process.env.USER_COLLECTION_NAME;
 export const TOKEN_PAYLOAD_COLLECTION_NAME = process.env.TOKEN_COLLECTION_NAME;
@@ -10,7 +10,9 @@ export const SMTP_PORT = parseInt(process.env.SMTP_PORT!);
 export const SMTP_USER = process.env.SMTP_USER!;
 export const SMTP_PASSWORD = process.env.SMTP_PASSWORD!;
 export const DEFAULT_FROM_EMAIL = process.env.DEFAULT_FROM_EMAIL!;
-export const PASSWORD_RESET_TOKEN_TTL_MINS = parseInt(process.env.PASSWORD_RESET_TOKEN_TTL_MINS || '');
+export const PASSWORD_RESET_TOKEN_TTL_MINS = parseInt(process.env.PASSWORD_RESET_TOKEN_TTL_MINS || '') || (60 * 2); // default to 2 hours
+export const INVITATION_TOKEN_TTL_MINS = parseInt(process.env.INVITATION_TOKEN_TTL_MINS || '') || (60 * 24 * 7); // default to 7 days
+export const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
 
 export function checkForRequiredEnvVars() {
   const requiredEnvVarKeys = [

@@ -12,7 +12,7 @@ export default class ErrorResponse {
     detail,
     error,
   }: {
-    status: 400 | 401 | 404 | 500;
+    status: 400 | 401 | 403 | 404 | 500;
     errorCode: ErrorCode;
     title: string;
     detail: string;
