@@ -57,8 +57,8 @@ export async function getManyTasks(
   // TODO maybe there's a way to do this with an aggregate pipeline?
   if (includeCompleted) {
     const completedFilter = {
+      userId: userOid,
       completedDate: {
-        userId: userOid,
         $gte: dayjs(targetDay).startOf("day").toDate(),
         $lte: adjustedDate,
       },
