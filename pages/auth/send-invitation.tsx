@@ -3,36 +3,22 @@ import { GetServerSideProps } from "next";
 import { getTokenPayload } from "../api/users";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
+import { getToken } from "next-auth/jwt";
+import { ADMIN_USER_ID } from "@/util/env";
 
 export const getServerSideProps = (async (context) => {
-  // TODO check token/fetch payload
-  const { token } = context.query;
-  if (!token || Array.isArray(token)) {
-    // TODO initial error props
-    return { props: {} };
+  // check session token to confirm it's an admin
+  const authToken = await getToken({ req: context.req });
+  if (!authToken) {
+    // shouldn't be able to get here
+    return { props: { isAdmin: false } };
   }
-
-  const tokenPayload = await getTokenPayload(token, "send-invitation");
-  if (!tokenPayload) {
-    // TODO handle invalid/expired token
-    return { props: {} };
-  }
-  // TODO should check if invitee email already exists here too?
-
-  return {
-    props: {
-      tokenPayload,
-    },
-  };
+  const userId = authToken.sub!;
+  return { props: { isAdmin: ADMIN_USER_ID && userId === ADMIN_USER_ID } };
 }) satisfies GetServerSideProps;
 
-export default function AcceptInvitationPage({
-  tokenPayload,
-}: {
-  tokenPayload?: TokenPayloadDto;
-}) {
-  const [password1, setPassword1] = useState("");
-  const [password2, setPassword2] = useState("");
+export default function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
+  const [email, setEmail] = useState("");
   const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,16 +27,21 @@ export default function AcceptInvitationPage({
     isError: boolean;
   };
   const [majorMessage, setMajorMessage] = useState<MajorMessage | null>(
-    tokenPayload
+    isAdmin
       ? null
       : {
+          // TODO should just redirect instead of displaying a message?
           body: (
             <div className="flex flex-col justify-center">
               <div className="text-center">
-                The token is invalid or expired. Try clicking the link in the
-                email again and if that does not work, reach out to whoever
-                invited you.
+                You are not authorized to view this page.
               </div>
+              <button
+                className="rounded-md bg-red-200"
+                onClick={() => (window.location.href = "/")}
+              >
+                Return
+              </button>
             </div>
           ),
           isError: true,
@@ -62,16 +53,7 @@ export default function AcceptInvitationPage({
     if (isLoading) return;
     try {
       setFormErrorMessage(null);
-      // check that password1 meets requirements
-      if (password1.length < 8) {
-        setFormErrorMessage("Password needs to be at least 8 characters long.");
-        return;
-      }
-      // check that password1 matches password2
-      if (password1 !== password2) {
-        setFormErrorMessage("Passwords do not match.");
-        return;
-      }
+      // TODO validate email
       setIsLoading(true);
 
       const result = await fetch(`/api/users`, {
@@ -80,9 +62,8 @@ export default function AcceptInvitationPage({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          operation: "register-from-invitation",
-          token: tokenPayload!.token,
-          password: password1,
+          operation: "send-invitation",
+          inviteeEmail: email,
         }),
       });
       if (result.status !== 200) {
@@ -93,12 +74,12 @@ export default function AcceptInvitationPage({
       setMajorMessage({
         body: (
           <>
-            <div>Your password has been successfully set!</div>
+            <div>An invitation has been sent to {email}!</div>
             <button
               className="rounded-md bg-green-200"
-              onClick={() => (window.location.href = "/auth/sign-in")}
+              onClick={() => (window.location.href = "/")}
             >
-              Sign in
+              Return
             </button>
           </>
         ),
@@ -114,8 +95,6 @@ export default function AcceptInvitationPage({
   const renderForm = () => (
     // <form className="space-y-6" action="#" method="POST">
     <div className="space-y-6">
-      <div>Set your password to get started!</div>
-
       <div>
         <label
           htmlFor="email"
@@ -130,54 +109,8 @@ export default function AcceptInvitationPage({
             type="email"
             autoComplete="email"
             className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            value={tokenPayload!.payload.userEmail}
-            readOnly
-            disabled
-          />
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between">
-          <label
-            htmlFor="password1"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Password
-          </label>
-        </div>
-        <div className="mt-2">
-          <input
-            id="password1"
-            name="password1"
-            type="password"
-            autoComplete="current-password"
-            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            value={password1}
-            onChange={(e) => setPassword1(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between">
-          <label
-            htmlFor="password2"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Password again
-          </label>
-        </div>
-        <div className="mt-2">
-          <input
-            id="password2"
-            name="password2"
-            type="password"
-            autoComplete="current-password"
-            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            value={password2}
-            onChange={(e) => setPassword2(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             disabled={isLoading}
           />
         </div>
@@ -189,7 +122,7 @@ export default function AcceptInvitationPage({
           onClick={handleSubmitForm}
           disabled={isLoading}
         >
-          Start using LyfeSchedule
+          Send invitation
         </button>
       </div>
 
@@ -216,7 +149,7 @@ export default function AcceptInvitationPage({
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
           <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-            Accept Invitation
+            Send Invitation
           </h2>
         </div>
 

@@ -15,6 +15,7 @@ import {
   faTags,
   faArrowRightFromBracket,
   faGear,
+  faPaperPlane,
 } from "@fortawesome/free-solid-svg-icons";
 import { EditTaskModal } from "@/components/editTaskModal";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
@@ -40,6 +41,8 @@ import TaskCard from "@/components/TaskCard";
 import { CalendarPickerModal } from "@/components/CalendarPickerModal";
 import { getLastPostponeUntilDate } from "@/util/task";
 import { PulseLoader } from "react-spinners";
+import { ADMIN_USER_ID } from "@/util/env";
+import { GetServerSideProps } from "next";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
@@ -54,29 +57,37 @@ function dtoTaskToTask(taskDto: TaskDto): Task {
   } as Task;
 }
 
-export async function getServerSideProps(context: any) {
+export const getServerSideProps = (async (context: any) => {
   // TODO this would be better as a util function
   // auth
   const token = await getToken({ req: context.req });
   if (!token) {
     // shouldn't be possible to get to this point
     console.error(`Error initializing: authentication error!`);
-    return;
+    return { props: {} };
   }
   const userId = token.sub!;
 
   const today = new Date();
+  const isAdmin = ADMIN_USER_ID && userId === ADMIN_USER_ID;
   const initTasks: TaskDto[] = (await getTasksForDay(userId, today)).map(
     taskDaoToDto
   );
   return {
     props: {
       initTasks,
+      isAdmin,
     },
   };
-}
+}) satisfies GetServerSideProps;
 
-export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
+export default function Home({
+  initTasks,
+  isAdmin,
+}: {
+  initTasks: TaskDto[];
+  isAdmin: boolean;
+}) {
   const [selectedDayTasks, setSelectedDayTasks] = useState(
     initTasks.map(dtoTaskToTask) as Task[]
   );
@@ -171,7 +182,6 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
     };
     fetchData();
   }, [shownDateRange]);
-
 
   const handleSelectedDayChange = async (date: Date) => {
     try {
@@ -558,6 +568,17 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
               </div>
             </div>
             <div className="footer">
+              {isAdmin && (
+                <Link href="/auth/send-invitation">
+                  <div className="cursor-pointer hover:bg-gray-500/25">
+                    <FontAwesomeIcon
+                      icon={faPaperPlane}
+                      className="mr-2"
+                    ></FontAwesomeIcon>
+                    invite new user
+                  </div>
+                </Link>
+              )}
               <Link href="/api/auth/signout">
                 <div className="cursor-pointer hover:bg-gray-500/25">
                   <FontAwesomeIcon
@@ -624,7 +645,7 @@ export default function Home({ initTasks }: { initTasks: TaskDto[] }) {
             </div>
             {isDayTasksLoading ? (
               // TODO take tailwind classes instead
-              <PulseLoader color="#d5dedb" className="mt-4"/>
+              <PulseLoader color="#d5dedb" className="mt-4" />
             ) : (
               selectedDayTasks?.map((task) => (
                 <TaskCard
