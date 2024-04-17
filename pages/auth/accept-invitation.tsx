@@ -1,8 +1,7 @@
 import { TokenPayloadDto } from "@/types/tokenPayload.dto";
 import { GetServerSideProps } from "next";
 import { getTokenPayload } from "../api/users";
-import { ReactFragment, useState } from "react";
-import { delay } from "@/util/delay";
+import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 
 export const getServerSideProps = (async (context) => {
@@ -13,11 +12,12 @@ export const getServerSideProps = (async (context) => {
     return { props: {} };
   }
 
-  const tokenPayload = await getTokenPayload(token, 'request-password-reset');
+  const tokenPayload = await getTokenPayload(token, 'send-invitation');
   if (!tokenPayload) {
     // TODO handle invalid/expired token
     return { props: {} };
   }
+  // TODO should check if invitee email already exists here too?
 
   return {
     props: {
@@ -26,7 +26,7 @@ export const getServerSideProps = (async (context) => {
   };
 }) satisfies GetServerSideProps;
 
-export default function ResetPasswordPage({
+export default function AcceptInvitationPage({
   tokenPayload,
 }: {
   tokenPayload?: TokenPayloadDto;
@@ -80,7 +80,7 @@ export default function ResetPasswordPage({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          operation: "set-new-password",
+          operation: "register-from-invitation",
           token: tokenPayload!.token,
           password: password1,
         }),
@@ -94,7 +94,7 @@ export default function ResetPasswordPage({
         body: (
           <>
             <div>
-              Your password has been successfully reset!
+              Your password has been successfully set!
             </div>
             <button 
               className="rounded-md bg-green-200"
@@ -114,6 +114,10 @@ export default function ResetPasswordPage({
   const renderForm = () => (
     // <form className="space-y-6" action="#" method="POST">
     <div className="space-y-6">
+      <div>
+        Set your password to get started!
+      </div>
+
       <div>
         <label
           htmlFor="email"
@@ -141,7 +145,7 @@ export default function ResetPasswordPage({
             htmlFor="password1"
             className="block text-sm font-medium leading-6 text-gray-900"
           >
-            New password
+            Password
           </label>
         </div>
         <div className="mt-2">
@@ -164,7 +168,7 @@ export default function ResetPasswordPage({
             htmlFor="password2"
             className="block text-sm font-medium leading-6 text-gray-900"
           >
-            New password again
+            Password again
           </label>
         </div>
         <div className="mt-2">
@@ -187,7 +191,7 @@ export default function ResetPasswordPage({
           onClick={handleSubmitForm}
           disabled={isLoading}
         >
-          Submit
+          Start using LyfeSchedule
         </button>
       </div>
 
@@ -214,7 +218,7 @@ export default function ResetPasswordPage({
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
           <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-            Reset Password
+            Accept Invitation
           </h2>
         </div>
 

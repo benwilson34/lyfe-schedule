@@ -1,7 +1,3 @@
-// TODO this isn't really needed anymore until we support registration or other user operations
-
-
-
 import type { NextApiRequest, NextApiResponse } from "next";
 import argon2 from "argon2";
 import { randomBytes } from "crypto";
@@ -15,7 +11,7 @@ import { sendMail } from "@/services/email.service";
 import { ADMIN_USER_ID, BASE_URL, INVITATION_TOKEN_TTL_MINS, PASSWORD_RESET_TOKEN_TTL_MINS } from "@/util/env";
 import { formatFriendlyFullDate } from "@/util/format";
 import { TokenPayloadDao, tokenPayloadDaoToDto } from "@/types/tokenPayload.dao";
-import { TokenPayloadDto } from "@/types/tokenPayload.dto";
+import { TokenPayloadAction, TokenPayloadDto } from "@/types/tokenPayload.dto";
 import { getToken } from "next-auth/jwt";
 
 
@@ -90,6 +86,7 @@ async function requestResetPassword(
   const expiresDate = dayjs().add(PASSWORD_RESET_TOKEN_TTL_MINS, 'minutes');
   const insertedId = await addTokenPayload({
     token,
+    action: 'request-password-reset',
     expiresDate: expiresDate.toDate(),
     payload: JSON.stringify({ 
       userId: foundUser._id!,
@@ -120,19 +117,16 @@ function generateToken() {
 }
 
 // TODO move to different module
-export async function getTokenPayload(token: string, doesConvertToDto: boolean = true) {
+export async function getTokenPayload(token: string, action: TokenPayloadAction) {
   const tokenPayload = await getTokenPayloadByToken(token);
   if (!tokenPayload) {
     return null;
   }
   const isExpired = tokenPayload && dayjs().isAfter(tokenPayload.expiresDate);
-  if (isExpired) {
+  if (isExpired || tokenPayload.action !== action) {
     return null;
   }
-  if (doesConvertToDto) {
-    return tokenPayloadDaoToDto(tokenPayload);
-  }
-  return tokenPayload;
+  return tokenPayloadDaoToDto(tokenPayload);
 }
 
 async function checkToken(
@@ -140,7 +134,7 @@ async function checkToken(
   res: NextApiResponse
 ) {
   // TODO wrap with try-catch
-  const { token } = req.body;
+  const { token, tokenAction } = req.body;
   // TODO validate
   const invalidFieldsResponse = new ErrorResponse({
     status: 400,
@@ -148,16 +142,17 @@ async function checkToken(
     title: 'Invalid token',
     detail: `The token was either not supplied or not valid.`,
   });
-  if (!token) {
+  if (!token || !tokenAction) {
     invalidFieldsResponse.send(res);
     return;
   }
-  const tokenPayload = await getTokenPayload(token);
+  const tokenPayload = await getTokenPayload(token, tokenAction);
   if (!tokenPayload) {
     invalidFieldsResponse.send(res);
     return;
   }
   new SuccessResponse({ data: {
+    // is it safe to send the whole object?
     ...tokenPayload,
   } }).send(res);
 }
@@ -178,7 +173,7 @@ async function setNewPassword(
     }).send(res);
     return;
   }
-  const tokenPayload = await getTokenPayload(token) as TokenPayloadDto | null;
+  const tokenPayload = await getTokenPayload(token, 'request-password-reset');
   if (!tokenPayload) {
     new ErrorResponse({
       status: 400,
@@ -221,7 +216,6 @@ async function sendInvitation(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
     const userId = authToken.sub!;
-    console.log('>> userId', userId);
     
     // check session token to confirm it's an admin
     if (!ADMIN_USER_ID || userId !== ADMIN_USER_ID) {
@@ -251,6 +245,7 @@ async function sendInvitation(req: NextApiRequest, res: NextApiResponse) {
     const expiresDate = dayjs().add(INVITATION_TOKEN_TTL_MINS, 'minutes');
     const insertedId = await addTokenPayload({
       token,
+      action: 'send-invitation',
       expiresDate: expiresDate.toDate(),
       payload: JSON.stringify({ userEmail: inviteeEmail }),
     });
@@ -266,7 +261,7 @@ async function sendInvitation(req: NextApiRequest, res: NextApiResponse) {
 
       This invite code will be valid until ${formatFriendlyFullDate(expiresDate)}.
       
-      Click here to activate your account: ${BASE_URL}/auth/register?token=${token}`,
+      Click here to activate your account: ${BASE_URL}/auth/accept-invitation?token=${token}`,
     });
     new SuccessResponse().send(res);
   } catch (maybeError: any) {
@@ -288,7 +283,7 @@ async function registerFromInvitation(req: NextApiRequest, res: NextApiResponse)
       }).send(res);
       return;
     }
-    const tokenPayload = await getTokenPayload(token) as TokenPayloadDto | null;
+    const tokenPayload = await getTokenPayload(token, 'send-invitation');
     if (!tokenPayload) {
       new ErrorResponse({
         status: 400,
@@ -299,6 +294,17 @@ async function registerFromInvitation(req: NextApiRequest, res: NextApiResponse)
       return;
     }
     const { userEmail: email } = tokenPayload.payload;
+    const existingUser = await getUserByEmail(email);
+    if (existingUser) {
+      new ErrorResponse({
+        status: 400,
+        errorCode: 'invalidFields',
+        title: 'Could not register new user: email already in use',
+        detail: `A user with email "${email}" could not be registered because that email is already in use by another user. This most likely means the user was invited multiple times by accident.`,
+      }).send(res);
+      return;
+    }
+
     // insert user
     const hashedPassword = await hashPassword(password);
     const insertedId = await addUser({ email, hashedPassword });
