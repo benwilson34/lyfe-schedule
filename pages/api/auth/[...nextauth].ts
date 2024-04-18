@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import argon2 from 'argon2';
 import { getUserByEmail } from "@/services/mongo.service";
 import { userDaoToDto } from "@/types/user.dao";
+import { customAuthPages } from "@/config/customAuthPages";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -39,9 +40,7 @@ export const authOptions: NextAuthOptions = {
       }
     }),
   ],
-  pages: {
-    signIn: '/auth/sign-in',
-  },
+  pages: customAuthPages,
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60,

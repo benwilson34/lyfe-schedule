@@ -1,16 +1,40 @@
-// by default we'll secure all pages
 // see https://next-auth.js.org/configuration/nextjs#middleware
-// export { default } from 'next-auth/middleware';
 
+import { getToken } from "next-auth/jwt";
 import { withAuth } from "next-auth/middleware";
+import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
+import { customAuthPages } from "./config/customAuthPages";
 
-export default withAuth({
-  // TODO this _has_ to be the same as in `pages/api/auth/[...nextauth].ts`, so maybe it should be in its own module?
-  // see https://github.com/nextauthjs/next-auth/discussions/4136#discussioncomment-2314117
-  pages: {
-    signIn: '/auth/sign-in',
+export default async function middleware(
+  req: NextRequest,
+  event: NextFetchEvent
+) {
+  const token = await getToken({ req });
+  const isAuthenticated = !!token;
+
+  // prevent visiting sign-in page if already signed in
+  // see https://stackoverflow.com/a/76178353
+  if (
+    req.nextUrl.pathname.startsWith(customAuthPages.signIn) &&
+    isAuthenticated
+  ) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
-});
+
+  // don't run on `/auth` pages
+  if (req.nextUrl.pathname.startsWith('/auth')) {
+    console.log(req.nextUrl.pathname);
+    console.log('about to allow auth page'); // TODO remove
+    return; // this ok?
+  }
+
+  const authMiddleware = withAuth({
+    pages: customAuthPages,
+  });
+
+  // @ts-expect-error
+  return authMiddleware(req, event);
+}
 
 export const config = {
   matcher: [
@@ -22,6 +46,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|auth|_next/static|_next/image|favicon.ico).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };
