@@ -1,0 +1,40 @@
+<!-- <mjml> and <mj-body> will be stripped when <mj-include> is used -->
+<mjml>
+  <mj-body>
+
+    <mj-column>
+      <mj-text>
+        <p>
+          Welcome to LyfeSchedule!! Thanks for your interest in my little productivity app 😁
+        </p>
+
+        <p>
+          Please remember that this app is somewhere between alpha and beta and is being actively developed. I'm accepting any and all feedback at this time.
+        </p>
+
+        <p>
+          TODO info about feedback/reporting bugs
+        </p>
+
+        <p>
+          TODO link to docs/guide/manual
+        </p>
+      
+        <p>
+          You can now sign in and start using it immediately!
+        </p>
+      </mj-text>
+
+      <mj-button mj-class="button" href="{{signInLink}}">
+        Sign in
+      </mj-button>
+
+      <mj-text>
+        <p>
+          💚 Ben
+        </p>
+      </mj-text>
+    </mj-column>
+
+  </mj-body>
+</mjml>

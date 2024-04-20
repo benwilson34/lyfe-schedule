@@ -16,16 +16,20 @@
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@headlessui/react": "^1.7.14",
     "@tailwindcss/forms": "^0.5.7",
+    "@types/mjml": "^4.7.4",
     "@types/node": "^20.2.0",
     "@types/nodemailer": "^6.4.14",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.1",
     "argon2": "^0.31.2",
     "autoprefixer": "10.4.14",
+    "copy-webpack-plugin": "^12.0.2",
     "dayjs": "^1.11.7",
     "eslint": "8.39.0",
     "eslint-config-next": "13.3.1",
+    "handlebars": "^4.7.8",
     "lodash": "^4.17.21",
+    "mjml": "^4.15.3",
     "mongodb": "^5.5.0",
     "next": "13.3.1",
     "next-auth": "^4.24.5",
@@ -38,6 +42,7 @@
     "react-resizable-panels": "^1.0.8",
     "react-spinners": "^0.13.8",
     "tailwindcss": "3.3.2",
-    "typescript": "5.0.4"
+    "typescript": "5.0.4",
+    "webpack": "^5.91.0"
   }
 }

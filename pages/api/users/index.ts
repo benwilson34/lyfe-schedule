@@ -18,7 +18,12 @@ import {
   updateUser,
 } from "@/services/mongo.service";
 import { userDaoToDto } from "@/types/user.dao";
-import { sendMail } from "@/services/email.service";
+import {
+  sendInvitationEmail,
+  sendPasswordResetConfirmationEmail,
+  sendPasswordResetEmail,
+  sendWelcomeEmail,
+} from "@/services/email.service";
 import {
   ADMIN_USER_ID,
   BASE_URL,
@@ -115,16 +120,12 @@ async function requestResetPassword(req: NextApiRequest, res: NextApiResponse) {
     // TODO should invalidate previous codes here?
 
     console.log("about to send email..."); // TODO remove
-    await sendMail({
-      to: email,
-      subject: "Password reset request",
-      text: `A password reset has been requested for ${email}. If you did not request this, feel free to ignore this email.
-
-    DO NOT forward this email or send the link to anyone. This link will be valid until ${formatFriendlyFullDate(
-      expiresDate
-    )}.
-    
-    Click here to reset your password: ${BASE_URL}/auth/reset-password?token=${token}`,
+    const expiresDateString = formatFriendlyFullDate(expiresDate);
+    const resetPasswordLink = `${BASE_URL}/auth/reset-password?token=${token}`;
+    await sendPasswordResetEmail(email, {
+      email,
+      expiresDate: expiresDateString,
+      resetPasswordLink,
     });
     new SuccessResponse().send(res);
   } catch (maybeError) {
@@ -221,16 +222,13 @@ async function setNewPassword(req: NextApiRequest, res: NextApiResponse) {
       internalErrorResponse.send(res);
       return;
     }
-    await sendMail({
-      to: userEmail,
-      subject: "Your password was reset",
-      text: `This is a confirmation that the password for ${userEmail} was successfully reset at ${formatFriendlyFullDate(
-        dayjs()
-      )}.
-    
-    If you didn't reset your password, please reset it again here: ${BASE_URL}/auth/request-reset-password?email=${encodeURIComponent(
-        userEmail
-      )}`,
+    const requestResetPasswordLink = `${BASE_URL}/auth/request-reset-password?email=${encodeURIComponent(
+      userEmail
+    )}`;
+    await sendPasswordResetConfirmationEmail(userEmail, {
+      email: userEmail,
+      actionDate: formatFriendlyFullDate(dayjs()),
+      requestResetPasswordLink,
     });
     new SuccessResponse().send(res);
   } catch (maybeError: any) {
@@ -286,16 +284,10 @@ async function sendInvitation(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
 
-    await sendMail({
-      to: inviteeEmail,
-      subject: "You're invited to use LyfeSchedule!",
-      text: `Hello! You've been invited to LyfeSchedule, the todo app for people who get things done eventually™.
-
-      This invite code will be valid until ${formatFriendlyFullDate(
-        expiresDate
-      )}.
-      
-      Click here to activate your account: ${BASE_URL}/auth/accept-invitation?token=${token}`,
+    const acceptInvitationLink = `${BASE_URL}/auth/accept-invitation?token=${token}`;
+    await sendInvitationEmail(inviteeEmail, {
+      expiresDate: formatFriendlyFullDate(expiresDate),
+      acceptInvitationLink,
     });
     new SuccessResponse().send(res);
   } catch (maybeError: any) {
@@ -355,20 +347,8 @@ async function registerFromInvitation(
       throw new Error("Could not delete token");
     }
 
-    await sendMail({
-      to: email,
-      subject: "Welcome to LyfeSchedule!",
-      text: `Welcome to LyfeSchedule!! Thanks for your interest in my little productivity app 😁
-
-      Please remember that this app is somewhere between alpha and beta and is being actively developed. I'm accepting any and all feedback at this time.
-
-      TODO info about feedback/reporting bugs
-
-      TODO link to docs/guide/manual
-      
-      You can now sign in and start using it immediately! ${BASE_URL}
-      
-      💚 Ben`,
+    await sendWelcomeEmail(email, {
+      signInLink: BASE_URL,
     });
     new SuccessResponse().send(res);
   } catch (maybeError) {
@@ -424,8 +404,8 @@ export default async function handler(
 ) {
   switch (req.method?.toUpperCase()) {
     // case "POST":
-      // TODO register new user?
-      // break;
+    // TODO register new user?
+    // break;
     case "PUT":
       await operateOnUsers(req, res);
       break;

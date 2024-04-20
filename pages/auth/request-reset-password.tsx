@@ -5,7 +5,7 @@ import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 
 export const getServerSideProps = (async (context) => {
-  const { email: initialEmail } = context.query;
+  const { email: initialEmail = null } = context.query;
   return {
     props: {
       initialEmail,
@@ -16,7 +16,7 @@ export const getServerSideProps = (async (context) => {
 export default function RequestResetPassword({
   initialEmail,
 }: {
-  initialEmail: string;
+  initialEmail: string|null;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState(initialEmail || "");
