@@ -1,9 +1,9 @@
 <mjml>
   <mj-head>
-    <mj-font name="Exo 2" href="https://fonts.googleapis.com/css2?family=Exo+2&display=swap" />
+    <mj-font name="Exo 2" href="https://fonts.googleapis.com/css2?family=Exo+2" />
     <mj-attributes>
       <mj-class name="button" border-radius="24px" font-weight="bold" background-color="#57cf7e" color="#337A4A" />
-      <mj-all font-family="'Exo 2', serif" font-size="16px" color="#0061CE" />
+      <mj-all font-family="'Exo 2', helvetica" font-size="16px" color="#0061CE" />
     </mj-attributes>
   </mj-head>
   <mj-body background-color="#f5f3de">

@@ -13,6 +13,13 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { basename, join } from "path";
 import mjmlToHtml from "mjml";
 import Handlebars from "handlebars";
+import {
+  XmlDocument,
+  XmlElement,
+  XmlNode,
+  XmlText,
+  parseXml,
+} from "@rgrove/parse-xml";
 
 const EMAIL_TEMPLATE_DIR = join(__PROJECT_BUILD_DIR, "server/email-templates");
 const MAIN_TEMPLATE_FILE_NAME = "main-template.mjml";
@@ -34,13 +41,42 @@ export async function sendEmail(options: MailOptions) {
   return transport.sendMail(options);
 }
 
+function extractPlaintextFromMjml(html: string) {
+  const xml = parseXml(html, {
+    preserveDocumentType: true,
+  });
+
+  let nodeStack: (
+    | XmlDocument["children"][number]
+    | XmlElement["children"][number]
+  )[] = [...xml.children];
+  let texts = ["LyfeSchedule"];
+  while (nodeStack.length > 0) {
+    const node = nodeStack.pop()!;
+    if (node.type === "text") {
+      const strippedText = (node as XmlText).text.replaceAll(/\n/gi, " ").trim();
+      if (strippedText.length > 0) {
+        texts.push(strippedText);
+      }
+    }
+    if (node.type === "element" && (node as XmlElement).name === "mj-button") {
+      texts.push((node as XmlElement).attributes.href);
+    }
+    if ((node as XmlElement).children) {
+      nodeStack = nodeStack.concat((node as XmlElement).children.reverse());
+    }
+  }
+  texts.push("Unsubscribe:");
+  return texts.join("\n\n");
+}
+
 function renderEmailTemplate(
   bodyFileName: string,
-  values: Record<string, string>,
-  plaintext: string
+  values: Record<string, string>
 ) {
   // It would also be nice to generate types or something from the Handlebars variables mentioned.
-  // maybe designing around this package would be easier? https://github.com/oscaroox/next-mjml
+  //   Maybe something mentioned here: https://github.com/handlebars-lang/handlebars.js/issues/1207
+  // Maybe designing around this package would be easier? https://github.com/oscaroox/next-mjml
 
   const bodyFilePath = join(EMAIL_TEMPLATE_DIR, bodyFileName);
   if (!existsSync(bodyFilePath)) {
@@ -65,14 +101,14 @@ function renderEmailTemplate(
   // TODO cache this template? Maybe with `Handlebars.precompile`?
   const subbedHtml = subbedHtmlTemplate(values);
 
-  // const outputFilePath = join(EMAIL_TEMPLATE_DIR, basename(bodyFileName) + '.html');
-  // writeFileSync(outputFilePath, subbedHtml);
-  // console.log(`Just wrote file out to ${outputFilePath}`);
-
-  const subbedPlaintextTemplate = Handlebars.compile(plaintext);
+  const bodyMjml = readFileSync(
+    join(EMAIL_TEMPLATE_DIR, bodyFileName),
+    "utf-8"
+  );
+  const generatedPlaintext = extractPlaintextFromMjml(bodyMjml);
+  const subbedPlaintextTemplate = Handlebars.compile(generatedPlaintext);
   const subbedPlaintext = subbedPlaintextTemplate(values);
 
-  // TODO extract plaintext or load separate plaintext file
   return {
     html: subbedHtml,
     text: subbedPlaintext,
@@ -84,16 +120,8 @@ export async function sendPasswordResetEmail(
   values: { email: string; expiresDate: string; resetPasswordLink: string }
 ) {
   // TODO validate values? Or is type checking enough?
-  const renderedEmail = renderEmailTemplate(
-    "password-reset.mjml",
-    values,
-    `
-A password reset has been requested for {{email}}. If you did not request this, feel free to ignore this email.
+  const renderedEmail = renderEmailTemplate("password-reset.mjml", values);
 
-DO NOT forward this email or send the link to anyone. This link will be valid until {{expiresDate}}.
-  
-Click here to reset your password: {{resetPasswordLink}}`
-  );
   return sendEmail({
     to: toEmail,
     subject: "Password reset request",
@@ -111,11 +139,7 @@ export async function sendPasswordResetConfirmationEmail(
 ) {
   const renderedEmail = renderEmailTemplate(
     "password-reset-confirmation.mjml",
-    values,
-    `
-This is a confirmation that the password for {{email}} was successfully reset at {{actionDate}}.
-
-If you didn't just reset your password, please reset it again by clicking here: {{requestResetPasswordLink}}`
+    values
   );
   return sendEmail({
     to: toEmail,
@@ -128,16 +152,7 @@ export async function sendInvitationEmail(
   toEmail: string,
   values: { expiresDate: string; acceptInvitationLink: string }
 ) {
-  const renderedEmail = renderEmailTemplate(
-    "invitation.mjml",
-    values,
-    `
-Hello! You've been invited to LyfeSchedule, the todo app for people who get things done eventually™.
-
-This invite code will be valid until {{expiresDate}}.
-
-Click here to activate your account: {{acceptInvitationLink}}`
-  );
+  const renderedEmail = renderEmailTemplate("invitation.mjml", values);
   return sendEmail({
     to: toEmail,
     subject: "You're invited to use LyfeSchedule!",
@@ -149,22 +164,7 @@ export async function sendWelcomeEmail(
   toEmail: string,
   values: { signInLink: string }
 ) {
-  const renderedEmail = renderEmailTemplate(
-    "welcome.mjml",
-    values,
-    `
-Welcome to LyfeSchedule!! Thanks for your interest in my little productivity app 😁
-
-Please remember that this app is somewhere between alpha and beta and is being actively developed. I'm accepting any and all feedback at this time.
-
-TODO info about feedback/reporting bugs
-
-TODO link to docs/guide/manual
-
-You can now sign in and start using it immediately! {{signInLink}}
-
-💚 Ben`
-  );
+  const renderedEmail = renderEmailTemplate("welcome.mjml", values);
   return sendEmail({
     to: toEmail,
     subject: "Welcome to LyfeSchedule!",
