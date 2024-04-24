@@ -16,6 +16,7 @@ import {
   faArrowRightFromBracket,
   faGear,
   faPaperPlane,
+  faBars,
 } from "@fortawesome/free-solid-svg-icons";
 import { EditTaskModal } from "@/components/editTaskModal";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
@@ -43,6 +44,7 @@ import { getLastPostponeUntilDate } from "@/util/task";
 import { PulseLoader } from "react-spinners";
 import { ADMIN_USER_ID } from "@/util/env";
 import { GetServerSideProps } from "next";
+import { faCircleQuestion } from "@fortawesome/free-regular-svg-icons";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
@@ -579,6 +581,17 @@ export default function Home({
                   </div>
                 </Link>
               )}
+              <a
+                href="https://docs.lyfeschedule.com/getting-started.html"
+                target="_blank"
+                className="cursor-pointer hover:bg-gray-500/25"
+              >
+                <FontAwesomeIcon
+                  icon={faCircleQuestion}
+                  className="mr-2"
+                ></FontAwesomeIcon>
+                need help?
+              </a>
               <Link href="/api/auth/signout">
                 <div className="cursor-pointer hover:bg-gray-500/25">
                   <FontAwesomeIcon
@@ -606,12 +619,21 @@ export default function Home({
 
       <Panel minSize={50} order={2}>
         <div className="max-h-full overflow-auto">
-          <section className="sticky top-2 pl-2 pr-2">
+          <section className="sticky flex justify-between top-2 pl-2 pr-2">
             <FontAwesomeIcon
-              icon={isSidebarVisible ? faArrowLeft : faArrowRight}
+              icon={isSidebarVisible ? faArrowLeft : faBars}
               className="cursor-pointer hover:bg-gray-500/25"
               onClick={toggleSidebar}
             ></FontAwesomeIcon>
+            <a
+              href="https://docs.lyfeschedule.com/getting-started.html"
+              target="_blank"
+            >
+              <FontAwesomeIcon
+                icon={faCircleQuestion}
+                className="cursor-pointer hover:bg-gray-500/25"
+              ></FontAwesomeIcon>
+            </a>
           </section>
 
           <section className={`flex flex-col items-center pr-8 pl-8 mb-6`}>
