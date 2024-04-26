@@ -18,6 +18,8 @@ import { useEffect } from "react";
 import SettingsContextProvider, {
   useSettingsContext,
 } from "@/contexts/settings-context";
+import AuthContextProvider, { useAuthContext } from "@/contexts/auth-context";
+import { decryptJwt } from "@/services/api.service";
 
 const exo2 = Exo_2({ subsets: ["latin"] });
 
@@ -152,19 +154,51 @@ function Modals() {
   );
 }
 
+// I think could do it this way with `getInitialProps`, but the details are annoying me so I'm just
+//   going to make an API call on first load for now 🤷‍♂️
+//   see: https://nextjs.org/docs/pages/building-your-application/routing/custom-app#getinitialprops-with-app
+// export const getServerSideProps = (async (context: any) => {
+//   // TODO this would be better as a util function
+//   // auth
+//   const token = await getToken({ req: context.req });
+//   if (!token) {
+//     // shouldn't be possible to get to this point
+//     console.error(`Error initializing: authentication error!`);
+//     return { props: {} };
+//   }
+//   const userId = token.sub!;
+
+//   const isAdmin = ADMIN_USER_ID && userId === ADMIN_USER_ID;
+//   return {
+//     props: {
+//       isAdmin,
+//     },
+//   };
+// }) satisfies GetServerSideProps;
+
 // there's probably a better way
 function Init() {
   const { setMonthInfoSettings, setDayInfoSettings } = useSettingsContext();
+  const { setIsAdmin } = useAuthContext();
 
+  // set application-wide state only on first load
   useEffect(() => {
-    const savedSettings = JSON.parse(
-      localStorage.getItem("settings") || "null"
-    );
-    if (savedSettings) {
-      setMonthInfoSettings(savedSettings.monthInfoSettings);
-      setDayInfoSettings(savedSettings.dayInfoSettings);
+    async function load() {
+      // auth payload
+      const { isAdmin } = await decryptJwt();
+      setIsAdmin(isAdmin);
+      
+      // user-configured settings
+      const savedSettings = JSON.parse(
+        localStorage.getItem("settings") || "null"
+      );
+      if (savedSettings) {
+        setMonthInfoSettings(savedSettings.monthInfoSettings);
+        setDayInfoSettings(savedSettings.dayInfoSettings);
+      }
     }
-  }, []); // only read from localStorage on first load
+    load();
+  }, []);
 
   return <></>;
 }
@@ -174,21 +208,26 @@ export default function App({ Component, pageProps }: AppProps) {
     <ModalContextProvider>
       <SidebarContextProvider>
         <SettingsContextProvider>
-          <Init />
+          <AuthContextProvider>
+            <Init />
 
-          <main className={exo2.className}>
-            <PanelGroup direction="horizontal" className={`max-h-screen flex`}>
-              <Sidebar isAdmin={false} />
+            <main className={exo2.className}>
+              <PanelGroup
+                direction="horizontal"
+                className={`max-h-screen flex`}
+              >
+                <Sidebar />
 
-              <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" />
+                <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" />
 
-              <Panel minSize={50} order={2}>
-                <Component {...pageProps} />
-              </Panel>
-            </PanelGroup>
+                <Panel minSize={50} order={2}>
+                  <Component {...pageProps} />
+                </Panel>
+              </PanelGroup>
 
-            <Modals />
-          </main>
+              <Modals />
+            </main>
+          </AuthContextProvider>
         </SettingsContextProvider>
       </SidebarContextProvider>
     </ModalContextProvider>

@@ -3,6 +3,23 @@
 import { TaskDto } from "@/types/task.dto";
 import { Dayjs } from "dayjs";
 
+export async function decryptJwt() {
+  const result = await fetch(`/api/auth/jwt`, {
+    method: "GET",
+    headers: {
+      // the auth header is added automatically?
+      "Content-Type": "application/json",
+    },
+  });
+  if (result.status !== 200) {
+    throw new Error("Failed to decrypt JWT");
+  }
+  const { data } = (await result.json()) as {
+    data: { userId: string; isAdmin: boolean };
+  };
+  return data;
+}
+
 export async function getTasksForDay(day: Dayjs) {
   const result = await fetch(`/api/tasks?targetDay=${day.toISOString()}`, {
     method: "GET",
@@ -56,7 +73,6 @@ export async function completeTask(
   const body = await result.json();
   if (result.status !== 200) {
     throw new Error("Failed to complete task");
-
   }
 }
 

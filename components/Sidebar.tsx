@@ -1,10 +1,3 @@
-import {
-  useCallback,
-  useEffect,
-  SetStateAction,
-  Dispatch,
-} from "react";
-import { getToken } from "next-auth/jwt";
 import { Panel } from "react-resizable-panels";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -16,38 +9,16 @@ import {
   faPaperPlane,
 } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
-import { ADMIN_USER_ID } from "@/util/env";
-import { GetServerSideProps } from "next";
 import { faCircleQuestion } from "@fortawesome/free-regular-svg-icons";
 import { useSidebarContext } from "@/contexts/sidebar-context";
 import { useModalContext } from "@/contexts/modal-context";
+import { useAuthContext } from "@/contexts/auth-context";
 
-// export const getServerSideProps = (async (context: any) => {
-//   // TODO this would be better as a util function
-//   // auth
-//   const token = await getToken({ req: context.req });
-//   if (!token) {
-//     // shouldn't be possible to get to this point
-//     console.error(`Error initializing: authentication error!`);
-//     return { props: {} };
-//   }
-//   const userId = token.sub!;
 
-//   const isAdmin = ADMIN_USER_ID && userId === ADMIN_USER_ID;
-//   return {
-//     props: {
-//       isAdmin,
-//     },
-//   };
-// }) satisfies GetServerSideProps;
-
-export default function Sidebar({
-  isAdmin,
-}: {
-  isAdmin: boolean;
-}) {
+export default function Sidebar() {
   const { isVisible } = useSidebarContext();
-  const { setCurrentModal } = useModalContext(); 
+  const { setCurrentModal } = useModalContext();
+  const { isAdmin } = useAuthContext();
 
   // const toggleSidebar = useCallback(
   //   () => setIsVisible(!isVisible),
