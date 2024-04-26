@@ -38,7 +38,7 @@ export default function SignIn({
       setIsLoading(true);
       // setFormValues({ email: "", password: "" });
 
-      const callbackUrl = "/";
+      const callbackUrl = "/calendar";
 
       const res = await signIn("credentials", {
         redirect: false,

@@ -185,8 +185,12 @@ function Init() {
   useEffect(() => {
     async function load() {
       // auth payload
-      const { isAdmin } = await decryptJwt();
-      setIsAdmin(isAdmin);
+      try {
+        const { isAdmin } = await decryptJwt();
+        setIsAdmin(isAdmin);
+      } catch (maybeError: any) {
+        console.error(maybeError);
+      }
       
       // user-configured settings
       const savedSettings = JSON.parse(

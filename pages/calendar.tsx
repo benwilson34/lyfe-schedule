@@ -80,6 +80,7 @@ export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
   const { showAddEditModal } = useModalContext();
   const { monthInfoSettings, dayInfoSettings } = useSettingsContext();
 
+  // TODO gonna have to check `initTasks` when switching pages I think
   const [selectedDayTasks, setSelectedDayTasks] = useState(
     initTasks.map(dtoTaskToTask) as Task[]
   );
