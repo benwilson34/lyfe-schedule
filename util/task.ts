@@ -66,3 +66,19 @@ export function getLastPostponeUntilDate(task: TaskDao | TaskViewModel): Date | 
     task.actions?.filter((a) => isPostponeAction(a)) as PostponeAction[]
   )?.postponeUntilDate;
 }
+
+// TODO also use on backend (update type to `TaskDao | TaskViewModel`)
+export function isPostponeDateValid(task: TaskViewModel, day: Date) {
+  // Three conditions need to be met:
+  // 1. Is the day after the current date?
+  // 2. Is the day after the task startDate?
+  // 3. If the task has been postponed before, is the day after the last postponeUntilDate?
+  const taskEffectiveDay = dayjs(
+    getLastPostponeUntilDate(task!) || task!.startDate
+  ).startOf("day");
+  const startOfTargetDay = dayjs(day).startOf("day");
+  return (
+    startOfTargetDay.isAfter(dayjs().startOf("day")) &&
+    startOfTargetDay.isAfter(taskEffectiveDay)
+  );
+}

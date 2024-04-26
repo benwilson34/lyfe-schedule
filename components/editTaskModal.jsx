@@ -36,13 +36,13 @@ const Bound = {
   END: "end",
 };
 
-export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartDate } = { initialStartDate: dayjs() }) {
+export function EditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialStartDate }) {
   const isNewTask = useMemo(() => !task, [task]);
   const [title, setTitle] = useState(task?.title || "");
   // TODO handle `useStartTime === true`
-  const [startDate, setStartDate] = useState(task?.startDate || initialStartDate);
+  const [startDate, setStartDate] = useState(task?.startDate || initialStartDate || dayjs());
   // TODO handle `useEndTime === true`
-  const [endDate, setEndDate] = useState(task?.endDate || initialStartDate);
+  const [endDate, setEndDate] = useState(task?.endDate || initialStartDate || dayjs());
   const [rangeDays, setRangeDays] = useState(task?.rangeDays || 0);
   const [isRepeating, setIsRepeating] = useState(!!task?.repeatDays || false);
   const [repeatDays, setRepeatDays] = useState(task?.repeatDays || 1);
@@ -149,7 +149,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartD
       } else {
         throw new Error(`>> error: ${JSON.stringify(body)}`);
       }
-      setTasks((tasks) => [...tasks, taskToAdd]);
+      onAddEdit(taskToAdd, true);
       setIsOpen(false);
       // TODO show some confimation message
     } catch (error) {
@@ -167,8 +167,8 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartD
     repeatDays,
     hasTimeEstimate,
     timeEstimateMins,
-    setTasks,
     setIsOpen,
+    onAddEdit,
   ]);
 
   const onSaveButtonClick = useCallback(async () => {
@@ -201,12 +201,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartD
       } else {
         throw new Error(`>> error: ${JSON.stringify(body)}`);
       }
-      setTasks((tasks) => {
-        return tasks.map((t) => {
-          if (t.id !== task.id) return t;
-          return { ...taskToSave, id: task.id };
-        });
-      });
+      onAddEdit(taskToSave, false);
       setIsOpen(false);
       // TODO show some confimation message
     } catch (error) {
@@ -225,7 +220,7 @@ export function EditTaskModal({ isOpen, setIsOpen, task, setTasks, initialStartD
     hasTimeEstimate,
     timeEstimateMins,
     task,
-    setTasks,
+    onAddEdit,
     setIsOpen,
   ]);
 

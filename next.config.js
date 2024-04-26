@@ -6,6 +6,11 @@ const BUILD_DIR = '.next';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  redirects: async () => [{
+    source: '/',
+    destination: '/calendar',
+    permanent: true,
+  }],
   distDir: BUILD_DIR,
   reactStrictMode: true,
   webpack: (config, options) => {

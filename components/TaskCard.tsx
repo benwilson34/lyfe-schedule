@@ -45,7 +45,7 @@ const formatDateRange = (
 export default function TaskCard({
   task,
   selectedDay,
-  onComplete,
+  onCheckboxClick,
   onCompleteOnAnotherDay,
   onEdit,
   onPostpone,
@@ -54,7 +54,7 @@ export default function TaskCard({
 }: {
   task: Task;
   selectedDay: dayjs.Dayjs;
-  onComplete: Function;
+  onCheckboxClick: Function;
   onCompleteOnAnotherDay: Function;
   onEdit: Function;
   onPostpone: Function;
@@ -92,10 +92,11 @@ export default function TaskCard({
     >
       <div className="flex justify-start items-center">
         <div
+          // TODO style disabled checkbox
           className={`task__checkbox shrink-0 mr-3 cursor-pointer w-4 h-4 rounded-[.25rem] relative`}
           onClick={() => {
             if (isCheckboxDisabled) return;
-            onComplete(id);
+            onCheckboxClick(id);
           }}
         >
           {isCompleted && (
