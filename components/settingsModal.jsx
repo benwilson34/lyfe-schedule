@@ -4,11 +4,8 @@
  * TODO convert to typescript...need to find type definitions somewhere
  */
 
-import { Fragment, useCallback, useRef, useState, useMemo, useEffect } from 'react'
+import { Fragment, useCallback, useRef, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import dayjs from 'dayjs';
-import { calculateRangeDays } from '@/util/task';
-import { assign } from 'lodash';
 import { ConfirmActionModal } from './ConfirmActionModal';
 
 export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthInfoSettings, dayInfoSettings, setDayInfoSettings }) {

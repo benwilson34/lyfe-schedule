@@ -1,6 +1,6 @@
 import type { TaskViewModel as Task } from "@/types/task.viewModel";
 import dayjs, { Dayjs } from "dayjs";
-import TaskOptionsMenu from "./taskOptionsMenu";
+import TaskOptionsMenu from "./TaskOptionsMenu";
 import { formatTimeEstimate } from "@/util/format";
 import { calculatePriority } from "@/util/date";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

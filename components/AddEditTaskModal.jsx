@@ -36,7 +36,7 @@ const Bound = {
   END: "end",
 };
 
-export function EditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialStartDate }) {
+export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialStartDate }) {
   const isNewTask = useMemo(() => !task, [task]);
   const [title, setTitle] = useState(task?.title || "");
   // TODO handle `useStartTime === true`

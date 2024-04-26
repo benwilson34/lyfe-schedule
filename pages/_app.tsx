@@ -8,12 +8,12 @@ import ModalContextProvider, {
 import SidebarContextProvider from "@/contexts/sidebar-context";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import Sidebar from "@/components/Sidebar";
-import { EditTaskModal } from "@/components/editTaskModal";
+import { AddEditTaskModal } from "@/components/AddEditTaskModal";
 import { CalendarPickerModal } from "@/components/CalendarPickerModal";
 import { isPostponeDateValid } from "@/util/task";
 import dayjs from "dayjs";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
-import { SettingsModal } from "@/components/settingsModal";
+import { SettingsModal } from "@/components/SettingsModal";
 import { useEffect } from "react";
 import SettingsContextProvider, {
   useSettingsContext,
@@ -43,7 +43,7 @@ function Modals() {
   return (
     <>
       {currentModal === "edit" && (
-        <EditTaskModal
+        <AddEditTaskModal
           isOpen={true}
           setIsOpen={() => setCurrentModal("none")}
           onAddEdit={onAddEdit}
