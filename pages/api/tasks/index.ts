@@ -17,7 +17,11 @@ import ErrorResponse, {
 } from "@/models/ErrorResponse";
 import SuccessResponse from "@/models/SuccessResponse";
 import dayjs, { Dayjs } from "dayjs";
-import { calculateEndDate, getLastPostponeUntilDate, sortTasks } from "@/util/task";
+import {
+  calculateEndDate,
+  getLastPostponeUntilDate,
+  sortTasks,
+} from "@/util/task";
 import { TaskDao, taskDaoToDto, taskDtoToDao } from "@/types/task.dao";
 import { assign, last } from "lodash";
 import { getToken } from "next-auth/jwt";
@@ -90,13 +94,16 @@ export async function getTasksForDay(
       targetDay,
       includeCompleted: !targetDayIsAfterCurrentDay,
     })
-  ).map((task) =>
-    assign(task, {
-      lastPostponeUntilDate: getLastPostponeUntilDate(task),
-      priority: calculatePriority(task.startDate, task.endDate, dayjs()),
-    })
-  // TODO support other sort methods - or shouldn't we sort on the server side?
-  ).sort(sortTasks);
+  )
+    .map(
+      (task) =>
+        assign(task, {
+          lastPostponeUntilDate: getLastPostponeUntilDate(task),
+          priority: calculatePriority(task.startDate, task.endDate, dayjs()),
+        })
+      // TODO support other sort methods - or shouldn't we sort on the server side?
+    )
+    .sort(sortTasks);
   if (filterOutPostponed) {
     tasks = tasks.filter((task) => {
       if (!task.lastPostponeUntilDate) return true;
@@ -177,30 +184,41 @@ async function getMultipleTasks(req: NextApiRequest, res: NextApiResponse) {
       targetStartDay?: string;
       targetEndDay?: string;
     } = req.query;
-    let dayTasks: Record<string, TaskDao[]> = {};
+
+    const sendMappedDayTasks = (dayTasks: Record<string, TaskDao[]>) => {
+      const dayTasksMapped = Object.fromEntries(
+        Object.entries(dayTasks).map(([day, tasks]) => [
+          day,
+          tasks.map(taskDaoToDto),
+        ])
+      );
+      new SuccessResponse({
+        data: { dayTasks: dayTasksMapped },
+      }).send(res);
+    };
+
+    // handle day-task-type requests
     if (targetDayString) {
       const dayKey = formatDayKey(dayjs(targetDayString));
-      dayTasks[dayKey] = await getTasksForDay(
-        userId,
-        new Date(targetDayString)
-      );
+      sendMappedDayTasks({
+        [dayKey]: await getTasksForDay(userId, new Date(targetDayString)),
+      });
+      return;
     } else if (targetStartDayString && targetEndDayString) {
-      dayTasks = await getTasksForDayRange(
-        userId,
-        new Date(targetStartDayString),
-        new Date(targetEndDayString)
+      sendMappedDayTasks(
+        await getTasksForDayRange(
+          userId,
+          new Date(targetStartDayString),
+          new Date(targetEndDayString)
+        )
       );
+      return;
     }
 
-    const dayTasksMapped = Object.fromEntries(
-      Object.entries(dayTasks).map(([day, tasks]) => [
-        day,
-        tasks.map(taskDaoToDto),
-      ])
-    );
-
+    // handle task-list-type requests
+    const tasks = (await getManyTasks(userId)).map(taskDaoToDto);
     new SuccessResponse({
-      data: { dayTasks: dayTasksMapped },
+      data: { tasks },
     }).send(res);
   } catch (maybeError: any) {
     handleError(maybeError, res);
