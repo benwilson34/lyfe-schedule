@@ -12,6 +12,8 @@ import { assign } from 'lodash';
 import { ConfirmActionModal } from './ConfirmActionModal';
 
 export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthInfoSettings, dayInfoSettings, setDayInfoSettings }) {
+  // TODO just use `useSettingsContext` here instead of using all these props
+
   const [isLoading, setIsLoading] = useState(false);
   const [isShowingDeleteAllModal, setIsShowingDeleteAllModal] = useState(false);
 

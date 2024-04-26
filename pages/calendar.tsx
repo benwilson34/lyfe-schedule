@@ -37,6 +37,7 @@ import {
   getTasksForDayRange,
   postponeTask,
 } from "@/services/api.service";
+import { useSettingsContext } from "@/contexts/settings-context";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
@@ -76,17 +77,12 @@ export const getServerSideProps = (async (context: any) => {
 export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
   const { isVisible: isSidebarVisible, setIsVisible: setIsSidebarVisible } =
     useSidebarContext();
-  const {
-    showAddEditModal,
-    showPostponeToModal,
-    showCompleteOnAnotherDayModal,
-    showDeleteModal,
-  } = useModalContext();
+  const { showAddEditModal } = useModalContext();
+  const { monthInfoSettings, dayInfoSettings } = useSettingsContext();
 
   const [selectedDayTasks, setSelectedDayTasks] = useState(
     initTasks.map(dtoTaskToTask) as Task[]
   );
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedDay, setSelectedDay] = useState<Dayjs>(dayjs());
   const [shownDateRange, setShownDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().startOf("month"),
@@ -94,52 +90,6 @@ export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
   ]);
   const [isDayTasksLoading, setIsDayTasksLoading] = useState(false);
   const [dayTasks, setDayTasks] = useState<Record<string, TaskDto[]>>({});
-
-  const DEFAULT_MONTH_INFO_SETTINGS = {
-    isShowing: true,
-    monthTotalSection: {
-      isTaskCountShowing: true,
-      isTimeEstimateShowing: true,
-    },
-    dailyAverageSection: {
-      isTaskCountShowing: true,
-      isTimeEstimateShowing: true,
-      isTimePercentageShowing: true,
-    },
-  };
-  // user-configurable settings
-  const [monthInfoSettings, setMonthInfoSettings] = useState(
-    DEFAULT_MONTH_INFO_SETTINGS
-  );
-  const DEFAULT_DAY_INFO_SETTINGS = {
-    isShowing: true,
-    dayTotalSection: {
-      // TODO total regardless of completed or not
-    },
-    remainingTaskSection: {
-      isTaskCountShowing: true,
-      isTimeEstimateShowing: true,
-      isTimePercentageShowing: true,
-    },
-    completedTaskSection: {
-      isTaskCountShowing: true,
-      isTimeEstimateShowing: true,
-      isTimePercentageShowing: true,
-    },
-  };
-  const [dayInfoSettings, setDayInfoSettings] = useState(
-    DEFAULT_DAY_INFO_SETTINGS
-  );
-
-  useEffect(() => {
-    const savedSettings = JSON.parse(
-      localStorage.getItem("settings") || "null"
-    );
-    if (savedSettings) {
-      setMonthInfoSettings(savedSettings.monthInfoSettings);
-      setDayInfoSettings(savedSettings.dayInfoSettings);
-    }
-  }, []); // only read from localStorage on first load
 
   useEffect(() => {
     const fetchData = async () => {
@@ -170,105 +120,45 @@ export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
     }
   };
 
-  const completeTaskOnAnotherDay = useCallback(
-    async (completedDate: Date) => {
-      // TODO animate
-      const selectedId = selectedTask!.id;
-      const newTasks = selectedDayTasks.filter(
-        (task) => task.id !== selectedId
-      );
-      setSelectedDayTasks(newTasks);
-      await completeTask(selectedId, completedDate);
-    },
-    [selectedTask, selectedDayTasks, setSelectedDayTasks]
-  );
-
-  const handleCompleteTaskOnAnotherDayOption = async (task: Task) => {
-    setSelectedTask(task);
-    showCompleteOnAnotherDayModal(task, completeTaskOnAnotherDay);
-  };
-
-  const handleCompleteTaskToday = async (completedTaskId: string) => {
-    // TODO animate
-    // accurate completedDate isn't really necessary here
-    const newTasks = selectedDayTasks.map((task) =>
-      task.id === completedTaskId ? { ...task, completedDate: dayjs() } : task
-    );
-    setSelectedDayTasks(newTasks);
-    await completeTask(completedTaskId);
-  };
-
-  const handleCompletedAddEdit = (task: Task, isAdding: boolean) => {
-    if (isAdding) {
-      setSelectedDayTasks((tasks) => [...tasks, task]);
-    } else {
-      setSelectedDayTasks((tasks) =>
-        tasks.map((t) => {
-          if (t.id !== task.id) return t;
-          return { ...task, id: task.id };
-        })
-      );
-    }
+  const afterAddTask = (task: Task) => {
+    setSelectedDayTasks((tasks) => [...tasks, task]);
   };
 
   const handleAddButtonClick = () => {
-    showAddEditModal(null, handleCompletedAddEdit, selectedDay);
+    showAddEditModal(null, afterAddTask, selectedDay);
   };
 
-  const handleEditOption = (task: Task) => {
-    showAddEditModal(task, handleCompletedAddEdit, selectedDay);
-  };
-
-  const handlePostponeTaskOption = async (task: Task, postponeDay: Dayjs) => {
-    try {
-      await postponeTask(task.id, postponeDay);
-      // TODO update state and/or re-fetch task data
-      setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
-    } catch (maybeError: any) {
-      // TODO display some error message
-      console.error(maybeError);
-    }
-  };
-
-  const handleConfirmedPostponeTask = useCallback(
-    async (postponeUntilDate: Date) => {
-      try {
-        // TODO animate
-        const selectedId = selectedTask!.id;
-        setSelectedDayTasks((tasks) =>
-          tasks.filter((t) => t.id !== selectedId)
-        );
-        await postponeTask(selectedTask!.id, dayjs(postponeUntilDate));
-      } catch (maybeError: any) {
-        // TODO display some error message
-        console.error(maybeError);
-      }
-    },
-    [selectedTask, setSelectedDayTasks]
-  );
-
-  const handlePostponeTaskToAnotherDayOption = async (task: Task) => {
-    setSelectedTask(task); // TODO needed?
-    showPostponeToModal(task, handleConfirmedPostponeTask);
-  };
-
-  const handleDeleteTaskOption = async (task: Task) => {
-    setSelectedTask(task); // TODO needed?
-    showDeleteModal(task, handleConfirmedDelete);
-  };
-
-  const handleConfirmedDelete = useCallback(async () => {
-    if (!selectedTask) return;
-    try {
-      await deleteTask(selectedTask.id);
+  const afterCompleteTask = (task: Task, completeDay: Dayjs) => {
+    if (completeDay.isSame(selectedDay, "day")) {
       setSelectedDayTasks((tasks) =>
-        tasks.filter((t) => t.id !== selectedTask.id)
+        tasks.map((t) =>
+          t.id === task.id ? { ...t, completedDate: completeDay } : t
+        )
       );
-    } catch (maybeError) {
-      console.error(maybeError);
-      // TODO show some error message
+    } else {
+      setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
     }
-  }, [selectedTask]);
+  };
+
+  const afterEditTask = (task: Task) => {
+    setSelectedDayTasks((tasks) =>
+      tasks.map((t) => {
+        if (t.id !== task.id) return t;
+        return { ...task, id: task.id };
+      })
+    );
+  };
+
+  const afterPostponeTask = async (task: Task) => {
+    // TODO could use 2nd param `postponeDate` to update `dayTasks`?
+    setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
+  };
+
+  const afterDeleteTask = async (deletedTask: Task) => {
+    setSelectedDayTasks((tasks) =>
+      tasks.filter((t) => t.id !== deletedTask.id)
+    );
+  };
 
   const onActiveStartDateChange = ({ activeStartDate, view }: OnArgs): any => {
     if (view !== "month") return;
@@ -492,12 +382,10 @@ export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
               key={task.id}
               task={task}
               selectedDay={selectedDay}
-              onCheckboxClick={handleCompleteTaskToday}
-              onCompleteOnAnotherDay={handleCompleteTaskOnAnotherDayOption}
-              onEdit={handleEditOption}
-              onPostpone={handlePostponeTaskOption}
-              onPostponeToAnotherDay={handlePostponeTaskToAnotherDayOption}
-              onDelete={handleDeleteTaskOption}
+              afterComplete={afterCompleteTask}
+              afterEdit={afterEditTask}
+              afterPostpone={afterPostponeTask}
+              afterDelete={afterDeleteTask}
             />
           ))
         )}

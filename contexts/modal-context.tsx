@@ -61,7 +61,7 @@ export default function ModalContextProvider({
   ) => {
     setCurrentModal("edit");
     setSelectedTask(selectedTask);
-    setOnAddEdit(onAddEdit);
+    setOnAddEdit(() => onAddEdit);
     setInitialStartDate(initialStartDate);
   };
 
@@ -71,7 +71,7 @@ export default function ModalContextProvider({
   ) => {
     setCurrentModal("postponeTo");
     setSelectedTask(selectedTask);
-    setOnCalendarPickerConfirm(onConfirm);
+    setOnCalendarPickerConfirm(() => onConfirm);
   };
 
   const showCompleteOnAnotherDayModal = (
@@ -80,13 +80,13 @@ export default function ModalContextProvider({
   ) => {
     setCurrentModal("completeOnAnotherDay");
     setSelectedTask(selectedTask);
-    setOnCalendarPickerConfirm(onConfirm);
+    setOnCalendarPickerConfirm(() => onConfirm);
   };
 
   const showDeleteModal = (selectedTask: Task, onConfirm: () => void) => {
     setCurrentModal("delete");
     setSelectedTask(selectedTask);
-    setOnConfirmActionConfirm(onConfirm);
+    setOnConfirmActionConfirm(() => onConfirm);
   };
 
   return (

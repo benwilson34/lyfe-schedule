@@ -14,6 +14,10 @@ import { isPostponeDateValid } from "@/util/task";
 import dayjs from "dayjs";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { SettingsModal } from "@/components/settingsModal";
+import { useEffect } from "react";
+import SettingsContextProvider, {
+  useSettingsContext,
+} from "@/contexts/settings-context";
 
 const exo2 = Exo_2({ subsets: ["latin"] });
 
@@ -27,6 +31,12 @@ function Modals() {
     onCalendarPickerConfirm,
     onConfirmActionConfirm,
   } = useModalContext();
+  const {
+    monthInfoSettings,
+    setMonthInfoSettings,
+    dayInfoSettings,
+    setDayInfoSettings,
+  } = useSettingsContext();
 
   return (
     <>
@@ -128,7 +138,7 @@ function Modals() {
         />
       )}
 
-      {/* {currentModal === "settings" && (
+      {currentModal === "settings" && (
         <SettingsModal
           isOpen={true}
           setIsOpen={() => setCurrentModal("none")}
@@ -137,28 +147,49 @@ function Modals() {
           dayInfoSettings={dayInfoSettings}
           setDayInfoSettings={setDayInfoSettings}
         />
-      )} */}
+      )}
     </>
   );
+}
+
+// there's probably a better way
+function Init() {
+  const { setMonthInfoSettings, setDayInfoSettings } = useSettingsContext();
+
+  useEffect(() => {
+    const savedSettings = JSON.parse(
+      localStorage.getItem("settings") || "null"
+    );
+    if (savedSettings) {
+      setMonthInfoSettings(savedSettings.monthInfoSettings);
+      setDayInfoSettings(savedSettings.dayInfoSettings);
+    }
+  }, []); // only read from localStorage on first load
+
+  return <></>;
 }
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <ModalContextProvider>
       <SidebarContextProvider>
-        <PanelGroup direction="horizontal" className={`max-h-screen flex`}>
-          <Sidebar isAdmin={false} />
+        <SettingsContextProvider>
+          <Init />
 
-          <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" />
+          <PanelGroup direction="horizontal" className={`max-h-screen flex`}>
+            <Sidebar isAdmin={false} />
 
-          <Panel minSize={50} order={2}>
-            <main className={exo2.className}>
-              <Component {...pageProps} />
-            </main>
-          </Panel>
-        </PanelGroup>
+            <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" />
 
-        <Modals />
+            <Panel minSize={50} order={2}>
+              <main className={exo2.className}>
+                <Component {...pageProps} />
+              </main>
+            </Panel>
+          </PanelGroup>
+
+          <Modals />
+        </SettingsContextProvider>
       </SidebarContextProvider>
     </ModalContextProvider>
   );
