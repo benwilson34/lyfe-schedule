@@ -176,19 +176,19 @@ export default function App({ Component, pageProps }: AppProps) {
         <SettingsContextProvider>
           <Init />
 
-          <PanelGroup direction="horizontal" className={`max-h-screen flex`}>
-            <Sidebar isAdmin={false} />
+          <main className={exo2.className}>
+            <PanelGroup direction="horizontal" className={`max-h-screen flex`}>
+              <Sidebar isAdmin={false} />
 
-            <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" />
+              <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" />
 
-            <Panel minSize={50} order={2}>
-              <main className={exo2.className}>
+              <Panel minSize={50} order={2}>
                 <Component {...pageProps} />
-              </main>
-            </Panel>
-          </PanelGroup>
+              </Panel>
+            </PanelGroup>
 
-          <Modals />
+            <Modals />
+          </main>
         </SettingsContextProvider>
       </SidebarContextProvider>
     </ModalContextProvider>
