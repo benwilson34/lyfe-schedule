@@ -75,8 +75,10 @@ export const getServerSideProps = (async (context: any) => {
 }) satisfies GetServerSideProps;
 
 export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
-  const { isVisible: isSidebarVisible, setIsVisible: setIsSidebarVisible } =
-    useSidebarContext();
+  const {
+    isVisible: isSidebarVisible,
+    toggleVisibility: toggleSidebarVisibility,
+  } = useSidebarContext();
   const { showAddEditModal } = useModalContext();
   const { monthInfoSettings, dayInfoSettings } = useSettingsContext();
 
@@ -323,18 +325,13 @@ export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
     [dayInfoSettings, renderTaskCount]
   );
 
-  const toggleSidebar = useCallback(
-    () => setIsSidebarVisible(!isSidebarVisible),
-    [isSidebarVisible, setIsSidebarVisible]
-  );
-
   return (
     <div className="max-h-full overflow-auto">
       <section className="sticky flex justify-between top-2 pl-2 pr-2">
         <FontAwesomeIcon
           icon={isSidebarVisible ? faArrowLeft : faBars}
           className="cursor-pointer hover:bg-gray-500/25"
-          onClick={toggleSidebar}
+          onClick={toggleSidebarVisibility}
         ></FontAwesomeIcon>
         <a
           href="https://docs.lyfeschedule.com/getting-started.html"

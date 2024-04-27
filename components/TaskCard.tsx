@@ -9,6 +9,7 @@ import { useState } from "react";
 import { autoPlacement, useFloating } from "@floating-ui/react";
 import { completeTask, deleteTask, postponeTask } from "@/services/api.service";
 import { useModalContext } from "@/contexts/modal-context";
+import { assign } from "lodash";
 
 const getTaskClass = (task: Task, priority: number) => {
   if (task.completedDate) {
@@ -93,7 +94,8 @@ export default function TaskCard({
   const handleCheckboxClick = async () => {
     // TODO animate
     await completeTask(task.id);
-    afterComplete(task, selectedDay);
+    // exact timestamp isn't important here
+    afterComplete(assign(task, { completedDate: dayjs() }), selectedDay);
   };
 
   const handleEditOptionClick = () => {
@@ -104,7 +106,11 @@ export default function TaskCard({
     completedDate: Date
   ) => {
     await completeTask(task.id, completedDate);
-    afterComplete(task, dayjs(completedDate));
+    // exact timestamp isn't important here
+    afterComplete(
+      assign(task, { completedDate: dayjs(completedDate) }),
+      dayjs(completedDate)
+    );
   };
 
   const handlePostponeOptionClick = async (postponeDay: Dayjs) => {

@@ -3,6 +3,7 @@ import React, { Dispatch, createContext, useContext, useState } from "react";
 export type SidebarContext = {
   isVisible: boolean;
   setIsVisible: Dispatch<React.SetStateAction<boolean>>;
+  toggleVisibility: () => void;
 };
 
 export const SidebarContext = createContext<SidebarContext | null>(null);
@@ -14,11 +15,16 @@ export default function SidebarContextProvider({
 }) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
 
+  const toggleVisibility = () => {
+    setIsVisible(!isVisible);
+  };
+
   return (
     <SidebarContext.Provider
       value={{
         isVisible,
         setIsVisible,
+        toggleVisibility,
       }}
     >
       {children}

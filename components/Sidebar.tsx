@@ -14,7 +14,6 @@ import { useSidebarContext } from "@/contexts/sidebar-context";
 import { useModalContext } from "@/contexts/modal-context";
 import { useAuthContext } from "@/contexts/auth-context";
 
-
 export default function Sidebar() {
   const { isVisible } = useSidebarContext();
   const { setCurrentModal } = useModalContext();
@@ -39,18 +38,22 @@ export default function Sidebar() {
         <div className="grow">
           <div className="text-4xl mb-2">LyfeSchedule</div>
 
-          <div className="cursor-pointer">
-            <FontAwesomeIcon
-              icon={faCalendarDays}
-              className="mr-2"
-            ></FontAwesomeIcon>
-            calendar
-          </div>
+          <Link href='/calendar'>
+            <div className="cursor-pointer">
+              <FontAwesomeIcon
+                icon={faCalendarDays}
+                className="mr-2"
+              ></FontAwesomeIcon>
+              calendar
+            </div>
+          </Link>
 
-          <div className="line-through">
-            <FontAwesomeIcon icon={faList} className="mr-2"></FontAwesomeIcon>
-            all tasks
-          </div>
+          <Link href="/all-tasks">
+            <div className="cursor-pointer">
+              <FontAwesomeIcon icon={faList} className="mr-2"></FontAwesomeIcon>
+              all tasks
+            </div>
+          </Link>
 
           <div className="line-through">
             <FontAwesomeIcon icon={faTags} className="mr-2"></FontAwesomeIcon>
