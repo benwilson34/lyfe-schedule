@@ -376,7 +376,7 @@ export function AddEditTaskModal({
                         </div> */}
 
                         <div
-                          className={`flex mb-4 px-4 py-2 ${
+                          className={`flex items-center mb-4 px-4 py-2 ${
                             isRepeating
                               ? "bg-general-100 shadow-md"
                               : "bg-disabled-100 text-ondisabled"
@@ -411,7 +411,7 @@ export function AddEditTaskModal({
                         </div>
 
                         <div
-                          className={`flex mb-2 px-4 py-2 ${
+                          className={`flex items-center mb-2 px-4 py-2 ${
                             hasTimeEstimate
                               ? "bg-general-100 shadow-md"
                               : "bg-disabled-100 text-ondisabled"
