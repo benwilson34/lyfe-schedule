@@ -42,7 +42,7 @@ export async function getManyTasks(
   await initIfNeeded();
 
   const userOid = userId instanceof ObjectId ? userId : new ObjectId(userId);
-  const adjustedDate = dayjs(targetDay)
+  const adjustedDate = targetDay && dayjs(targetDay)
     .startOf("day")
     .add(1, "day")
     // TODO maybe just endOf('day') instead?
@@ -50,7 +50,7 @@ export async function getManyTasks(
   const filter = {
     userId: userOid,
     completedDate: { $exists: false },
-    startDate: { $lt: adjustedDate },
+    ...(adjustedDate && { startDate: { $lt: adjustedDate } }),
   };
   const tasks = await taskCollection!.find(filter).toArray();
 
