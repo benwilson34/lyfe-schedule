@@ -1,13 +1,11 @@
 /**
  * @see https://tailwindui.com/components/application-ui/overlays/modals
- *
- * TODO convert to typescript...need to find type definitions somewhere
  */
 
 import { Fragment, useState, useMemo, useCallback, useRef } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Exo_2 } from "next/font/google";
-import { CalendarPicker } from './CalendarPicker';
+import { CalendarPicker } from "./CalendarPicker";
 import dayjs from "dayjs";
 
 const exo2 = Exo_2({ subsets: ["latin"] });
@@ -20,22 +18,44 @@ export function CalendarPickerModal({
   onConfirm,
   confirmButtonText = "confirm",
   confirmButtonClasses = "bg-accent hover:bg-green-500 text-background",
-  isDayValid = (day) => true,
-  dayFeedback = (day) => <></>,
+  isDayValid = () => true,
+  dayFeedback = () => <></>,
+}: {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  title?: string;
+  body?: React.ReactNode;
+  onConfirm: (selectedDay: Date) => void;
+  confirmButtonText?: string;
+  confirmButtonClasses?: string;
+  isDayValid?: (day: Date) => boolean;
+  dayFeedback?: (day: Date) => React.ReactNode;
 }) {
-  const [selectedDay, setSelectedDay] = useState(null);
-  const selectedDayFeedback = useMemo(() => dayFeedback(selectedDay) || <></>, [selectedDay, dayFeedback]);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const selectedDayFeedback = useMemo(
+    () => (selectedDay && dayFeedback(selectedDay)) || <></>,
+    [selectedDay, dayFeedback]
+  );
   const cancelButtonRef = useRef(null);
 
   // TODO also style the in/valid tiles?
 
-  const handleSelectedDayChange = useCallback((day) => {
-    const isValid = isDayValid(day);
-    if (!isValid) return;
-    setSelectedDay(day);
-  }, [isDayValid, setSelectedDay]);
+  const handleSelectedDayChange = useCallback(
+    (day: Date) => {
+      const isValid = isDayValid(day);
+      if (!isValid) {
+        return;
+      }
+      setSelectedDay(day);
+    },
+    [isDayValid, setSelectedDay]
+  );
 
   const onConfirmButtonClick = useCallback(() => {
+    if (!selectedDay) {
+      // shouldn't be possible, but just to make sure
+      return;
+    }
     setIsOpen(false);
     onConfirm(selectedDay);
   }, [selectedDay, onConfirm, setIsOpen]);
@@ -43,10 +63,10 @@ export function CalendarPickerModal({
   if (!isOpen) return null;
 
   return (
-    <Transition.Root show={isOpen} as={Fragment} className={exo2.className}>
+    <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
         as="div"
-        className="relative z-10"
+        className={`${exo2.className} relative z-10`}
         initialFocus={cancelButtonRef}
         onClose={setIsOpen}
       >
@@ -88,7 +108,7 @@ export function CalendarPickerModal({
                     </div>
 
                     <CalendarPicker
-                      onChange={handleSelectedDayChange}
+                      onChange={(d) => handleSelectedDayChange(d as Date)}
                       value={selectedDay}
                     />
 

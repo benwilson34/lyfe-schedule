@@ -1,7 +1,5 @@
 /**
  * @see https://tailwindui.com/components/application-ui/overlays/modals
- *
- * TODO convert to typescript...need to find type definitions somewhere
  */
 
 import {
@@ -13,7 +11,7 @@ import {
   useEffect,
 } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { calculateRangeDays } from "@/util/task";
 import { assign } from "lodash";
 import {
@@ -24,11 +22,11 @@ import {
 // import './editTaskModal.css';
 import { Exo_2 } from "next/font/google";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faArrowsRotate,
-  faHourglass,
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowsRotate, faHourglass } from "@fortawesome/free-solid-svg-icons";
+import { TaskViewModel as Task } from "@/types/task.viewModel";
+import { OnClickFunc, TileContentFunc } from "react-calendar";
 
+// TODO why is this needed even though the font is included in `_app`?
 const exo2 = Exo_2({ subsets: ["latin"] });
 
 const Bound = {
@@ -36,18 +34,34 @@ const Bound = {
   END: "end",
 };
 
-export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialStartDate }) {
+export function AddEditTaskModal({
+  isOpen,
+  handleClose,
+  task,
+  afterSave,
+  initialStartDate,
+}: {
+  isOpen: boolean;
+  handleClose: () => void;
+  task: Task;
+  afterSave: (task: Task) => void;
+  initialStartDate: Dayjs | null;
+}) {
   const isNewTask = useMemo(() => !task, [task]);
   const [title, setTitle] = useState(task?.title || "");
   // TODO handle `useStartTime === true`
-  const [startDate, setStartDate] = useState(task?.startDate || initialStartDate || dayjs());
+  const [startDate, setStartDate] = useState(
+    task?.startDate || initialStartDate || dayjs()
+  );
   // TODO handle `useEndTime === true`
-  const [endDate, setEndDate] = useState(task?.endDate || initialStartDate || dayjs());
+  const [endDate, setEndDate] = useState(
+    task?.endDate || initialStartDate || dayjs()
+  );
   const [rangeDays, setRangeDays] = useState(task?.rangeDays || 0);
   const [isRepeating, setIsRepeating] = useState(!!task?.repeatDays || false);
   const [repeatDays, setRepeatDays] = useState(task?.repeatDays || 1);
   const [hasTimeEstimate, setHasTimeEstimate] = useState(
-    !!task?.timeEstimateMins || true
+    !!(task?.timeEstimateMins || true)
   );
   const [timeEstimateMins, setTimeEstimateMins] = useState(
     task?.timeEstimateMins || 15
@@ -75,7 +89,7 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
     return isValidTitle;
   }, [title]);
 
-  const handleClickDay = useCallback(
+  const handleClickDay = useCallback<OnClickFunc>(
     (value) => {
       const chosenDate = dayjs(value);
       if (mostRecentlySetDate === Bound.END) {
@@ -86,7 +100,7 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
       }
       if (chosenDate.isBefore(startDate)) {
         // swap bounds
-        setEndDate(startDate)
+        setEndDate(startDate);
         setStartDate(chosenDate);
       } else {
         setEndDate(chosenDate);
@@ -96,7 +110,7 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
     [mostRecentlySetDate, startDate]
   );
 
-  const tileContent = useCallback(
+  const tileContent = useCallback<TileContentFunc>(
     ({ date, view }) => {
       if (view !== "month") return null;
       if (!isRepeating) return emptyDayTileContent;
@@ -107,7 +121,9 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
       const daysFromStartDate = dayjs(date).diff(startDate, "days");
       if (daysFromStartDate !== 0 && daysFromStartDate % repeatDays === 0) {
         return (
-          <div className={`${contentClassName} flex justify-center items-end w-full`}>
+          <div
+            className={`${contentClassName} flex justify-center items-end w-full`}
+          >
             <span className="text-base leading-none">
               <FontAwesomeIcon icon={faArrowsRotate}></FontAwesomeIcon>
             </span>
@@ -121,8 +137,7 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
 
   const onAddButtonClick = useCallback(async () => {
     try {
-      /* type: Task */
-      const taskToAdd = {
+      const taskToAdd: Partial<Task> = {
         title,
         startDate: dayjs(startDate),
         endDate: dayjs(endDate),
@@ -149,8 +164,8 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
       } else {
         throw new Error(`>> error: ${JSON.stringify(body)}`);
       }
-      onAddEdit(taskToAdd, true);
-      setIsOpen(false);
+      afterSave(taskToAdd as Task);
+      handleClose();
       // TODO show some confimation message
     } catch (error) {
       console.error(error);
@@ -167,13 +182,13 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
     repeatDays,
     hasTimeEstimate,
     timeEstimateMins,
-    setIsOpen,
-    onAddEdit,
+    handleClose,
+    afterSave,
   ]);
 
   const onSaveButtonClick = useCallback(async () => {
     try {
-      const taskToSave = {
+      const taskToSave: Partial<Task> = {
         title,
         startDate: dayjs(startDate),
         endDate: dayjs(endDate),
@@ -201,8 +216,8 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
       } else {
         throw new Error(`>> error: ${JSON.stringify(body)}`);
       }
-      onAddEdit(taskToSave, false);
-      setIsOpen(false);
+      afterSave(taskToSave as Task);
+      handleClose();
       // TODO show some confimation message
     } catch (error) {
       console.error(error);
@@ -220,11 +235,14 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
     hasTimeEstimate,
     timeEstimateMins,
     task,
-    onAddEdit,
-    setIsOpen,
+    afterSave,
+    handleClose,
   ]);
 
-  const formatDate = useCallback((date) => date.format("ddd MMM D, YYYY"), []);
+  const formatDate = useCallback(
+    (date: Dayjs) => date.format("ddd MMM D, YYYY"),
+    []
+  );
 
   if (!isOpen) return null;
 
@@ -234,7 +252,7 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
         as="div"
         className={`${exo2.className} relative z-10`}
         initialFocus={cancelButtonRef}
-        onClose={setIsOpen}
+        onClose={handleClose}
       >
         <Transition.Child
           as={Fragment}
@@ -287,16 +305,17 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
                           <div className="font-semibold">Schedule:</div>
                           <div className="text-sm text-general-200 leading-none italic">
                             {/* TODO this would be better as a tooltip */}
-                            Click once to choose a single day. Click again to choose a range.
+                            Click once to choose a single day. Click again to
+                            choose a range.
                           </div>
                           <CalendarPicker
                             value={[
-                              startDate.startOf('day').toDate(),
-                              endDate.endOf('day').toDate(),
+                              startDate.startOf("day").toDate(),
+                              endDate.endOf("day").toDate(),
                             ]}
                             onClickDay={handleClickDay}
                             tileContent={tileContent}
-                            disabled={isLoading || lockedField === "startDate"}
+                            // disabled={isLoading || lockedField === "startDate"}
                             className="mx-auto mb-4"
                           />
                           <div className="flex flex-col px-4 py-2 bg-disabled-100 rounded-xl text-ondisabled">
@@ -316,7 +335,9 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
                               <span className="mr-2 font-semibold">Range:</span>
                               <input
                                 type="number"
-                                onChange={(e) => setRangeDays(e.target.value)}
+                                onChange={(e) =>
+                                  setRangeDays(parseInt(e.target.value, 10))
+                                }
                                 value={rangeDays}
                                 min={0}
                                 disabled={
@@ -447,7 +468,7 @@ export function AddEditTaskModal({ isOpen, setIsOpen, task, onAddEdit, initialSt
                   <button
                     type="button"
                     className="inline-flex justify-center items-center rounded-full px-5 py-1 text-sm font-semibold shadow-md ring-1 ring-inset ring-general hover:bg-gray-50 mt-0 w-32 uppercase"
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => handleClose()}
                     ref={cancelButtonRef}
                     disabled={isLoading}
                   >

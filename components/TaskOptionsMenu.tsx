@@ -1,11 +1,9 @@
 /**
  * @see https://tailwindui.com/components/marketing/elements/flyout-menus#component-911576fb54922e5199a9434ca8a273fd
- *
- * @todo convert to Typescript
  */
 
 import { Fragment, forwardRef, useCallback, useEffect } from "react";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { Popover, Transition } from "@headlessui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -17,8 +15,10 @@ import {
   faCircleLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatShownDate } from "@/util/format";
+import { TaskViewModel as Task } from "@/types/task.viewModel";
+import { UseFloatingReturn } from "@floating-ui/react";
 
-const Day = {
+const Day: Record<string, number> = {
   SUN: 0,
   MON: 1,
   TUES: 2,
@@ -44,19 +44,30 @@ export default function TaskOptionsMenu({
   task,
   buttonClasses = "",
   selectedDay,
-  onMenuOpenChange = (isOpen) => {},
+  onMenuOpenChange = () => {},
   onEditClick,
   onPostponeClick,
   onPostponeToAnotherDayClick,
   onCompleteOnAnotherDayClick,
   onDeleteClick,
   floating,
+}: {
+  task: Task;
+  buttonClasses?: string;
+  selectedDay: Dayjs;
+  onMenuOpenChange: (isOpen: boolean) => void;
+  onEditClick: () => void;
+  onPostponeClick: (postponeDay: Dayjs) => void;
+  onPostponeToAnotherDayClick: () => void;
+  onCompleteOnAnotherDayClick: () => void;
+  onDeleteClick: () => void;
+  floating: UseFloatingReturn;
 }) {
   const { refs, floatingStyles } = floating;
   const selectedDayIsToday = selectedDay.isSame(dayjs().startOf("day"), "day");
   const selectedDayIsWeekend = [Day.SAT, Day.SUN].includes(selectedDay.day());
 
-  const getNextDayOfWeek = useCallback((selectedDay, dayOfWeek) => {
+  const getNextDayOfWeek = useCallback((selectedDay: Dayjs, dayOfWeek: number) => {
     const currentWeekday = selectedDay.day();
     if (currentWeekday === dayOfWeek) {
       return selectedDay.add(7, "day");
@@ -69,7 +80,7 @@ export default function TaskOptionsMenu({
   const weekendDay = getNextDayOfWeek(selectedDay, Day.SAT);
   const nextWeekDay = getNextDayOfWeek(selectedDay, Day.MON);
 
-  const renderProjectedMenuBody = (close) => (
+  const renderProjectedMenuBody = (close: () => void) => (
     <div className="p-1">
       <div className="italic text-center text-sm">projected repeating task</div>
       <div
@@ -90,7 +101,7 @@ export default function TaskOptionsMenu({
     </div>
   );
 
-  const renderMenuBody = (close) => {
+  const renderMenuBody = (close: () => void) => {
     return (
       <div
         ref={refs.setFloating}

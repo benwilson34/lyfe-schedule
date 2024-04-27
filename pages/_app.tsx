@@ -28,7 +28,7 @@ function Modals() {
     currentModal,
     setCurrentModal,
     selectedTask,
-    onAddEdit,
+    afterSave,
     initialStartDate,
     onCalendarPickerConfirm,
     onConfirmActionConfirm,
@@ -45,9 +45,9 @@ function Modals() {
       {currentModal === "edit" && (
         <AddEditTaskModal
           isOpen={true}
-          setIsOpen={() => setCurrentModal("none")}
-          onAddEdit={onAddEdit}
-          task={selectedTask}
+          handleClose={() => setCurrentModal("none")}
+          afterSave={afterSave!}
+          task={selectedTask!}
           initialStartDate={initialStartDate}
         />
       )}
@@ -56,7 +56,7 @@ function Modals() {
         <CalendarPickerModal
           isOpen={true}
           setIsOpen={() => setCurrentModal("none")}
-          onConfirm={onCalendarPickerConfirm}
+          onConfirm={onCalendarPickerConfirm!}
           title="Postpone to"
           body={
             <>
@@ -81,7 +81,7 @@ function Modals() {
         <CalendarPickerModal
           isOpen={true}
           setIsOpen={() => setCurrentModal("none")}
-          onConfirm={onCalendarPickerConfirm}
+          onConfirm={onCalendarPickerConfirm!}
           title="Complete on another day"
           body={
             <>

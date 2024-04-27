@@ -36,7 +36,7 @@ export default function Sidebar() {
     <Panel defaultSize={30} minSize={20} order={1}>
       <div className="h-full max-h-full overflow-auto p-2 flex flex-col">
         <div className="grow">
-          <div className="text-4xl mb-2">LyfeSchedule</div>
+          <div className="text-4xl mb-2"><span className="font-bold">Lyfe</span>Schedule</div>
 
           <Link href='/calendar'>
             <div className="cursor-pointer">

@@ -1,24 +1,40 @@
 /**
  * @see https://tailwindui.com/components/application-ui/overlays/modals
- * 
- * TODO convert to typescript...need to find type definitions somewhere
  */
 
-import { Fragment, useCallback, useRef, useState } from 'react'
-import { Dialog, Transition } from '@headlessui/react'
-import { ConfirmActionModal } from './ConfirmActionModal';
+import { Dispatch, Fragment, useCallback, useRef, useState } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { ConfirmActionModal } from "./ConfirmActionModal";
+import { DayInfoSettings, MonthInfoSettings } from "@/contexts/settings-context";
 
-export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthInfoSettings, dayInfoSettings, setDayInfoSettings }) {
+export function SettingsModal({
+  isOpen,
+  setIsOpen,
+  monthInfoSettings,
+  setMonthInfoSettings,
+  dayInfoSettings,
+  setDayInfoSettings,
+}: {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  monthInfoSettings: MonthInfoSettings;
+  setMonthInfoSettings: Dispatch<React.SetStateAction<MonthInfoSettings>>;
+  dayInfoSettings: DayInfoSettings;
+  setDayInfoSettings: Dispatch<React.SetStateAction<DayInfoSettings>>;
+}) {
   // TODO just use `useSettingsContext` here instead of using all these props
 
   const [isLoading, setIsLoading] = useState(false);
   const [isShowingDeleteAllModal, setIsShowingDeleteAllModal] = useState(false);
 
   const onSaveButtonClick = useCallback(() => {
-    localStorage.setItem('settings', JSON.stringify({
-      monthInfoSettings,
-      dayInfoSettings,
-    }))
+    localStorage.setItem(
+      "settings",
+      JSON.stringify({
+        monthInfoSettings,
+        dayInfoSettings,
+      })
+    );
   }, [monthInfoSettings, dayInfoSettings]);
 
   const onDeleteAllTasksButtonClick = useCallback(() => {
@@ -27,13 +43,13 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
 
   const onConfirmDeleteAllTasksButtonClick = useCallback(async () => {
     const result = await fetch(`/api/tasks`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
-      }
+        "Content-Type": "application/json",
+      },
     });
     if (result.status !== 200) {
-      throw new Error('Failed to delete tasks.');
+      throw new Error("Failed to delete tasks.");
     }
     const { data } = await result.json();
   }, []);
@@ -44,7 +60,12 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-10" initialFocus={cancelButtonRef} onClose={setIsOpen}>
+      <Dialog
+        as="div"
+        className="relative z-10"
+        initialFocus={cancelButtonRef}
+        onClose={setIsOpen}
+      >
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -75,13 +96,14 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                       {/* <ExclamationTriangleIcon className="h-6 w-6 text-red-600" aria-hidden="true" /> */}
                     </div>
                     <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                      <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
+                      <Dialog.Title
+                        as="h3"
+                        className="text-base font-semibold leading-6 text-gray-900"
+                      >
                         settings
                       </Dialog.Title>
                       <div className="mt-2">
-                        <div className='text-md font-bold'>
-                          month info bar
-                        </div>
+                        <div className="text-md font-bold">month info bar</div>
 
                         <div>
                           <input
@@ -104,11 +126,15 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.monthTotalSection.isTaskCountShowing = e.target.checked;
+                              updatedSettings.monthTotalSection.isTaskCountShowing =
+                                e.target.checked;
                               setMonthInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={monthInfoSettings.monthTotalSection.isTaskCountShowing}
+                            checked={
+                              monthInfoSettings.monthTotalSection
+                                .isTaskCountShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show month total task count
@@ -120,43 +146,55 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.monthTotalSection.isTimeEstimateShowing = e.target.checked;
+                              updatedSettings.monthTotalSection.isTimeEstimateShowing =
+                                e.target.checked;
                               setMonthInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={monthInfoSettings.monthTotalSection.isTimeEstimateShowing}
+                            checked={
+                              monthInfoSettings.monthTotalSection
+                                .isTimeEstimateShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show month total time estimate
                           </div>
                         </div>
-                        
+
                         <div>
                           <input
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.dailyAverageSection.isTaskCountShowing = e.target.checked;
+                              updatedSettings.dailyAverageSection.isTaskCountShowing =
+                                e.target.checked;
                               setMonthInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={monthInfoSettings.dailyAverageSection.isTaskCountShowing}
+                            checked={
+                              monthInfoSettings.dailyAverageSection
+                                .isTaskCountShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show daily average task count
                           </div>
                         </div>
-                        
+
                         <div>
                           <input
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.monthTotalSection.dailyAverageSection.isTimeEstimateShowing = e.target.checked;
+                              updatedSettings.dailyAverageSection.isTimeEstimateShowing =
+                                e.target.checked;
                               setMonthInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={monthInfoSettings.dailyAverageSection.isTimeEstimateShowing}
+                            checked={
+                              monthInfoSettings.dailyAverageSection
+                                .isTimeEstimateShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show daily average time estimate
@@ -168,20 +206,22 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.dailyAverageSection.isTimePercentageShowing = e.target.checked;
+                              updatedSettings.dailyAverageSection.isTimePercentageShowing =
+                                e.target.checked;
                               setMonthInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={monthInfoSettings.dailyAverageSection.isTimePercentageShowing}
+                            checked={
+                              monthInfoSettings.dailyAverageSection
+                                .isTimePercentageShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show daily average time percentage
                           </div>
                         </div>
 
-                        <div className='text-md font-bold'>
-                          day info bar
-                        </div>
+                        <div className="text-md font-bold">day info bar</div>
 
                         <div>
                           <input
@@ -194,9 +234,7 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                             className="mr-2"
                             checked={dayInfoSettings.isShowing}
                           ></input>
-                          <div className="inline-block">
-                            show day info bar
-                          </div>
+                          <div className="inline-block">show day info bar</div>
                         </div>
 
                         <div>
@@ -204,11 +242,15 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.remainingTaskSection.isTaskCountShowing = e.target.checked;
+                              updatedSettings.remainingTaskSection.isTaskCountShowing =
+                                e.target.checked;
                               setDayInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={dayInfoSettings.remainingTaskSection.isTaskCountShowing}
+                            checked={
+                              dayInfoSettings.remainingTaskSection
+                                .isTaskCountShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show remaining task count
@@ -220,11 +262,15 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.remainingTaskSection.isTimeEstimateShowing = e.target.checked;
+                              updatedSettings.remainingTaskSection.isTimeEstimateShowing =
+                                e.target.checked;
                               setDayInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={dayInfoSettings.remainingTaskSection.isTimeEstimateShowing}
+                            checked={
+                              dayInfoSettings.remainingTaskSection
+                                .isTimeEstimateShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show remaining time estimate
@@ -236,11 +282,15 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.remainingTaskSection.isTimePercentageShowing = e.target.checked;
+                              updatedSettings.remainingTaskSection.isTimePercentageShowing =
+                                e.target.checked;
                               setDayInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={dayInfoSettings.remainingTaskSection.isTimePercentageShowing}
+                            checked={
+                              dayInfoSettings.remainingTaskSection
+                                .isTimePercentageShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show remaining time percentage
@@ -252,11 +302,15 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.completedTaskSection.isTaskCountShowing = e.target.checked;
+                              updatedSettings.completedTaskSection.isTaskCountShowing =
+                                e.target.checked;
                               setDayInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={dayInfoSettings.completedTaskSection.isTaskCountShowing}
+                            checked={
+                              dayInfoSettings.completedTaskSection
+                                .isTaskCountShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show completed task count
@@ -268,11 +322,15 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.completedTaskSection.isTimeEstimateShowing = e.target.checked;
+                              updatedSettings.completedTaskSection.isTimeEstimateShowing =
+                                e.target.checked;
                               setDayInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={dayInfoSettings.completedTaskSection.isTimeEstimateShowing}
+                            checked={
+                              dayInfoSettings.completedTaskSection
+                                .isTimeEstimateShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show completed time estimate
@@ -284,11 +342,15 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                             type="checkbox"
                             onChange={(e) => {
                               const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.completedTaskSection.isTimePercentageShowing = e.target.checked;
+                              updatedSettings.completedTaskSection.isTimePercentageShowing =
+                                e.target.checked;
                               setDayInfoSettings(updatedSettings);
                             }}
                             className="mr-2"
-                            checked={dayInfoSettings.completedTaskSection.isTimePercentageShowing}
+                            checked={
+                              dayInfoSettings.completedTaskSection
+                                .isTimePercentageShowing
+                            }
                           ></input>
                           <div className="inline-block">
                             show completed time percentage
@@ -296,15 +358,14 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                         </div>
 
                         <div>
-                        <button
-                          type="button"
-                          className="inline-flex w-full justify-center rounded-md bg-red-300 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-400"
-                          onClick={onDeleteAllTasksButtonClick}
-                        >
-                          Delete all tasks
-                        </button>
+                          <button
+                            type="button"
+                            className="inline-flex w-full justify-center rounded-md bg-red-300 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-400"
+                            onClick={onDeleteAllTasksButtonClick}
+                          >
+                            Delete all tasks
+                          </button>
                         </div>
-
                       </div>
                     </div>
                   </div>
@@ -327,26 +388,27 @@ export function SettingsModal({ isOpen, setIsOpen, monthInfoSettings, setMonthIn
                     Cancel
                   </button>
                 </div>
-                
-                <ConfirmActionModal 
+
+                <ConfirmActionModal
                   isOpen={isShowingDeleteAllModal}
                   setIsOpen={setIsShowingDeleteAllModal}
                   onConfirm={onConfirmDeleteAllTasksButtonClick}
                   title="Confirm delete"
-                  body={(
-                    <div className='text-md'>
-                      are you sure you want to delete <span className="font-bold text-red-500">all tasks</span>? This action cannot be undone.
+                  body={
+                    <div className="text-md">
+                      are you sure you want to delete{" "}
+                      <span className="font-bold text-red-500">all tasks</span>?
+                      This action cannot be undone.
                     </div>
-                  )}
-                  confirmButtonText='delete'
+                  }
+                  confirmButtonText="delete"
                   confirmButtonClasses="bg-red-300 hover:bg-red-500"
                 />
               </Dialog.Panel>
-
             </Transition.Child>
           </div>
         </div>
       </Dialog>
     </Transition.Root>
-  )
+  );
 }

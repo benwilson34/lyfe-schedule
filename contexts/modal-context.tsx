@@ -14,13 +14,13 @@ export type ModalContext = {
   setCurrentModal: Dispatch<React.SetStateAction<Modal>>;
   // TODO maybe these could be packed into some `addEditModalProps`?
   selectedTask: Task | null;
-  onAddEdit: ((task: Task, isAdding: boolean) => void) | null;
+  afterSave: ((task: Task) => void) | null;
   initialStartDate: Dayjs | null;
   onCalendarPickerConfirm: ((selectedDay: Date) => void) | null;
   onConfirmActionConfirm: (() => void) | null;
   showAddEditModal: (
     selectedTask: Task | null,
-    onAddEdit: (task: Task, isAdding: boolean) => void,
+    afterSave: (task: Task) => void,
     initialStartDate?: Dayjs | null
   ) => void;
   showPostponeToModal: (
@@ -43,8 +43,8 @@ export default function ModalContextProvider({
 }) {
   const [currentModal, setCurrentModal] = useState<Modal>("none");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [onAddEdit, setOnAddEdit] = useState<
-    ((task: Task, isAdding: boolean) => void) | null
+  const [afterSave, setAfterSave] = useState<
+    ((task: Task) => void) | null
   >(null);
   const [initialStartDate, setInitialStartDate] = useState<Dayjs | null>(null);
   const [onCalendarPickerConfirm, setOnCalendarPickerConfirm] = useState<
@@ -56,12 +56,12 @@ export default function ModalContextProvider({
 
   const showAddEditModal = (
     selectedTask: Task | null,
-    onAddEdit: (task: Task, isAdding: boolean) => void,
+    afterSave: (task: Task, isAdding: boolean) => void,
     initialStartDate: Dayjs | null = null
   ) => {
     setCurrentModal("edit");
     setSelectedTask(selectedTask);
-    setOnAddEdit(() => onAddEdit);
+    setAfterSave(() => afterSave);
     setInitialStartDate(initialStartDate);
   };
 
@@ -95,7 +95,7 @@ export default function ModalContextProvider({
         currentModal,
         setCurrentModal,
         selectedTask,
-        onAddEdit,
+        afterSave,
         initialStartDate,
         onCalendarPickerConfirm,
         onConfirmActionConfirm,
