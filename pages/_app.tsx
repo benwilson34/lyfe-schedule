@@ -20,6 +20,7 @@ import SettingsContextProvider, {
 } from "@/contexts/settings-context";
 import AuthContextProvider, { useAuthContext } from "@/contexts/auth-context";
 import { decryptJwt } from "@/services/api.service";
+import Head from "next/head";
 
 const exo2 = Exo_2({ subsets: ["latin"] });
 
@@ -191,7 +192,7 @@ function Init() {
       } catch (maybeError: any) {
         console.error(maybeError);
       }
-      
+
       // user-configured settings
       const savedSettings = JSON.parse(
         localStorage.getItem("settings") || "null"
@@ -209,31 +210,37 @@ function Init() {
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <ModalContextProvider>
-      <SidebarContextProvider>
-        <SettingsContextProvider>
-          <AuthContextProvider>
-            <Init />
+    <>
+      <Head>
+        <title>LyfeSchedule</title>
+      </Head>
 
-            <main className={exo2.className}>
-              <PanelGroup
-                direction="horizontal"
-                className={`max-h-screen flex`}
-              >
-                <Sidebar />
+      <ModalContextProvider>
+        <SidebarContextProvider>
+          <SettingsContextProvider>
+            <AuthContextProvider>
+              <Init />
 
-                <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" />
+              <main className={exo2.className}>
+                <PanelGroup
+                  direction="horizontal"
+                  className={`max-h-screen flex`}
+                >
+                  <Sidebar />
 
-                <Panel minSize={50} order={2}>
-                  <Component {...pageProps} />
-                </Panel>
-              </PanelGroup>
+                  <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" />
 
-              <Modals />
-            </main>
-          </AuthContextProvider>
-        </SettingsContextProvider>
-      </SidebarContextProvider>
-    </ModalContextProvider>
+                  <Panel minSize={50} order={2}>
+                    <Component {...pageProps} />
+                  </Panel>
+                </PanelGroup>
+
+                <Modals />
+              </main>
+            </AuthContextProvider>
+          </SettingsContextProvider>
+        </SidebarContextProvider>
+      </ModalContextProvider>
+    </>
   );
 }
