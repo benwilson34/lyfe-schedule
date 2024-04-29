@@ -74,8 +74,30 @@ body {
   background-color: #888888;
 }
 
+input[type] {
+  @apply p-0 border-0;
+}
+
+input[type=number] {
+  @apply rounded bg-background ring-2 ring-general-200 font-semibold;
+}
+
+input[type=number][disabled] {
+  @apply bg-disabled-200 ring-1 ring-ondisabled;
+}
+
 
 /* TODO move to own file? */
+
+/* prevent the options menu from "popping" during transitions, see https://stackoverflow.com/a/19311234 */
+.task {
+  z-index: 0;
+  transition: z-index 0.5s step-end;
+}
+.task.task--selected {
+  z-index: 20;
+  transition: z-index 0.5s step-start;
+}
 
 .task__completed {
   @apply bg-disabled-100 text-ondisabled;
@@ -115,16 +137,4 @@ body {
 
 .task__priority-high .task__checkbox {
   @apply bg-ondark;
-}
-
-input[type] {
-  @apply p-0 border-0;
-}
-
-input[type=number] {
-  @apply rounded bg-background ring-2 ring-general-200 font-semibold;
-}
-
-input[type=number][disabled] {
-  @apply bg-disabled-200 ring-1 ring-ondisabled;
 }

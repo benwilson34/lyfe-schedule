@@ -7,8 +7,6 @@ import { OnArgs, TileContentFunc } from "react-calendar/dist/cjs/shared/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCirclePlus,
-  faArrowLeft,
-  faBars,
 } from "@fortawesome/free-solid-svg-icons";
 import { getTasksForDay as getTasksForDayFromDb } from "./api/tasks";
 import { taskDaoToDto } from "@/types/task.dao";
@@ -27,17 +25,13 @@ import {
 import TaskCard from "@/components/TaskCard";
 import { PulseLoader } from "react-spinners";
 import { GetServerSideProps } from "next";
-import { faCircleQuestion } from "@fortawesome/free-regular-svg-icons";
-import { useSidebarContext } from "@/contexts/sidebar-context";
 import { useModalContext } from "@/contexts/modal-context";
 import {
-  completeTask,
-  deleteTask,
   getTasksForDay,
   getTasksForDayRange,
-  postponeTask,
 } from "@/services/api.service";
 import { useSettingsContext } from "@/contexts/settings-context";
+import NavBar from "@/components/NavBar";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
@@ -75,10 +69,6 @@ export const getServerSideProps = (async (context: any) => {
 }) satisfies GetServerSideProps;
 
 export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
-  const {
-    isVisible: isSidebarVisible,
-    toggleVisibility: toggleSidebarVisibility,
-  } = useSidebarContext();
   const { showAddEditModal } = useModalContext();
   const { monthInfoSettings, dayInfoSettings } = useSettingsContext();
 
@@ -327,22 +317,7 @@ export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
 
   return (
     <div className="max-h-full overflow-auto">
-      <section className="sticky flex justify-between top-2 pl-2 pr-2">
-        <FontAwesomeIcon
-          icon={isSidebarVisible ? faArrowLeft : faBars}
-          className="cursor-pointer hover:bg-gray-500/25"
-          onClick={toggleSidebarVisibility}
-        ></FontAwesomeIcon>
-        <a
-          href="https://docs.lyfeschedule.com/getting-started.html"
-          target="_blank"
-        >
-          <FontAwesomeIcon
-            icon={faCircleQuestion}
-            className="cursor-pointer hover:bg-gray-500/25"
-          ></FontAwesomeIcon>
-        </a>
-      </section>
+      <NavBar />
 
       <section className={`flex flex-col items-center pr-8 pl-8 mb-6`}>
         <h1 className="mb-1 mt-10 text-4xl font-bold">
@@ -356,7 +331,7 @@ export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
         />
       </section>
 
-      <section>
+      <section className="mx-auto max-w-lg">
         <div className="flex flex-row justify-evenly mb-6">
           <div className="w-1/2">{renderMonthInfo()}</div>
           <div className="w-1/2">{renderDayInfo(selectedDayTasks)}</div>

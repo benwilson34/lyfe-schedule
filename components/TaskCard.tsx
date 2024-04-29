@@ -10,6 +10,7 @@ import { autoPlacement, useFloating } from "@floating-ui/react";
 import { completeTask, deleteTask, postponeTask } from "@/services/api.service";
 import { useModalContext } from "@/contexts/modal-context";
 import { assign } from "lodash";
+import Overlay from "./Overlay";
 
 const getTaskClass = (task: Task, priority: number) => {
   if (task.completedDate) {
@@ -144,8 +145,8 @@ export default function TaskCard({
     <>
       <div
         ref={floating.refs.setReference}
-        className={`group/task relative flex justify-between items-center max-w-lg w-full mb-2 px-3 py-2 ${taskClass} shadow-lg rounded-xl text-sm ${
-          isOptionsMenuOpen ? "z-20" : ""
+        className={`task group/task relative flex justify-between items-center max-w-lg w-full mb-2 px-3 py-2 ${taskClass} shadow-lg rounded-xl text-sm ${
+          isOptionsMenuOpen ? "task--selected" : ""
         }`}
       >
         <div className="flex justify-start items-center">
@@ -191,6 +192,7 @@ export default function TaskCard({
             </div>
           </span>
           {/* <span className="text-sm">({calculatedPriority.toFixed(2)})</span> */}
+
           <TaskOptionsMenu
             task={task}
             selectedDay={selectedDay}
@@ -204,9 +206,8 @@ export default function TaskCard({
           />
         </div>
       </div>
-      {isOptionsMenuOpen && (
-        <div className="task__overlay fixed inset-0 bg-disabled-200/75 z-10"></div>
-      )}
+
+      <Overlay isVisible={isOptionsMenuOpen} durationMs={150}/>
     </>
   );
 }

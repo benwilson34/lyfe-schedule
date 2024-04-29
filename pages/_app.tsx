@@ -222,18 +222,18 @@ export default function App({ Component, pageProps }: AppProps) {
               <Init />
 
               <main className={exo2.className}>
-                <PanelGroup
+                {/* <PanelGroup
                   direction="horizontal"
                   className={`max-h-screen flex`}
-                >
+                > */}
                   <Sidebar />
 
-                  <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" />
+                  {/* <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" /> */}
 
-                  <Panel minSize={50} order={2}>
+                  {/* <Panel minSize={50} order={2}> */}
                     <Component {...pageProps} />
-                  </Panel>
-                </PanelGroup>
+                  {/* </Panel>
+                </PanelGroup> */}
 
                 <Modals />
               </main>

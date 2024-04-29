@@ -17,6 +17,7 @@ import { faCircleQuestion } from "@fortawesome/free-regular-svg-icons";
 import { useSidebarContext } from "@/contexts/sidebar-context";
 import { useModalContext } from "@/contexts/modal-context";
 import { getManyTasks } from "@/services/mongo.service";
+import NavBar from "@/components/NavBar";
 
 function dtoTaskToTask(taskDto: TaskDto): Task {
   return {
@@ -96,22 +97,7 @@ export default function AllTasksView({ initTasks }: { initTasks: TaskDto[] }) {
 
   return (
     <div className="max-h-full overflow-auto">
-      <section className="sticky flex justify-between top-2 pl-2 pr-2">
-        <FontAwesomeIcon
-          icon={isSidebarVisible ? faArrowLeft : faBars}
-          className="cursor-pointer hover:bg-gray-500/25"
-          onClick={toggleSidebarVisibility}
-        ></FontAwesomeIcon>
-        <a
-          href="https://docs.lyfeschedule.com/getting-started.html"
-          target="_blank"
-        >
-          <FontAwesomeIcon
-            icon={faCircleQuestion}
-            className="cursor-pointer hover:bg-gray-500/25"
-          ></FontAwesomeIcon>
-        </a>
-      </section>
+      <NavBar />
 
       <section className={`flex flex-col items-center pr-8 pl-8 mb-6`}>
         <h1 className="mb-1 mt-10 text-4xl font-bold">All Tasks</h1>
