@@ -4,8 +4,16 @@
 
 import { Dispatch, Fragment, useCallback, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import Toggle from "react-toggle";
 import { ConfirmActionModal } from "./ConfirmActionModal";
-import { DayInfoSettings, MonthInfoSettings } from "@/contexts/settings-context";
+import {
+  DayInfoSettings,
+  MonthInfoSettings,
+} from "@/contexts/settings-context";
+import { Exo_2 } from "next/font/google";
+
+// TODO why is this needed even though the font is included in `_app`?
+const exo2 = Exo_2({ subsets: ["latin"] });
 
 export function SettingsModal({
   isOpen,
@@ -35,7 +43,8 @@ export function SettingsModal({
         dayInfoSettings,
       })
     );
-  }, [monthInfoSettings, dayInfoSettings]);
+    setIsOpen(false);
+  }, [monthInfoSettings, dayInfoSettings, setIsOpen]);
 
   const onDeleteAllTasksButtonClick = useCallback(() => {
     setIsShowingDeleteAllModal(true);
@@ -56,13 +65,188 @@ export function SettingsModal({
 
   const cancelButtonRef = useRef(null);
 
+  const renderToggle = (
+    isChecked: boolean,
+    onChange: (isChecked: boolean) => any,
+    label: string
+  ) => (
+    <label className="block mb-1">
+      <Toggle
+        defaultChecked={isChecked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span className="ml-2 relative -top-1">{label}</span>
+    </label>
+  );
+
+  const renderBody = () => (
+    <>
+      <div className="text-md font-bold mt-4 mb-2">month info bar</div>
+
+      {renderToggle(
+        monthInfoSettings.isShowing,
+        (isChecked) => {
+          setMonthInfoSettings((prevSettings) => {
+            prevSettings.isShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show month info bar"
+      )}
+
+      {renderToggle(
+        monthInfoSettings.monthTotalSection.isTaskCountShowing,
+        (isChecked) => {
+          setMonthInfoSettings((prevSettings) => {
+            prevSettings.monthTotalSection.isTaskCountShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show month total task count"
+      )}
+
+      {renderToggle(
+        monthInfoSettings.monthTotalSection.isTimeEstimateShowing,
+        (isChecked) => {
+          setMonthInfoSettings((prevSettings) => {
+            prevSettings.monthTotalSection.isTimeEstimateShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show month total time estimate"
+      )}
+
+      {renderToggle(
+        monthInfoSettings.dailyAverageSection.isTaskCountShowing,
+        (isChecked) => {
+          setMonthInfoSettings((prevSettings) => {
+            prevSettings.dailyAverageSection.isTaskCountShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show daily average task count"
+      )}
+
+      {renderToggle(
+        monthInfoSettings.dailyAverageSection.isTimeEstimateShowing,
+        (isChecked) => {
+          setMonthInfoSettings((prevSettings) => {
+            prevSettings.dailyAverageSection.isTimeEstimateShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show daily average time estimate"
+      )}
+
+      {renderToggle(
+        monthInfoSettings.dailyAverageSection.isTimePercentageShowing,
+        (isChecked) => {
+          setMonthInfoSettings((prevSettings) => {
+            prevSettings.dailyAverageSection.isTimePercentageShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show daily average time percentage"
+      )}
+
+      <div className="text-md font-bold mt-4 mb-2">day info bar</div>
+
+      {renderToggle(
+        dayInfoSettings.isShowing,
+        (isChecked) => {
+          setDayInfoSettings((prevSettings) => {
+            prevSettings.isShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show day info bar"
+      )}
+
+      {renderToggle(
+        dayInfoSettings.remainingTaskSection.isTaskCountShowing,
+        (isChecked) => {
+          setDayInfoSettings((prevSettings) => {
+            prevSettings.remainingTaskSection.isTaskCountShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show remaining task count"
+      )}
+
+      {renderToggle(
+        dayInfoSettings.remainingTaskSection.isTimeEstimateShowing,
+        (isChecked) => {
+          setDayInfoSettings((prevSettings) => {
+            prevSettings.remainingTaskSection.isTimeEstimateShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show remaining time estimate"
+      )}
+
+      {renderToggle(
+        dayInfoSettings.remainingTaskSection.isTimePercentageShowing,
+        (isChecked) => {
+          setDayInfoSettings((prevSettings) => {
+            prevSettings.remainingTaskSection.isTimePercentageShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show remaining time percentage"
+      )}
+
+      {renderToggle(
+        dayInfoSettings.completedTaskSection.isTaskCountShowing,
+        (isChecked) => {
+          setDayInfoSettings((prevSettings) => {
+            prevSettings.completedTaskSection.isTaskCountShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show completed task count"
+      )}
+
+      {renderToggle(
+        dayInfoSettings.completedTaskSection.isTimeEstimateShowing,
+        (isChecked) => {
+          setDayInfoSettings((prevSettings) => {
+            prevSettings.completedTaskSection.isTimeEstimateShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show completed time estimate"
+      )}
+
+      {renderToggle(
+        dayInfoSettings.completedTaskSection.isTimePercentageShowing,
+        (isChecked) => {
+          setDayInfoSettings((prevSettings) => {
+            prevSettings.completedTaskSection.isTimePercentageShowing = isChecked;
+            return prevSettings;
+          });
+        },
+        "show completed time percentage"
+      )}
+
+      <div className="mt-4">
+        <button
+          type="button"
+          className="inline-flex w-full justify-center rounded-md bg-attention text-ondark px-3 py-2 text-sm font-semibold shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-400"
+          onClick={onDeleteAllTasksButtonClick}
+        >
+          Delete all tasks
+        </button>
+      </div>
+    </>
+  );
+
   if (!isOpen) return null;
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
         as="div"
-        className="relative z-10"
+        className={`${exo2.className} relative z-10`}
         initialFocus={cancelButtonRef}
         onClose={setIsOpen}
       >
@@ -89,306 +273,42 @@ export function SettingsModal({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                      {/* <ExclamationTriangleIcon className="h-6 w-6 text-red-600" aria-hidden="true" /> */}
-                    </div>
-                    <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-background text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                <div className="px-8 sm:px-12 pt-4">
+                  <div className="flex flex-row justify-center">
+                    <div className="mt-3">
                       <Dialog.Title
                         as="h3"
-                        className="text-base font-semibold leading-6 text-gray-900"
+                        className="text-lg text-center font-semibold leading-6 uppercase mb-6"
                       >
                         settings
                       </Dialog.Title>
-                      <div className="mt-2">
-                        <div className="text-md font-bold">month info bar</div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.isShowing = e.target.checked;
-                              setMonthInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={monthInfoSettings.isShowing}
-                          ></input>
-                          <div className="inline-block">
-                            show month info bar
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.monthTotalSection.isTaskCountShowing =
-                                e.target.checked;
-                              setMonthInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              monthInfoSettings.monthTotalSection
-                                .isTaskCountShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show month total task count
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.monthTotalSection.isTimeEstimateShowing =
-                                e.target.checked;
-                              setMonthInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              monthInfoSettings.monthTotalSection
-                                .isTimeEstimateShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show month total time estimate
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.dailyAverageSection.isTaskCountShowing =
-                                e.target.checked;
-                              setMonthInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              monthInfoSettings.dailyAverageSection
-                                .isTaskCountShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show daily average task count
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.dailyAverageSection.isTimeEstimateShowing =
-                                e.target.checked;
-                              setMonthInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              monthInfoSettings.dailyAverageSection
-                                .isTimeEstimateShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show daily average time estimate
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...monthInfoSettings };
-                              updatedSettings.dailyAverageSection.isTimePercentageShowing =
-                                e.target.checked;
-                              setMonthInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              monthInfoSettings.dailyAverageSection
-                                .isTimePercentageShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show daily average time percentage
-                          </div>
-                        </div>
-
-                        <div className="text-md font-bold">day info bar</div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.isShowing = e.target.checked;
-                              setDayInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={dayInfoSettings.isShowing}
-                          ></input>
-                          <div className="inline-block">show day info bar</div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.remainingTaskSection.isTaskCountShowing =
-                                e.target.checked;
-                              setDayInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              dayInfoSettings.remainingTaskSection
-                                .isTaskCountShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show remaining task count
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.remainingTaskSection.isTimeEstimateShowing =
-                                e.target.checked;
-                              setDayInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              dayInfoSettings.remainingTaskSection
-                                .isTimeEstimateShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show remaining time estimate
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.remainingTaskSection.isTimePercentageShowing =
-                                e.target.checked;
-                              setDayInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              dayInfoSettings.remainingTaskSection
-                                .isTimePercentageShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show remaining time percentage
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.completedTaskSection.isTaskCountShowing =
-                                e.target.checked;
-                              setDayInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              dayInfoSettings.completedTaskSection
-                                .isTaskCountShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show completed task count
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.completedTaskSection.isTimeEstimateShowing =
-                                e.target.checked;
-                              setDayInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              dayInfoSettings.completedTaskSection
-                                .isTimeEstimateShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show completed time estimate
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              const updatedSettings = { ...dayInfoSettings };
-                              updatedSettings.completedTaskSection.isTimePercentageShowing =
-                                e.target.checked;
-                              setDayInfoSettings(updatedSettings);
-                            }}
-                            className="mr-2"
-                            checked={
-                              dayInfoSettings.completedTaskSection
-                                .isTimePercentageShowing
-                            }
-                          ></input>
-                          <div className="inline-block">
-                            show completed time percentage
-                          </div>
-                        </div>
-
-                        <div>
-                          <button
-                            type="button"
-                            className="inline-flex w-full justify-center rounded-md bg-red-300 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-400"
-                            onClick={onDeleteAllTasksButtonClick}
-                          >
-                            Delete all tasks
-                          </button>
-                        </div>
-                      </div>
+                      <div className="mt-2">{renderBody()}</div>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+
+                <div className="mt-4 px-10 py-3 flex flex-row justify-between">
                   <button
                     type="button"
-                    className="inline-flex w-full justify-center rounded-md bg-green-300 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:bg-gray-400"
-                    onClick={onSaveButtonClick}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                    className="inline-flex justify-center items-center rounded-full px-5 py-1 text-sm font-semibold shadow-md ring-1 ring-inset ring-general hover:bg-gray-50 mt-0 w-32 uppercase"
                     onClick={() => setIsOpen(false)}
                     ref={cancelButtonRef}
                     disabled={isLoading}
                   >
                     Cancel
                   </button>
+
+                  <button
+                    type="button"
+                    className="inline-flex justify-center items-center rounded-full px-5 py-1 text-sm font-semibold shadow-md ml-3 w-40 bg-accent text-ondark disabled:bg-disabled-200 uppercase"
+                    onClick={onSaveButtonClick}
+                  >
+                    Save & Close
+                  </button>
                 </div>
 
+                {/* TODO use the settings context instead */}
                 <ConfirmActionModal
                   isOpen={isShowingDeleteAllModal}
                   setIsOpen={setIsShowingDeleteAllModal}

@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import "@/styles/CalendarPicker.css";
+import "@/styles/react-toggle-style.css";
 import type { AppProps } from "next/app";
 import { Exo_2 } from "next/font/google";
 import ModalContextProvider, {

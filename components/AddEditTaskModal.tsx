@@ -464,6 +464,7 @@ export function AddEditTaskModal({
                     </div>
                   </div>
                 </div>
+
                 <div className="px-10 py-3 flex flex-row justify-between">
                   <button
                     type="button"
@@ -474,6 +475,7 @@ export function AddEditTaskModal({
                   >
                     Cancel
                   </button>
+                  
                   <button
                     type="button"
                     className="inline-flex justify-center items-center rounded-full px-5 py-1 text-sm font-semibold shadow-md ml-3 w-32 bg-accent text-ondark disabled:bg-disabled-200 uppercase"
