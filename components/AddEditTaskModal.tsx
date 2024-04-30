@@ -250,7 +250,7 @@ export function AddEditTaskModal({
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
         as="div"
-        className={`${exo2.className} relative z-10`}
+        className={`${exo2.className} relative z-30`}
         initialFocus={cancelButtonRef}
         onClose={handleClose}
       >

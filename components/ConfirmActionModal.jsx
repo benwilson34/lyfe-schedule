@@ -35,7 +35,7 @@ export function ConfirmActionModal({
     <Transition.Root show={isOpen} as={Fragment} className={exo2.className}>
       <Dialog
         as="div"
-        className="relative z-10"
+        className="relative z-30"
         initialFocus={cancelButtonRef}
         onClose={setIsOpen}
       >
