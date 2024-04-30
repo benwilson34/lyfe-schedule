@@ -5,9 +5,7 @@ import { getToken } from "next-auth/jwt";
 import dayjs, { Dayjs } from "dayjs";
 import { OnArgs, TileContentFunc } from "react-calendar/dist/cjs/shared/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCirclePlus,
-} from "@fortawesome/free-solid-svg-icons";
+import { faCirclePlus } from "@fortawesome/free-solid-svg-icons";
 import { getTasksForDay as getTasksForDayFromDb } from "./api/tasks";
 import { taskDaoToDto } from "@/types/task.dao";
 import { uniqBy } from "lodash";
@@ -26,10 +24,7 @@ import TaskCard from "@/components/TaskCard";
 import { PulseLoader } from "react-spinners";
 import { GetServerSideProps } from "next";
 import { useModalContext } from "@/contexts/modal-context";
-import {
-  getTasksForDay,
-  getTasksForDayRange,
-} from "@/services/api.service";
+import { getTasksForDay, getTasksForDayRange } from "@/services/api.service";
 import { useSettingsContext } from "@/contexts/settings-context";
 import NavBar from "@/components/NavBar";
 
@@ -333,8 +328,8 @@ export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
 
       <section className="mx-auto max-w-lg">
         <div className="flex flex-row justify-evenly mb-6">
-          <div className="w-1/2">{renderMonthInfo()}</div>
-          <div className="w-1/2">{renderDayInfo(selectedDayTasks)}</div>
+          <div className="">{renderMonthInfo()}</div>
+          <div className="">{renderDayInfo(selectedDayTasks)}</div>
         </div>
       </section>
 
