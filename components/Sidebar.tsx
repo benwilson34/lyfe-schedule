@@ -28,7 +28,8 @@ export default function Sidebar() {
   });
   const router = useRouter();
 
-  const onSettingsButtonClick = () => {
+  const handleSettingsClick = () => {
+    setIsVisible(false);
     setCurrentModal("settings");
   };
 
@@ -148,7 +149,7 @@ export default function Sidebar() {
 
           <div
             className="cursor-pointer hover:bg-gray-500/25"
-            onClick={onSettingsButtonClick}
+            onClick={handleSettingsClick}
           >
             <FontAwesomeIcon icon={faGear} className="mr-2"></FontAwesomeIcon>
             settings
