@@ -6,7 +6,7 @@ import { Fragment, useState, useMemo, useCallback, useRef } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Exo_2 } from "next/font/google";
 import { CalendarPicker } from "./CalendarPicker";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 
 const exo2 = Exo_2({ subsets: ["latin"] });
 

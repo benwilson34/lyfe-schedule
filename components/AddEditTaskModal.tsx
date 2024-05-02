@@ -11,7 +11,7 @@ import {
   useEffect,
 } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "@/lib/dayjs";
 import { calculateRangeDays } from "@/util/task";
 import { assign } from "lodash";
 import {
@@ -25,6 +25,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowsRotate, faHourglass } from "@fortawesome/free-solid-svg-icons";
 import { TaskViewModel as Task } from "@/types/task.viewModel";
 import { OnClickFunc, TileContentFunc } from "react-calendar";
+import { createTask, updateTask } from "@/services/api.service";
+import { CreateTaskDto, UpdateTaskDto } from "@/types/task.dto";
 
 // TODO why is this needed even though the font is included in `_app`?
 const exo2 = Exo_2({ subsets: ["latin"] });
@@ -138,32 +140,23 @@ export function AddEditTaskModal({
   const onAddButtonClick = useCallback(async () => {
     try {
       const taskToAdd: Partial<Task> = {
-        title,
+        title: title!,
         startDate: dayjs(startDate),
         endDate: dayjs(endDate),
-        rangeDays,
+        rangeDays: rangeDays!,
         ...(isRepeating && { repeatDays }),
         ...(hasTimeEstimate && { timeEstimateMins }),
       };
 
       setIsLoading(true);
-      const result = await fetch(`/api/tasks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...taskToAdd,
-          startDate: dayjs(startDate).toISOString(),
-          endDate: dayjs(endDate).toISOString(),
-        }),
-      });
-      const body = await result.json();
-      if (result.status === 200) {
-        taskToAdd.id = body.data.taskId;
-      } else {
-        throw new Error(`>> error: ${JSON.stringify(body)}`);
-      }
+
+      const taskId = await createTask({
+        ...taskToAdd,
+        startDate: dayjs(startDate).format(),
+        endDate: dayjs(endDate).format(),
+      } as CreateTaskDto);
+      taskToAdd.id = taskId;
+
       afterSave(taskToAdd as Task);
       handleClose();
       // TODO show some confimation message
@@ -198,24 +191,13 @@ export function AddEditTaskModal({
       };
 
       setIsLoading(true);
-      const result = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...taskToSave,
-          startDate: dayjs(startDate).toISOString(),
-          endDate: dayjs(endDate).toISOString(),
-        }),
-      });
-      const body = await result.json();
-      if (result.status === 200) {
-        // console.log('>> Success!!');
-        // taskToAdd.id = body.data.taskId;
-      } else {
-        throw new Error(`>> error: ${JSON.stringify(body)}`);
-      }
+
+      await updateTask(task.id, {
+        ...taskToSave,
+        startDate: dayjs(startDate).format(),
+        endDate: dayjs(endDate).format(),
+      } as UpdateTaskDto);
+
       afterSave(taskToSave as Task);
       handleClose();
       // TODO show some confimation message
@@ -475,7 +457,7 @@ export function AddEditTaskModal({
                   >
                     Cancel
                   </button>
-                  
+
                   <button
                     type="button"
                     className="inline-flex justify-center items-center rounded-full px-5 py-1 text-sm font-semibold shadow-md ml-3 w-32 bg-accent text-ondark disabled:bg-disabled-200 uppercase"

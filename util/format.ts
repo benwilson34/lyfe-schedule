@@ -1,4 +1,4 @@
-import { Dayjs } from "dayjs";
+import { Dayjs } from "@/lib/dayjs";
 
 export function formatDayKey(day: Dayjs): string {
   return day.format('YYYY-MM-DD');

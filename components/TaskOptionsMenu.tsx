@@ -3,7 +3,7 @@
  */
 
 import { Fragment, forwardRef, useCallback, useEffect } from "react";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "@/lib/dayjs";
 import { Popover, Transition } from "@headlessui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {

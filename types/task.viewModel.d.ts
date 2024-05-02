@@ -1,5 +1,5 @@
 import type TaskDto from './task.dto';
-import type { Dayjs } from 'dayjs';
+import type { Dayjs } from "@/lib/dayjs";
 import { Action } from './task.dto';
 
 /**

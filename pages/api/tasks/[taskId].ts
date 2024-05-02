@@ -5,7 +5,8 @@ import ErrorResponse, { internalErrorResponse, unauthenticatedErrorResponse, not
 import { getTaskById as getTaskByIdFromDb, updateTask as updateTaskInDb, deleteTask as deleteTaskInDb, addTask } from '@/services/mongo.service';
 import SuccessResponse from '@/models/SuccessResponse';
 import { TaskDao, taskDtoToDao } from '@/types/task.dao';
-import dayjs from 'dayjs';
+import dayjs from "@/lib/dayjs";
+import { stripOffset } from '@/util/date';
 
 async function updateTask(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -79,9 +80,19 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
     // TODO check if task was already completed - or should we support changing the complete date after the fact?
 
     const { completedDate: completedDateFromReq } = req.body;
+    if (!completedDateFromReq) {
+      new ErrorResponse({
+        status: 400,
+        errorCode: 'invalidFields',
+        title: 'Could not complete task: invalid fields',
+        detail: `Could not complete the task because the \`completedDate\` field in the body was not supplied.`,
+      }).send(res);
+      return;
+    }
     // TODO validate :)
 
-    task.completedDate = completedDateFromReq ? new Date(completedDateFromReq) : new Date();
+    task.completedDate = dayjs.utc(completedDateFromReq).toDate();
+
     await updateTaskInDb(taskId, task);
     
     if (task.repeatDays) {
@@ -153,8 +164,8 @@ async function postponeTask(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
     const postponeAction = {
-      timestamp: new Date(),
-      postponeUntilDate: dayjs(postponeUntilDate).toDate(),
+      timestamp: stripOffset(dayjs()).toDate(),
+      postponeUntilDate: dayjs.utc(postponeUntilDate).toDate(),
     };
     if (task.actions) {
       task.actions.push(postponeAction);

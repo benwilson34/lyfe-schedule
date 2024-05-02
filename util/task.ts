@@ -1,6 +1,6 @@
 import type { TaskViewModel as Task, TaskViewModel } from "@/types/task.viewModel";
 import type { TaskDao } from "@/types/task.dao";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "@/lib/dayjs";
 import { last } from "lodash";
 import { PostponeAction, isPostponeAction } from "@/types/task.dto";
 

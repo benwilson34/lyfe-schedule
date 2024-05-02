@@ -6,7 +6,7 @@ import {
   WithoutId,
   OptionalId,
 } from "mongodb";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { UserDao } from "@/types/user.dao";
 import { TokenPayloadDao } from "@/types/tokenPayload.dao";
 import {

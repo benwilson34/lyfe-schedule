@@ -1,7 +1,7 @@
 import { ObjectId, OptionalId, WithoutId } from 'mongodb';
 import { Modify } from '@/util/types';
 import { TokenPayloadDto } from './tokenPayload.dto';
-import dayjs from 'dayjs';
+import dayjs from "@/lib/dayjs";
 
 export type TokenPayloadDao = OptionalId<Modify<TokenPayloadDto, {
   expiresDate: Date,

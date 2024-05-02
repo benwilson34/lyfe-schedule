@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import argon2 from "argon2";
 import { randomBytes } from "crypto";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { assign } from "lodash";
 import ErrorResponse, {
   internalErrorResponse,
@@ -37,6 +37,7 @@ import {
 } from "@/types/tokenPayload.dao";
 import { TokenPayloadAction, TokenPayloadDto } from "@/types/tokenPayload.dto";
 import { getToken } from "next-auth/jwt";
+import { stripOffset } from "@/util/date";
 
 async function hashPassword(password: string) {
   return argon2.hash(password);
@@ -103,7 +104,7 @@ async function requestResetPassword(req: NextApiRequest, res: NextApiResponse) {
 
     // generate token payload
     const token = generateToken();
-    const expiresDate = dayjs().add(PASSWORD_RESET_TOKEN_TTL_MINS, "minutes");
+    const expiresDate = stripOffset(dayjs()).add(PASSWORD_RESET_TOKEN_TTL_MINS, "minutes");
     const insertedId = await addTokenPayload({
       token,
       action: "request-password-reset",

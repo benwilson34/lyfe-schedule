@@ -12,7 +12,7 @@ import Sidebar from "@/components/Sidebar";
 import { AddEditTaskModal } from "@/components/AddEditTaskModal";
 import { CalendarPickerModal } from "@/components/CalendarPickerModal";
 import { isPostponeDateValid } from "@/util/task";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { useEffect } from "react";

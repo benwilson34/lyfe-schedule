@@ -1,5 +1,5 @@
 import type { TaskViewModel as Task } from "@/types/task.viewModel";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "@/lib/dayjs";
 import TaskOptionsMenu from "./TaskOptionsMenu";
 import { formatTimeEstimate } from "@/util/format";
 import { calculatePriority } from "@/util/date";
@@ -94,9 +94,9 @@ export default function TaskCard({
 
   const handleCheckboxClick = async () => {
     // TODO animate
-    await completeTask(task.id);
-    // exact timestamp isn't important here
-    afterComplete(assign(task, { completedDate: dayjs() }), selectedDay);
+    const completedDate = new Date();
+    await completeTask(task.id, completedDate);
+    afterComplete(assign(task, { completedDate }), selectedDay);
   };
 
   const handleEditOptionClick = () => {
@@ -107,7 +107,6 @@ export default function TaskCard({
     completedDate: Date
   ) => {
     await completeTask(task.id, completedDate);
-    // exact timestamp isn't important here
     afterComplete(
       assign(task, { completedDate: dayjs(completedDate) }),
       dayjs(completedDate)

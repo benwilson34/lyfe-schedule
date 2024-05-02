@@ -1,108 +1,92 @@
-// Strictly frontend service
+/**
+ * Strictly frontend service
+ * 
+ * For now I'm going to strip the offset to get the "canonical date". If/when we add time features, this
+ *   will need to be revisited.
+ *
+ * @todo should wrap these functions with try-catch to log and display more user-friendly error message?
+ */
 
-import { TaskDto } from "@/types/task.dto";
-import { Dayjs } from "dayjs";
+import { CreateTaskDto, TaskDto, UpdateTaskDto } from "@/types/task.dto";
+import dayjs, { Dayjs } from '@/lib/dayjs';
+import { stripOffset } from "@/util/date";
 
-export async function decryptJwt() {
-  const result = await fetch(`/api/auth/jwt`, {
-    method: "GET",
+async function request<T extends Record<string, any> = {}>(
+  method: string,
+  endpoint: string,
+  body?: Record<string, any>
+): Promise<T> {
+  const result = await fetch(endpoint, {
+    method,
     headers: {
       // the auth header is added automatically?
       "Content-Type": "application/json",
     },
+    ...(body && { body: JSON.stringify(body) }),
   });
+  const { data, detail } = (await result.json()) as { data: T; detail: string };
   if (result.status !== 200) {
-    throw new Error("Failed to decrypt JWT");
+    throw new Error(detail || `Request to ${method} ${endpoint} failed.`);
   }
-  const { data } = (await result.json()) as {
-    data: { userId: string; isAdmin: boolean };
-  };
   return data;
 }
 
+export async function decryptJwt() {
+  return request<{ userId: string; isAdmin: boolean }>("GET", "/api/auth/jwt");
+}
+
 export async function getTasksForDay(day: Dayjs) {
-  const result = await fetch(`/api/tasks?targetDay=${day.toISOString()}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if (result.status !== 200) {
-    throw new Error("Failed to fetch tasks");
-  }
-  const { data } = (await result.json()) as {
-    data: { dayTasks: Record<string, TaskDto[]> };
-  };
-  return data.dayTasks;
+  const { dayTasks } = await request<{ dayTasks: Record<string, TaskDto[]> }>(
+    "GET",
+    `/api/tasks?targetDay=${stripOffset(day).format()}`
+  );
+  return dayTasks;
 }
 
 export async function getTasksForDayRange(startDay: Dayjs, endDay: Dayjs) {
-  const result = await fetch(
-    `/api/tasks?targetStartDay=${startDay.toISOString()}&targetEndDay=${endDay.toISOString()}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
+  const { dayTasks } = await request<{ dayTasks: Record<string, TaskDto[]> }>(
+    "GET",
+    `/api/tasks?targetStartDay=${stripOffset(startDay).format()}&targetEndDay=${stripOffset(endDay).format()}`
   );
-  if (result.status !== 200) {
-    throw new Error("Failed to fetch tasks for multiple days");
-  }
-  const { data } = (await result.json()) as {
-    data: { dayTasks: Record<string, TaskDto[]> };
-  };
-  return data.dayTasks;
+  return dayTasks;
 }
 
 export async function completeTask(
   completedTaskId: string,
-  completedDate?: Date
+  completedDate: Date
 ) {
-  const result = await fetch(`/api/tasks/${completedTaskId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      operation: "complete",
-      ...(completedDate && { completedDate: completedDate.toISOString() }),
-    }),
+  return request("PUT", `/api/tasks/${completedTaskId}`, {
+    operation: "complete",
+    completedDate: stripOffset(completedDate).format(),
   });
-
-  const body = await result.json();
-  if (result.status !== 200) {
-    throw new Error("Failed to complete task");
-  }
 }
 
 export async function postponeTask(taskId: string, postponeUntilDate: Dayjs) {
-  const requestBody = {
+  return request("PUT", `/api/tasks/${taskId}`, {
     operation: "postpone",
-    postponeUntilDate: postponeUntilDate.toISOString(),
-  };
-  const result = await fetch(`/api/tasks/${taskId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(requestBody),
+    postponeUntilDate: stripOffset(postponeUntilDate).format(),
   });
-  const responseBody = await result.json();
-  if (result.status !== 200) {
-    throw new Error(`>> error: ${JSON.stringify(responseBody)}`);
-  }
+}
+
+// TODO or should the type be TaskViewModel then we'll just convert to TaskDto?
+export async function createTask(task: CreateTaskDto) {
+  const { taskId } = await request<{ taskId: string }>(
+    "POST",
+    "/api/tasks",
+    task
+  );
+  return taskId;
+}
+
+export async function updateTask(taskId: string, task: UpdateTaskDto) {
+  const { taskId: modifiedId } = await request<{ taskId: string }>(
+    "PATCH",
+    `/api/tasks/${taskId}`,
+    task
+  );
+  return modifiedId;
 }
 
 export async function deleteTask(taskId: string) {
-  const result = await fetch(`/api/tasks/${taskId}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  const body = await result.json();
-  if (result.status !== 200) {
-    throw new Error(`>> error: ${JSON.stringify(body)}`);
-  }
+  return request("DELETE", `/api/tasks/${taskId}`);
 }

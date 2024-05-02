@@ -1,5 +1,5 @@
 import type { CalendarProps, TileContentFunc } from "react-calendar";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import Calendar from "react-calendar";
 
 export const emptyDayTileContent = <div className="h-full"></div>;

@@ -35,3 +35,7 @@ export type TaskDto = {
   actions?: Action[];
   priority?: number; // calculated field (not part of the data model)
 }
+
+export type CreateTaskDto = Omit<TaskDto, "id" | "userId" | "isProjected" | "priority">;
+
+export type UpdateTaskDto = Partial<Omit<TaskDto, "id" | "userId" | "isProjected" | "priority">>;

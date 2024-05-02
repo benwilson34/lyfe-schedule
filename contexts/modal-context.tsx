@@ -1,6 +1,6 @@
 import React, { Dispatch, createContext, useContext, useState } from "react";
 import { TaskViewModel as Task } from "@/types/task.viewModel";
-import { Dayjs } from "dayjs";
+import { Dayjs } from "@/lib/dayjs";
 
 export type Modal =
   | "none"

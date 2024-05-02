@@ -1,4 +1,4 @@
-import dayjs, { Dayjs, isDayjs } from "dayjs";
+import dayjs, { Dayjs, isDayjs } from "@/lib/dayjs";
 import { lerp } from "./math";
 
 export function calculatePriority(
@@ -18,4 +18,10 @@ export function calculatePriority(
   const rangeHours = conformedEndDate.diff(conformedStartDate, "hours");
   const elapsedHours = conformedCurrentDay.diff(conformedStartDate, "hours");
   return lerp(MIN_PRIORITY, MAX_PRIORITY, elapsedHours / rangeHours);
+}
+
+export function stripOffset(date: string | Date | Dayjs): Dayjs {
+  const conformedDate = isDayjs(date) ? date : dayjs(date);
+  const formattedDate = conformedDate.format('YYYY-MM-DDTHH:mm:ss');
+  return dayjs.utc(formattedDate);
 }

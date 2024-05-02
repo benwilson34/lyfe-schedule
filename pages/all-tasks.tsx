@@ -2,7 +2,7 @@ import type { TaskDto } from "@/types/task.dto";
 import type { TaskViewModel as Task } from "@/types/task.viewModel";
 import { useState, useCallback } from "react";
 import { getToken } from "next-auth/jwt";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCirclePlus,

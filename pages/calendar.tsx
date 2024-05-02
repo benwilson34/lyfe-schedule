@@ -2,7 +2,7 @@ import type { TaskDto } from "@/types/task.dto";
 import type { TaskViewModel as Task } from "@/types/task.viewModel";
 import { useState, useCallback, useEffect } from "react";
 import { getToken } from "next-auth/jwt";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "@/lib/dayjs";
 import { OnArgs, TileContentFunc } from "react-calendar/dist/cjs/shared/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCirclePlus } from "@fortawesome/free-solid-svg-icons";

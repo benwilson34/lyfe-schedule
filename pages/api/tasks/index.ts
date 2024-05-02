@@ -16,7 +16,7 @@ import ErrorResponse, {
   unauthenticatedErrorResponse,
 } from "@/models/ErrorResponse";
 import SuccessResponse from "@/models/SuccessResponse";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "@/lib/dayjs";
 import {
   calculateEndDate,
   getLastPostponeUntilDate,
@@ -199,7 +199,7 @@ async function getMultipleTasks(req: NextApiRequest, res: NextApiResponse) {
 
     // handle day-task-type requests
     if (targetDayString) {
-      const dayKey = formatDayKey(dayjs(targetDayString));
+      const dayKey = formatDayKey(dayjs.utc(targetDayString));
       sendMappedDayTasks({
         [dayKey]: await getTasksForDay(userId, new Date(targetDayString)),
       });
@@ -208,8 +208,8 @@ async function getMultipleTasks(req: NextApiRequest, res: NextApiResponse) {
       sendMappedDayTasks(
         await getTasksForDayRange(
           userId,
-          new Date(targetStartDayString),
-          new Date(targetEndDayString)
+          dayjs.utc(targetStartDayString).toDate(),
+          dayjs.utc(targetEndDayString).toDate(),
         )
       );
       return;

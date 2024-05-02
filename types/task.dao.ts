@@ -1,6 +1,6 @@
 import { ObjectId, OptionalId, WithoutId } from 'mongodb';
 import { isPostponeAction, type TaskDto } from './task.dto';
-import dayjs from 'dayjs';
+import dayjs from "@/lib/dayjs";
 import { Modify } from '@/util/types';
 
 /**
@@ -50,15 +50,15 @@ export function taskDtoToDao(taskDto: TaskDto): TaskDao {
     userId: new ObjectId(userId), // TODO should this just be removed?
     title,
     ...(timeEstimateMins && { timeEstimateMins }),
-    startDate: dayjs(startDate).toDate(),
+    startDate: dayjs.utc(startDate).toDate(),
     rangeDays,
-    endDate: dayjs(endDate).toDate(),
+    endDate: dayjs.utc(endDate).toDate(),
     ...(repeatDays && { repeatDays }),
-    ...(completedDate && { completedDate: dayjs(completedDate).toDate() }),
+    ...(completedDate && { completedDate: dayjs.utc(completedDate).toDate() }),
     ...(actions && { actions: actions.map(
       (action) => ({
-        timestamp: dayjs(action.timestamp).toDate(),
-        ...(isPostponeAction(action) && { postponeUntilDate: dayjs(action.postponeUntilDate).toDate() }),
+        timestamp: dayjs.utc(action.timestamp).toDate(),
+        ...(isPostponeAction(action) && { postponeUntilDate: dayjs.utc(action.postponeUntilDate).toDate() }),
       })
     ) }),
   } as TaskDao;
