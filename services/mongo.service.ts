@@ -1,10 +1,11 @@
-import type { TaskDao, TaskInsertDao, TaskUpdateDao } from "@/types/task.dao";
+import type { TaskDao, CreateTaskDao, UpdateTaskDao } from "@/types/task.dao";
 import {
   MongoClient,
   Collection,
   ObjectId,
   WithoutId,
   OptionalId,
+  WithId,
 } from "mongodb";
 import dayjs from "@/lib/dayjs";
 import { UserDao } from "@/types/user.dao";
@@ -42,11 +43,14 @@ export async function getManyTasks(
   await initIfNeeded();
 
   const userOid = userId instanceof ObjectId ? userId : new ObjectId(userId);
-  const adjustedDate = targetDay && dayjs(targetDay)
-    .startOf("day")
-    .add(1, "day")
-    // TODO maybe just endOf('day') instead?
-    .toDate();
+  const adjustedDate =
+    targetDay &&
+    dayjs
+      .utc(targetDay)
+      .startOf("day")
+      .add(1, "day")
+      // TODO maybe just endOf('day') instead?
+      .toDate();
   const filter = {
     userId: userOid,
     completedDate: { $exists: false },
@@ -69,18 +73,18 @@ export async function getManyTasks(
   return tasks;
 }
 
-export async function addTask(newTask: WithoutId<TaskDao>): Promise<string> {
+export async function addTask(newTask: CreateTaskDao): Promise<string> {
   await initIfNeeded();
   // TODO validate task? or trust caller?
   const insertResult = await taskCollection!.insertOne(
-    newTask as OptionalId<TaskDao>
+    newTask as WithId<CreateTaskDao> // this ain't right but I don't have the patience for it rn
   );
   return insertResult.insertedId.toString();
 }
 
 export async function updateTask(
   id: ObjectId | string,
-  task: TaskUpdateDao
+  task: UpdateTaskDao
 ): Promise<string> {
   await initIfNeeded();
   // TODO validate task

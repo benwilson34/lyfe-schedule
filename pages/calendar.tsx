@@ -1,5 +1,8 @@
 import type { TaskDto } from "@/types/task.dto";
-import type { TaskViewModel as Task } from "@/types/task.viewModel";
+import {
+  taskDtoToViewModel,
+  type TaskViewModel as Task,
+} from "@/types/task.viewModel";
 import { useState, useCallback, useEffect } from "react";
 import { getToken } from "next-auth/jwt";
 import dayjs, { Dayjs } from "@/lib/dayjs";
@@ -7,7 +10,7 @@ import { OnArgs, TileContentFunc } from "react-calendar/dist/cjs/shared/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCirclePlus } from "@fortawesome/free-solid-svg-icons";
 import { getTasksForDay as getTasksForDayFromDb } from "./api/tasks";
-import { taskDaoToDto } from "@/types/task.dao";
+import { convertTaskDaoToDto } from "@/types/task.dao";
 import { uniqBy } from "lodash";
 import {
   formatDayKey,
@@ -30,60 +33,25 @@ import NavBar from "@/components/NavBar";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
-function dtoTaskToTask(taskDto: TaskDto): Task {
-  return {
-    ...taskDto,
-    startDate: dayjs(taskDto.startDate),
-    endDate: dayjs(taskDto.endDate),
-    ...(taskDto.completedDate && {
-      completedDate: dayjs(taskDto.completedDate),
-    }),
-  } as Task;
-}
-
-export const getServerSideProps = (async (context: any) => {
-  // TODO this would be better as a util function
-  // auth
-  const token = await getToken({ req: context.req });
-  if (!token) {
-    // shouldn't be possible to get to this point
-    console.error(`Error initializing: authentication error!`);
-    return { props: {} };
-  }
-  const userId = token.sub!;
-
-  const today = new Date();
-  const initTasks: TaskDto[] = (await getTasksForDayFromDb(userId, today)).map(
-    taskDaoToDto
-  );
-  return {
-    props: {
-      initTasks,
-    },
-  };
-}) satisfies GetServerSideProps;
-
-export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
+export default function CalendarView() {
   const { showAddEditModal } = useModalContext();
   const { monthInfoSettings, dayInfoSettings } = useSettingsContext();
 
-  // TODO gonna have to check `initTasks` when switching pages I think
-  const [selectedDayTasks, setSelectedDayTasks] = useState(
-    initTasks.map(dtoTaskToTask) as Task[]
-  );
+  const [selectedDayTasks, setSelectedDayTasks] = useState<Task[]>([]);
   const [selectedDay, setSelectedDay] = useState<Dayjs>(dayjs());
   const [shownDateRange, setShownDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().startOf("month"),
     dayjs().endOf("month"),
   ]);
-  const [isDayTasksLoading, setIsDayTasksLoading] = useState(false);
+  const [isDayTasksLoading, setIsDayTasksLoading] = useState<boolean>(false);
+  // `TaskDto` at the moment because we're only displaying this data in aggregate (sums and such)
   const [dayTasks, setDayTasks] = useState<Record<string, TaskDto[]>>({});
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [shownStartDay, shownEndDay] = shownDateRange;
-        const dayTasks = await getTasksForDayRange(shownStartDay, shownEndDay);
+        const dayTasks = await getTasksForDayRange(shownStartDay, shownEndDay)
         setDayTasks(dayTasks);
       } catch (maybeError) {
         console.error(maybeError);
@@ -93,14 +61,31 @@ export default function CalendarView({ initTasks }: { initTasks: TaskDto[] }) {
     fetchData();
   }, [shownDateRange]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const newSelectedDayTasks = await getTasksForDay(selectedDay);
+        setSelectedDayTasks(
+          newSelectedDayTasks[formatDayKey(selectedDay)].map(taskDtoToViewModel)
+        );
+      } catch (maybeError) {
+        console.error(maybeError);
+        // TODO display some error message
+      }
+    };
+    fetchData();
+  }, []); // only on first load
+
   const handleSelectedDayChange = async (date: Date) => {
     try {
       setSelectedDay(dayjs(date));
       setIsDayTasksLoading(true);
-      const dayTasks = await getTasksForDay(dayjs(date));
-      const newTasks =
-        dayTasks[dayjs(date).format("YYYY-MM-DD")].map(dtoTaskToTask);
-      setSelectedDayTasks(newTasks);
+      // if the date is "today", use the current time too
+      const adjustedDate = dayjs(date).isSame(dayjs(), 'day') ? dayjs() : dayjs(date);
+      const dayTasks = await getTasksForDay(adjustedDate);
+      const selectedDayTasks =
+        dayTasks[formatDayKey(adjustedDate)].map(taskDtoToViewModel);
+      setSelectedDayTasks(selectedDayTasks);
       setIsDayTasksLoading(false);
     } catch (maybeError: any) {
       console.error(maybeError);

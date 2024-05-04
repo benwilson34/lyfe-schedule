@@ -9,5 +9,7 @@ import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 // dayjs.extend(timezone);
 
+// dayjs.tz.setDefault('UTC'); // I'm not convinced this is necessary
+
 export default dayjs;
 export { Dayjs, isDayjs };

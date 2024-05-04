@@ -1,53 +1,94 @@
-import { ObjectId, OptionalId, WithoutId } from 'mongodb';
-import { isPostponeAction, type TaskDto } from './task.dto';
+import { ObjectId, OptionalId, WithoutId, WithId } from "mongodb";
+import {
+  CreateTaskDto,
+  UpdateTaskDto,
+  isPostponeAction,
+  type TaskDto,
+} from "./task.dto";
 import dayjs from "@/lib/dayjs";
-import { Modify } from '@/util/types';
+import { Modify } from "@/util/types";
+import { getCanonicalDatestring } from "@/util/date";
+
+export type TaskDaoWithCalculatedFields = WithId<
+  Modify<
+    Omit<TaskDto, "id">,
+    {
+      userId: ObjectId;
+      startDate: Date;
+      endDate: Date;
+      completedDate?: Date;
+    }
+  >
+>;
 
 /**
  * Access object for the Todo task model.
- * @todo is this explicit definition needed, or is there some shorthand way from the
- *   Node MongoDB package?
- * @todo convert `startDate` type to `Date` here if the DTO changes it to `string`
  */
+export type TaskDao = Omit<
+  TaskDaoWithCalculatedFields,
+  "isProjected" | "priority"
+>;
 
-export type TaskDao = OptionalId<Modify<TaskDto, {
-  userId: ObjectId,
-  startDate: Date,
-  endDate: Date,
-  completedDate?: Date,
-}>>;
+export type CreateTaskDao = WithoutId<TaskDao>;
 
-export type TaskInsertDao = WithoutId<TaskDao>;
+export type UpdateTaskDao = WithoutId<
+  Partial<Omit<TaskDao, "userId" | "actions">>
+>;
 
-export type TaskUpdateDao = WithoutId<Partial<TaskDao>>;
-
-export function taskDaoToDto(taskDao: TaskDao): TaskDto {
-  const { _id, userId, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, isProjected, completedDate, actions } = taskDao;
+export function convertTaskDaoToDto(
+  taskDao: TaskDaoWithCalculatedFields
+): TaskDto {
+  const {
+    _id,
+    userId,
+    title,
+    timeEstimateMins,
+    startDate,
+    rangeDays,
+    endDate,
+    repeatDays,
+    isProjected,
+    completedDate,
+    actions,
+  } = taskDao;
   return {
     ...(_id && { id: _id.toString() }),
     userId: userId.toString(),
     title,
     ...(timeEstimateMins && { timeEstimateMins }),
-    startDate: startDate.toISOString(),
+    startDate: getCanonicalDatestring(startDate, false),
     rangeDays,
-    endDate: endDate.toISOString(),
+    endDate: getCanonicalDatestring(endDate, false),
     ...(repeatDays && { repeatDays }),
     ...(isProjected && { isProjected }),
-    ...(completedDate && { completedDate: completedDate.toISOString() }),
-    ...(actions && { actions: actions.map(
-      (action) => ({
-        timestamp: action.timestamp.toISOString(),
-        ...(isPostponeAction(action) && { postponeUntilDate: action.postponeUntilDate.toISOString() }),
-      })
-    ) }),
+    ...(completedDate && {
+      completedDate: getCanonicalDatestring(completedDate, false),
+    }),
+    ...(actions && {
+      actions: actions.map((action) => ({
+        timestamp: getCanonicalDatestring(action.timestamp, false),
+        ...(isPostponeAction(action) && {
+          postponeUntilDate: getCanonicalDatestring(action.postponeUntilDate, false),
+        }),
+      })),
+    }),
   } as TaskDto;
 }
 
-export function taskDtoToDao(taskDto: TaskDto): TaskDao {
-  const { id, userId, title, timeEstimateMins, startDate, rangeDays, endDate, repeatDays, completedDate, actions } = taskDto;
+export function convertCreateTaskDtoToDao(
+  createTaskDto: CreateTaskDto
+): TaskDao {
+  const {
+    title,
+    timeEstimateMins,
+    startDate,
+    rangeDays,
+    endDate,
+    repeatDays,
+    completedDate,
+    actions,
+  } = createTaskDto;
   return {
-    ...(id && { _id: id }),
-    userId: new ObjectId(userId), // TODO should this just be removed?
     title,
     ...(timeEstimateMins && { timeEstimateMins }),
     startDate: dayjs.utc(startDate).toDate(),
@@ -55,11 +96,36 @@ export function taskDtoToDao(taskDto: TaskDto): TaskDao {
     endDate: dayjs.utc(endDate).toDate(),
     ...(repeatDays && { repeatDays }),
     ...(completedDate && { completedDate: dayjs.utc(completedDate).toDate() }),
-    ...(actions && { actions: actions.map(
-      (action) => ({
+    ...(actions && {
+      actions: actions.map((action) => ({
         timestamp: dayjs.utc(action.timestamp).toDate(),
-        ...(isPostponeAction(action) && { postponeUntilDate: dayjs.utc(action.postponeUntilDate).toDate() }),
-      })
-    ) }),
+        ...(isPostponeAction(action) && {
+          postponeUntilDate: dayjs.utc(action.postponeUntilDate).toDate(),
+        }),
+      })),
+    }),
   } as TaskDao;
+}
+
+export function convertUpdateTaskDtoToDao(
+  updateTaskDto: UpdateTaskDto
+): UpdateTaskDao {
+  const {
+    title,
+    timeEstimateMins,
+    startDate,
+    rangeDays,
+    endDate,
+    repeatDays,
+    completedDate,
+  } = updateTaskDto;
+  return {
+    ...(title && { title }),
+    ...(timeEstimateMins && { timeEstimateMins }), // TODO this could also be a "remove" operation. This dao is less like the others...
+    ...(startDate && { startDate: dayjs.utc(startDate).toDate() }),
+    ...(rangeDays && { rangeDays }),
+    ...(endDate && { endDate: dayjs.utc(endDate).toDate() }),
+    ...(repeatDays && { repeatDays }), // TODO this could also be a "remove" operation...
+    ...(completedDate && { completedDate }),
+  } as UpdateTaskDao;
 }

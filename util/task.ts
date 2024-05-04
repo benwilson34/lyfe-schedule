@@ -1,5 +1,5 @@
 import type { TaskViewModel as Task, TaskViewModel } from "@/types/task.viewModel";
-import type { TaskDao } from "@/types/task.dao";
+import type { TaskDao, TaskDaoWithCalculatedFields } from "@/types/task.dao";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import { last } from "lodash";
 import { PostponeAction, isPostponeAction } from "@/types/task.dto";
@@ -53,7 +53,7 @@ export function verifyDateRange(task: Task): boolean {
   return false;
 }
 
-export function sortTasks(a: Partial<TaskDao>, b: Partial<TaskDao>): number {
+export function sortTasks(a: TaskDaoWithCalculatedFields, b: TaskDaoWithCalculatedFields): number {
   if (!!a.completedDate !== !!b.completedDate) {
     return a.completedDate ? 1 : -1;
   }

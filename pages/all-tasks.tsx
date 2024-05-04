@@ -1,5 +1,5 @@
 import type { TaskDto } from "@/types/task.dto";
-import type { TaskViewModel as Task } from "@/types/task.viewModel";
+import { taskDtoToViewModel, type TaskViewModel as Task } from "@/types/task.viewModel";
 import { useState, useCallback } from "react";
 import { getToken } from "next-auth/jwt";
 import dayjs from "@/lib/dayjs";
@@ -9,7 +9,7 @@ import {
   faArrowLeft,
   faBars,
 } from "@fortawesome/free-solid-svg-icons";
-import { taskDaoToDto } from "@/types/task.dao";
+import { convertTaskDaoToDto } from "@/types/task.dao";
 import TaskCard from "@/components/TaskCard";
 import { PulseLoader } from "react-spinners";
 import { GetServerSideProps } from "next";
@@ -18,17 +18,6 @@ import { useSidebarContext } from "@/contexts/sidebar-context";
 import { useModalContext } from "@/contexts/modal-context";
 import { getManyTasks } from "@/services/mongo.service";
 import NavBar from "@/components/NavBar";
-
-function dtoTaskToTask(taskDto: TaskDto): Task {
-  return {
-    ...taskDto,
-    startDate: dayjs(taskDto.startDate),
-    endDate: dayjs(taskDto.endDate),
-    ...(taskDto.completedDate && {
-      completedDate: dayjs(taskDto.completedDate),
-    }),
-  } as Task;
-}
 
 export const getServerSideProps = (async (context: any) => {
   // TODO this would be better as a util function
@@ -41,7 +30,7 @@ export const getServerSideProps = (async (context: any) => {
   }
   const userId = token.sub!;
 
-  const initTasks: TaskDto[] = (await getManyTasks(userId)).map(taskDaoToDto);
+  const initTasks: TaskDto[] = (await getManyTasks(userId)).map(convertTaskDaoToDto);
   return {
     props: {
       initTasks,
@@ -57,8 +46,8 @@ export default function AllTasksView({ initTasks }: { initTasks: TaskDto[] }) {
   const { showAddEditModal } = useModalContext();
 
   // TODO gonna have to check `initTasks` when switching pages I think
-  const [tasks, setTasks] = useState((initTasks.map(dtoTaskToTask) as Task[]).sort((a, b) => a.startDate.isAfter(b.startDate) ? 1 : -1));
-  const [isLoading, setIsLoading] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>((initTasks.map(taskDtoToViewModel) as Task[]).sort((a, b) => a.startDate.isAfter(b.startDate) ? 1 : -1));
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // useEffect(() => {
   //   const fetchData = async () => {

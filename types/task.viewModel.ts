@@ -1,5 +1,5 @@
-import type TaskDto from './task.dto';
-import type { Dayjs } from "@/lib/dayjs";
+import type { TaskDto } from './task.dto';
+import dayjs, { Dayjs } from "@/lib/dayjs";
 import { Action } from './task.dto';
 
 /**
@@ -20,3 +20,14 @@ export type TaskViewModel = {
   actions?: Action[];
   priority?: number;
 };
+
+export function taskDtoToViewModel(taskDto: TaskDto): TaskViewModel {
+  return {
+    ...taskDto,
+    startDate: dayjs(taskDto.startDate),
+    endDate: dayjs(taskDto.endDate),
+    ...(taskDto.completedDate && {
+      completedDate: dayjs(taskDto.completedDate),
+    }),
+  } as TaskViewModel;
+}

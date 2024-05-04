@@ -13,7 +13,6 @@ import {
 import { Dialog, Transition } from "@headlessui/react";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import { calculateRangeDays } from "@/util/task";
-import { assign } from "lodash";
 import {
   CalendarPicker,
   contentClassName,
@@ -27,6 +26,7 @@ import { TaskViewModel as Task } from "@/types/task.viewModel";
 import { OnClickFunc, TileContentFunc } from "react-calendar";
 import { createTask, updateTask } from "@/services/api.service";
 import { CreateTaskDto, UpdateTaskDto } from "@/types/task.dto";
+import { getCanonicalDatestring } from "@/util/date";
 
 // TODO why is this needed even though the font is included in `_app`?
 const exo2 = Exo_2({ subsets: ["latin"] });
@@ -59,7 +59,7 @@ export function AddEditTaskModal({
   const [endDate, setEndDate] = useState(
     task?.endDate || initialStartDate || dayjs()
   );
-  const [rangeDays, setRangeDays] = useState(task?.rangeDays || 0);
+  const [rangeDays, setRangeDays] = useState(task?.rangeDays || 1);
   const [isRepeating, setIsRepeating] = useState(!!task?.repeatDays || false);
   const [repeatDays, setRepeatDays] = useState(task?.repeatDays || 1);
   const [hasTimeEstimate, setHasTimeEstimate] = useState(
@@ -152,8 +152,8 @@ export function AddEditTaskModal({
 
       const taskId = await createTask({
         ...taskToAdd,
-        startDate: dayjs(startDate).format(),
-        endDate: dayjs(endDate).format(),
+        startDate: getCanonicalDatestring(startDate),
+        endDate: getCanonicalDatestring(endDate),
       } as CreateTaskDto);
       taskToAdd.id = taskId;
 
@@ -194,8 +194,8 @@ export function AddEditTaskModal({
 
       await updateTask(task.id, {
         ...taskToSave,
-        startDate: dayjs(startDate).format(),
-        endDate: dayjs(endDate).format(),
+        startDate: getCanonicalDatestring(startDate),
+        endDate: getCanonicalDatestring(endDate),
       } as UpdateTaskDto);
 
       afterSave(taskToSave as Task);

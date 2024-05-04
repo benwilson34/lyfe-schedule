@@ -22,12 +22,17 @@ import {
   getLastPostponeUntilDate,
   sortTasks,
 } from "@/util/task";
-import { TaskDao, taskDaoToDto, taskDtoToDao } from "@/types/task.dao";
+import {
+  TaskDao,
+  convertCreateTaskDtoToDao,
+  convertTaskDaoToDto,
+} from "@/types/task.dao";
 import { assign, last } from "lodash";
 import { getToken } from "next-auth/jwt";
 import { ObjectId } from "mongodb";
 import { formatDayKey } from "@/util/format";
 import { calculatePriority } from "@/util/date";
+import { getTimezoneOffsetFromHeader } from "@/util/timezoneOffset";
 
 function handleError(maybeError: any, res: NextApiResponse) {
   console.error(maybeError);
@@ -48,12 +53,14 @@ function getProjectedRepeatingTasksForDay(
       const { startDate, repeatDays } = task;
       const lastPostponeUntilDate = getLastPostponeUntilDate(task);
       // theoretical complete date has nothing to do with targetDay!
-      const theoreticalCompleteDate = dayjs(
-        lastPostponeUntilDate ||
-          (dayjs(startDate).isAfter(dayjs(currentDay), "day")
-            ? startDate
-            : currentDay)
-      ).startOf("day");
+      const theoreticalCompleteDate = dayjs
+        .utc(
+          lastPostponeUntilDate ||
+            (dayjs.utc(startDate).isAfter(dayjs.utc(currentDay), "day")
+              ? startDate
+              : currentDay)
+        )
+        .startOf("day");
       if (!repeatDays) return false; // task.repeatDays must be >= 1 if defined
       // If the task's TCD is the same as the targetDay, the task is still open, so it doesn't need
       //   to be projected.
@@ -63,18 +70,18 @@ function getProjectedRepeatingTasksForDay(
       //   that scales on [0,1] for [startDate,endDate].
       //   That could also be automatically tailored to the user by collecting an average over their
       //   previously completed tasks of when in the date range it was completed.
-      const startOfTargetDay = dayjs(targetDay).startOf("day");
+      const startOfTargetDay = dayjs.utc(targetDay).startOf("day");
       const taskRepeatsOnTargetDay =
         theoreticalCompleteDate.diff(startOfTargetDay, "day") % repeatDays ===
         0;
       return !targetIsSameDay && taskRepeatsOnTargetDay;
     })
     .map((task) => {
-      const offsetDays = dayjs(targetDay).diff(task.startDate, "day");
+      const offsetDays = dayjs.utc(targetDay).diff(task.startDate, "day");
       return {
         ...task,
-        startDate: dayjs(task.startDate).add(offsetDays, "day").toDate(),
-        endDate: dayjs(task.endDate).add(offsetDays, "day").toDate(),
+        startDate: dayjs.utc(task.startDate).add(offsetDays, "day").toDate(),
+        endDate: dayjs.utc(task.endDate).add(offsetDays, "day").toDate(),
         isProjected: true,
       };
     });
@@ -83,10 +90,12 @@ function getProjectedRepeatingTasksForDay(
 export async function getTasksForDay(
   userId: string,
   targetDay: Date,
+  currentDay: Date,
   { filterOutPostponed = true }: { filterOutPostponed?: boolean } = {}
 ): Promise<TaskDao[]> {
-  const startOfTargetDay = dayjs(targetDay).startOf("day");
-  const currentDay = dayjs().startOf("day");
+  const startOfTargetDay = dayjs.utc(targetDay).startOf("day");
+  // const currentDay = dayjs.utc().startOf("day");
+  // console.log(">> currentDay", currentDay);
   const targetDayIsAfterCurrentDay = startOfTargetDay.isAfter(currentDay);
   type CalculatedTaskDao = TaskDao & { lastPostponeUntilDate?: Date };
   let tasks: CalculatedTaskDao[] = (
@@ -99,15 +108,16 @@ export async function getTasksForDay(
       (task) =>
         assign(task, {
           lastPostponeUntilDate: getLastPostponeUntilDate(task),
-          priority: calculatePriority(task.startDate, task.endDate, dayjs()),
+          priority: calculatePriority(task.startDate, task.endDate, currentDay),
         })
       // TODO support other sort methods - or shouldn't we sort on the server side?
     )
     .sort(sortTasks);
+
   if (filterOutPostponed) {
     tasks = tasks.filter((task) => {
       if (!task.lastPostponeUntilDate) return true;
-      const lastPostponeUntilDate = dayjs(task.lastPostponeUntilDate);
+      const lastPostponeUntilDate = dayjs.utc(task.lastPostponeUntilDate);
       return (
         startOfTargetDay.isSame(lastPostponeUntilDate, "day") ||
         startOfTargetDay.isAfter(lastPostponeUntilDate)
@@ -119,16 +129,12 @@ export async function getTasksForDay(
       startOfTargetDay.isSame(task.lastPostponeUntilDate, "day")
     );
     const tasksThatStartOnTargetDay = tasks.filter((task) =>
-      startOfTargetDay.isSame(dayjs(task.startDate), "day")
+      startOfTargetDay.isSame(dayjs.utc(task.startDate), "day")
     );
     tasks = [
       ...tasksPostponedToTargetDay,
       ...tasksThatStartOnTargetDay,
-      ...getProjectedRepeatingTasksForDay(
-        tasks,
-        targetDay,
-        currentDay.toDate()
-      ),
+      ...getProjectedRepeatingTasksForDay(tasks, targetDay, currentDay),
     ];
   }
   return tasks;
@@ -137,17 +143,20 @@ export async function getTasksForDay(
 async function getTasksForDayRange(
   userId: string,
   targetStartDay: Date,
-  targetEndDay: Date
+  targetEndDay: Date,
+  currentDay: Date
 ): Promise<Record<string, TaskDao[]>> {
-  const dayDiff = dayjs(targetEndDay).diff(targetStartDay, "day") + 1; // inclusive bounds, so we'll add one
+  const dayDiff =
+    dayjs.utc(targetEndDay).diff(dayjs.utc(targetStartDay), "day") + 1; // inclusive bounds, so we'll add one
   const dayToTasksMap: Record<string, TaskDao[]> = {};
   let dayOffset = 0;
   while (dayOffset !== dayDiff) {
-    const targetDay = dayjs(targetStartDay).add(dayOffset, "day");
+    const targetDay = dayjs.utc(targetStartDay).add(dayOffset, "day");
     const targetDayKey = formatDayKey(targetDay);
     dayToTasksMap[targetDayKey] = await getTasksForDay(
       userId,
-      targetDay.toDate()
+      targetDay.toDate(),
+      currentDay
     );
     dayOffset += 1;
   }
@@ -189,7 +198,7 @@ async function getMultipleTasks(req: NextApiRequest, res: NextApiResponse) {
       const dayTasksMapped = Object.fromEntries(
         Object.entries(dayTasks).map(([day, tasks]) => [
           day,
-          tasks.map(taskDaoToDto),
+          tasks.map(convertTaskDaoToDto),
         ])
       );
       new SuccessResponse({
@@ -197,11 +206,28 @@ async function getMultipleTasks(req: NextApiRequest, res: NextApiResponse) {
       }).send(res);
     };
 
+    const timezoneOffset = getTimezoneOffsetFromHeader(req);
+    if (!timezoneOffset) {
+      new ErrorResponse({
+        status: 400,
+        errorCode: "invalidFields",
+        title: "Could not get tasks: missing timezone header",
+        detail: `Could not get tasks because the required header "X-Timezone-Offset" was not provided. TODO more info.`,
+      }).send(res);
+      return;
+    }
+    const currentDay = dayjs.utc().subtract(timezoneOffset, "minute").toDate();
+
     // handle day-task-type requests
     if (targetDayString) {
-      const dayKey = formatDayKey(dayjs.utc(targetDayString));
+      const parsedTargetDay = dayjs.utc(targetDayString);
+      const dayKey = formatDayKey(parsedTargetDay);
       sendMappedDayTasks({
-        [dayKey]: await getTasksForDay(userId, new Date(targetDayString)),
+        [dayKey]: await getTasksForDay(
+          userId,
+          parsedTargetDay.toDate(),
+          currentDay
+        ),
       });
       return;
     } else if (targetStartDayString && targetEndDayString) {
@@ -210,13 +236,14 @@ async function getMultipleTasks(req: NextApiRequest, res: NextApiResponse) {
           userId,
           dayjs.utc(targetStartDayString).toDate(),
           dayjs.utc(targetEndDayString).toDate(),
+          currentDay
         )
       );
       return;
     }
 
     // handle task-list-type requests
-    const tasks = (await getManyTasks(userId)).map(taskDaoToDto);
+    const tasks = (await getManyTasks(userId)).map(convertTaskDaoToDto);
     new SuccessResponse({
       data: { tasks },
     }).send(res);
@@ -235,11 +262,10 @@ async function addNewTask(req: NextApiRequest, res: NextApiResponse) {
     }
     const userId = token.sub!;
 
-    const taskToAdd = assign(taskDtoToDao(req.body), {
+    // TODO validate req.body
+    const taskToAdd = assign(convertCreateTaskDtoToDao(req.body), {
       userId: new ObjectId(userId),
     });
-
-    // TODO validate req.body
     const taskId = await addTask(taskToAdd);
     new SuccessResponse({
       data: { taskId },
@@ -271,6 +297,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  console.log(`${req.method} ${req.url}`); // TODO replace with proper logging
   switch (req.method?.toUpperCase()) {
     case "GET":
       await getMultipleTasks(req, res);

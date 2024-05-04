@@ -11,31 +11,32 @@ export function isPostponeAction(action: Action): action is PostponeAction {
 }
 
 /**
- * The data transfer object for the Todo task model. Note that this contract is used for:
- *   - retrieving task objects (GET)
- *   - creating task objects (POST)
- *   - updating 1 or more fields of task object (PATCH)
- *   - deleting task objects (DELETE)
+ * The main data transfer object for the Todo task model.
  */
 export type TaskDto = {
-  id?: string,
-  userId: string,
-  title: string,
-  timeEstimateMins?: number,
-  startDate: string, // TODO use some IsoDateString type
-  useStartTime?: boolean, 
-  rangeDays: number,
-  endDate: string, // TODO use some IsoDateString type
-  useEndTime?: boolean, 
-  repeatDays?: number,
+  id?: string;
+  userId: string;
+  title: string;
+  timeEstimateMins?: number;
+  startDate: string;
+  useStartTime?: boolean;
+  rangeDays: number;
+  endDate: string;
+  useEndTime?: boolean;
+  repeatDays?: number;
   // repeatIdiom?: string,
-  isProjected?: boolean, // calculated field (not part of the data model)
+  isProjected?: boolean; // calculated field (not part of the data model)
   // TODO tags?: string[],
-  completedDate?: string, // TODO use some IsoDateString type
+  completedDate?: string;
   actions?: Action[];
   priority?: number; // calculated field (not part of the data model)
-}
+};
 
-export type CreateTaskDto = Omit<TaskDto, "id" | "userId" | "isProjected" | "priority">;
+export type CreateTaskDto = Omit<
+  TaskDto,
+  "id" | "userId" | "isProjected" | "priority"
+>;
 
-export type UpdateTaskDto = Partial<Omit<TaskDto, "id" | "userId" | "isProjected" | "priority">>;
+export type UpdateTaskDto = Partial<
+  Omit<TaskDto, "id" | "userId" | "isProjected" | "priority" | "actions">
+>;

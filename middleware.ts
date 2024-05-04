@@ -22,9 +22,9 @@ export default async function middleware(
   }
 
   // don't run on `/auth` pages
-  if (req.nextUrl.pathname.startsWith('/auth')) {
+  if (req.nextUrl.pathname.startsWith("/auth")) {
     console.log(req.nextUrl.pathname);
-    console.log('about to allow auth page'); // TODO remove
+    console.log("about to allow auth page"); // TODO remove
     return; // this ok?
   }
 
@@ -41,7 +41,6 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - api (API routes)
-     * - auth (auth pages)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)

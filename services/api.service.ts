@@ -1,6 +1,6 @@
 /**
  * Strictly frontend service
- * 
+ *
  * For now I'm going to strip the offset to get the "canonical date". If/when we add time features, this
  *   will need to be revisited.
  *
@@ -8,8 +8,9 @@
  */
 
 import { CreateTaskDto, TaskDto, UpdateTaskDto } from "@/types/task.dto";
-import dayjs, { Dayjs } from '@/lib/dayjs';
-import { stripOffset } from "@/util/date";
+import { Dayjs } from "@/lib/dayjs";
+import { getCanonicalDatestring } from "@/util/date";
+import { getTimezoneOffsetHeader } from "@/util/timezoneOffset";
 
 async function request<T extends Record<string, any> = {}>(
   method: string,
@@ -21,6 +22,7 @@ async function request<T extends Record<string, any> = {}>(
     headers: {
       // the auth header is added automatically?
       "Content-Type": "application/json",
+      ...getTimezoneOffsetHeader(),
     },
     ...(body && { body: JSON.stringify(body) }),
   });
@@ -38,7 +40,7 @@ export async function decryptJwt() {
 export async function getTasksForDay(day: Dayjs) {
   const { dayTasks } = await request<{ dayTasks: Record<string, TaskDto[]> }>(
     "GET",
-    `/api/tasks?targetDay=${stripOffset(day).format()}`
+    `/api/tasks?targetDay=${getCanonicalDatestring(day)}`
   );
   return dayTasks;
 }
@@ -46,7 +48,9 @@ export async function getTasksForDay(day: Dayjs) {
 export async function getTasksForDayRange(startDay: Dayjs, endDay: Dayjs) {
   const { dayTasks } = await request<{ dayTasks: Record<string, TaskDto[]> }>(
     "GET",
-    `/api/tasks?targetStartDay=${stripOffset(startDay).format()}&targetEndDay=${stripOffset(endDay).format()}`
+    `/api/tasks?targetStartDay=${getCanonicalDatestring(
+      startDay
+    )}&targetEndDay=${getCanonicalDatestring(endDay)}`
   );
   return dayTasks;
 }
@@ -57,14 +61,14 @@ export async function completeTask(
 ) {
   return request("PUT", `/api/tasks/${completedTaskId}`, {
     operation: "complete",
-    completedDate: stripOffset(completedDate).format(),
+    completedDate: getCanonicalDatestring(completedDate),
   });
 }
 
 export async function postponeTask(taskId: string, postponeUntilDate: Dayjs) {
   return request("PUT", `/api/tasks/${taskId}`, {
     operation: "postpone",
-    postponeUntilDate: stripOffset(postponeUntilDate).format(),
+    postponeUntilDate: getCanonicalDatestring(postponeUntilDate),
   });
 }
 
@@ -73,6 +77,7 @@ export async function createTask(task: CreateTaskDto) {
   const { taskId } = await request<{ taskId: string }>(
     "POST",
     "/api/tasks",
+    // TODO should use `getCanonicalDatestring` on the `task` fields here?
     task
   );
   return taskId;

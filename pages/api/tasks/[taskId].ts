@@ -1,12 +1,21 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { getToken } from 'next-auth/jwt';
-import ErrorResponse, { internalErrorResponse, unauthenticatedErrorResponse, notFoundErrorResponse } from '@/models/ErrorResponse';
-import { getTaskById as getTaskByIdFromDb, updateTask as updateTaskInDb, deleteTask as deleteTaskInDb, addTask } from '@/services/mongo.service';
-import SuccessResponse from '@/models/SuccessResponse';
-import { TaskDao, taskDtoToDao } from '@/types/task.dao';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { getToken } from "next-auth/jwt";
+import ErrorResponse, {
+  internalErrorResponse,
+  unauthenticatedErrorResponse,
+  notFoundErrorResponse,
+} from "@/models/ErrorResponse";
+import {
+  getTaskById as getTaskByIdFromDb,
+  updateTask as updateTaskInDb,
+  deleteTask as deleteTaskInDb,
+  addTask,
+} from "@/services/mongo.service";
+import SuccessResponse from "@/models/SuccessResponse";
+import { CreateTaskDao, convertUpdateTaskDtoToDao } from "@/types/task.dao";
 import dayjs from "@/lib/dayjs";
-import { stripOffset } from '@/util/date';
+import { stripOffset } from "@/util/date";
 
 async function updateTask(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -33,16 +42,14 @@ async function updateTask(req: NextApiRequest, res: NextApiResponse) {
       unauthenticatedErrorResponse.send(res);
       return;
     }
-    const updateTask: Partial<TaskDao> = taskDtoToDao(req.body);
-    // should never be overwriting `userId`
-    delete updateTask.userId;
     // TODO validate updateTask
+    const updateTask = convertUpdateTaskDtoToDao(req.body);
     const modifiedId = await updateTaskInDb(taskId, updateTask);
     if (!modifiedId) {
       throw new Error(`Failed to update task with id "${taskId}"`);
     }
     new SuccessResponse({
-      data: { taskId: modifiedId }
+      data: { taskId: modifiedId },
     }).send(res);
   } catch (error) {
     console.error(error);
@@ -83,8 +90,8 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
     if (!completedDateFromReq) {
       new ErrorResponse({
         status: 400,
-        errorCode: 'invalidFields',
-        title: 'Could not complete task: invalid fields',
+        errorCode: "invalidFields",
+        title: "Could not complete task: invalid fields",
         detail: `Could not complete the task because the \`completedDate\` field in the body was not supplied.`,
       }).send(res);
       return;
@@ -94,21 +101,32 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
     task.completedDate = dayjs.utc(completedDateFromReq).toDate();
 
     await updateTaskInDb(taskId, task);
-    
+
     if (task.repeatDays) {
-      delete task._id;
-      // TODO is the logic still this straightforward if the task has useStart/EndTime === true?
-      // for now, assume "repeat from completedDate"
-      const newStartDate = dayjs(task.completedDate).add(task.repeatDays, 'days');
-      task.startDate = newStartDate.toDate();
-      task.endDate = newStartDate.add(task.rangeDays - 1, 'days').toDate(); // minus one because range is [start of startDate, end of endDate]
-      delete task.completedDate;
-      const createdTaskId = await addTask(task);
+      const newStartDate = dayjs.utc(task.completedDate).add(
+        task.repeatDays,
+        "days"
+      ); // should be `dayjs.utc()`?
+      // there might be a better way, but this explicit approach gives me the most confidence
+      const newTask: CreateTaskDao = {
+        userId: task.userId,
+        title: task.title,
+        ...(task.timeEstimateMins && {
+          timeEstimateMins: task.timeEstimateMins,
+        }),
+        repeatDays: task.repeatDays,
+        rangeDays: task.rangeDays,
+        // TODO is the logic still this straightforward if the task has useStart/EndTime === true?
+        // for now, assume "repeat from completedDate"
+        startDate: newStartDate.toDate(),
+        endDate: newStartDate.add(task.rangeDays - 1, "days").toDate(), // minus one because range is [start of startDate, end of endDate]
+      };
+      const createdTaskId = await addTask(newTask);
       if (!createdTaskId) {
         // TODO send error response
       }
       new SuccessResponse({
-        data: { createdTaskId }
+        data: { createdTaskId },
       }).send(res);
       return;
     }
@@ -126,13 +144,13 @@ async function postponeTask(req: NextApiRequest, res: NextApiResponse) {
     if (!taskId || Array.isArray(taskId)) {
       new ErrorResponse({
         status: 404,
-        errorCode: 'invalidFields',
-        title: 'TODO',
-        detail: 'TODO',
+        errorCode: "invalidFields",
+        title: "TODO",
+        detail: "TODO",
       }).send(res);
       return;
     }
-    
+
     // auth
     const token = await getToken({ req });
     if (!token) {
@@ -146,9 +164,9 @@ async function postponeTask(req: NextApiRequest, res: NextApiResponse) {
     if (!postponeUntilDate) {
       new ErrorResponse({
         status: 400,
-        errorCode: 'invalidFields',
-        title: 'TODO',
-        detail: 'TODO',
+        errorCode: "invalidFields",
+        title: "TODO",
+        detail: "TODO",
       }).send(res);
       return;
     }
@@ -187,24 +205,24 @@ async function operateOnTask(req: NextApiRequest, res: NextApiResponse) {
     if (!operation) {
       new ErrorResponse({
         status: 400,
-        errorCode: 'invalidFields',
-        title: 'TODO',
-        detail: 'TODO',
+        errorCode: "invalidFields",
+        title: "TODO",
+        detail: "TODO",
       }).send(res);
       return;
     }
-    switch(operation.toLowerCase()) {
-      case 'complete':
+    switch (operation.toLowerCase()) {
+      case "complete":
         await completeTask(req, res);
         break;
-      case 'postpone':
+      case "postpone":
         await postponeTask(req, res);
         break;
       default:
         new ErrorResponse({
           status: 400,
-          errorCode: 'invalidFields',
-          title: 'Invalid operation',
+          errorCode: "invalidFields",
+          title: "Invalid operation",
           detail: `The provided operation "${operation}" is not valid.`,
         }).send(res);
         return;
@@ -221,9 +239,9 @@ async function deleteTask(req: NextApiRequest, res: NextApiResponse) {
     if (!taskId || Array.isArray(taskId)) {
       new ErrorResponse({
         status: 400,
-        errorCode: 'invalidFields',
-        title: 'TODO',
-        detail: 'TODO',
+        errorCode: "invalidFields",
+        title: "TODO",
+        detail: "TODO",
       }).send(res);
       return;
     }
@@ -258,21 +276,22 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  console.log(`${req.method} ${req.url}`); // TODO replace with proper logging
   switch (req.method?.toUpperCase()) {
-    case 'PATCH':
+    case "PATCH":
       await updateTask(req, res);
       break;
-    case 'PUT':
+    case "PUT":
       await operateOnTask(req, res);
       break;
-    case 'DELETE':
+    case "DELETE":
       await deleteTask(req, res);
       break;
     default:
       new ErrorResponse({
         status: 404,
-        errorCode: 'resourceNotFound',
-        title: 'Resource not found',
+        errorCode: "resourceNotFound",
+        title: "Resource not found",
         detail: `Can not ${req.method} ${req.url}`,
       }).send(res);
       break;
