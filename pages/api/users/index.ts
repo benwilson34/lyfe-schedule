@@ -2,7 +2,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import argon2 from "argon2";
 import { randomBytes } from "crypto";
 import dayjs from "@/lib/dayjs";
-import { assign } from "lodash";
 import ErrorResponse, {
   internalErrorResponse,
   unauthenticatedErrorResponse,
@@ -13,11 +12,9 @@ import {
   addUser,
   deleteTokenPayload,
   getTokenPayloadByToken,
-  getUser,
   getUserByEmail,
   updateUser,
 } from "@/services/mongo.service";
-import { userDaoToDto } from "@/types/user.dao";
 import {
   sendInvitationEmail,
   sendPasswordResetConfirmationEmail,
@@ -32,12 +29,10 @@ import {
 } from "@/util/env";
 import { formatFriendlyFullDate } from "@/util/format";
 import {
-  TokenPayloadDao,
   tokenPayloadDaoToDto,
 } from "@/types/tokenPayload.dao";
-import { TokenPayloadAction, TokenPayloadDto } from "@/types/tokenPayload.dto";
+import { TokenPayloadAction } from "@/types/tokenPayload.dto";
 import { getToken } from "next-auth/jwt";
-import { stripOffset } from "@/util/date";
 
 async function hashPassword(password: string) {
   return argon2.hash(password);
@@ -104,7 +99,7 @@ async function requestResetPassword(req: NextApiRequest, res: NextApiResponse) {
 
     // generate token payload
     const token = generateToken();
-    const expiresDate = stripOffset(dayjs()).add(PASSWORD_RESET_TOKEN_TTL_MINS, "minutes");
+    const expiresDate = dayjs.utc().add(PASSWORD_RESET_TOKEN_TTL_MINS, "minutes");
     const insertedId = await addTokenPayload({
       token,
       action: "request-password-reset",
@@ -148,7 +143,7 @@ export async function getTokenPayload(
   if (!tokenPayload) {
     return null;
   }
-  const isExpired = tokenPayload && dayjs().isAfter(tokenPayload.expiresDate);
+  const isExpired = tokenPayload && dayjs.utc().isAfter(tokenPayload.expiresDate);
   if (isExpired || tokenPayload.action !== action) {
     return null;
   }
@@ -273,7 +268,7 @@ async function sendInvitation(req: NextApiRequest, res: NextApiResponse) {
     // TODO check to see if invitee email is already in system?
 
     const token = generateToken();
-    const expiresDate = dayjs().add(INVITATION_TOKEN_TTL_MINS, "minutes");
+    const expiresDate = dayjs.utc().add(INVITATION_TOKEN_TTL_MINS, "minutes");
     const insertedId = await addTokenPayload({
       token,
       action: "send-invitation",

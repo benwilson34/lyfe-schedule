@@ -1,22 +1,14 @@
-<!-- <mjml> and <mj-body> will be stripped when <mj-include> is used -->
-<mjml>
-  <mj-body>
+<mj-column>
+  <mj-text>
+    <p>
+      Hello! You've been invited to LyfeSchedule, the todo app for people who
+      get things done eventually™.
+    </p>
 
-    <mj-column>
-      <mj-text>
-        <p>
-          Hello! You've been invited to LyfeSchedule, the todo app for people who get things done eventually™.
-        </p>
+    <p>This invite code will be valid until {{expiresDate}}.</p>
+  </mj-text>
 
-        <p>
-          This invite code will be valid until {{expiresDate}}.
-        </p>
-      </mj-text>
-
-      <mj-button mj-class="button" href="{{acceptInvitationLink}}">
-        Activate my account!
-      </mj-button>
-    </mj-column>
-
-  </mj-body>
-</mjml>
+  <mj-button mj-class="button" href="{{acceptInvitationLink}}">
+    Activate my account!
+  </mj-button>
+</mj-column>

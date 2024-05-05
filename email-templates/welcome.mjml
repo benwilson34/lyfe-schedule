@@ -1,7 +1,3 @@
-<!-- <mjml> and <mj-body> will be stripped when <mj-include> is used -->
-<mjml>
-  <mj-body>
-
     <mj-column>
       <mj-text>
         <p>
@@ -10,14 +6,14 @@
 
         <p>
           This app is in alpha and is being actively developed. I'm accepting any and all feedback at this time - please email me at
-          <a href="mailto:benwcodes@gmail.com?subject=LyfeSchedule%20Feedback&body=I%20have%20some%20feedback%20about%20LyfeSchedule%3A%0A%0A">benwcodes@gmail.com<a>
+          <a href="mailto:benwcodes@gmail.com?subject=LyfeSchedule%20Feedback&amp;body=I%20have%20some%20feedback%20about%20LyfeSchedule%3A%0A%0A">benwcodes@gmail.com</a>
           if you encounter a bug, have a question, or have an idea for an improvement!
         </p>
 
         <p>
-          There is also a 
-          <a href="https://docs.lyfeschedule.com/getting-started.html">User Guide</a>
-          that you can refer to, although again this is very much a work-in-progress.
+          I recommend going through the  
+          <a href="https://docs.lyfeschedule.com/getting-started.html">Getting Started guide</a>
+          to get introduced to the app.
         </p>
       
         <p>
@@ -35,6 +31,3 @@
         </p>
       </mj-text>
     </mj-column>
-
-  </mj-body>
-</mjml>

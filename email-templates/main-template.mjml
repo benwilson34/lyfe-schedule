@@ -24,7 +24,7 @@
     <mj-section>
 
       <!-- body will be substituted here -->
-      <mj-include path="./{{bodyFileName}}" />
+      {{body}}
 
     </mj-section>
 

@@ -9,20 +9,30 @@ import {
   SMTP_PORT,
   SMTP_USER,
 } from "@/util/env";
-import { existsSync, readFileSync, writeFileSync } from "fs";
-import { basename, join } from "path";
 import mjmlToHtml from "mjml";
 import Handlebars from "handlebars";
 import {
   XmlDocument,
   XmlElement,
-  XmlNode,
   XmlText,
   parseXml,
 } from "@rgrove/parse-xml";
 
-const EMAIL_TEMPLATE_DIR = join(__PROJECT_BUILD_DIR, "server/email-templates");
-const MAIN_TEMPLATE_FILE_NAME = "main-template.mjml";
+// trying to import here to force copying the files
+import invitationMjml from "@/email-templates/invitation.mjml";
+import mainTemplateMjml from "@/email-templates/main-template.mjml";
+import passwordResetConfirmationMjml from "@/email-templates/password-reset-confirmation.mjml";
+import passwordResetMjml from "@/email-templates/password-reset.mjml";
+import welcomeMjml from "@/email-templates/welcome.mjml";
+
+const MJML_TEMPLATE_MAP = {
+  invitation: invitationMjml,
+  "password-reset-confirmation": passwordResetConfirmationMjml,
+  "password-reset": passwordResetMjml,
+  welcome: welcomeMjml,
+};
+// const EMAIL_TEMPLATE_DIR = join(__PROJECT_BUILD_DIR, "server/email-templates");
+// const MAIN_TEMPLATE_FILE_NAME = "main-template.mjml";
 
 const transport = createTransport({
   host: SMTP_HOST_URL,
@@ -54,7 +64,9 @@ function extractPlaintextFromMjml(html: string) {
   while (nodeStack.length > 0) {
     const node = nodeStack.pop()!;
     if (node.type === "text") {
-      const strippedText = (node as XmlText).text.replaceAll(/\n/gi, " ").trim();
+      const strippedText = (node as XmlText).text
+        .replaceAll(/\n/gi, " ")
+        .trim();
       if (strippedText.length > 0) {
         texts.push(strippedText);
       }
@@ -71,27 +83,17 @@ function extractPlaintextFromMjml(html: string) {
 }
 
 function renderEmailTemplate(
-  bodyFileName: string,
+  bodyTemplate: keyof typeof MJML_TEMPLATE_MAP,
   values: Record<string, string>
 ) {
   // It would also be nice to generate types or something from the Handlebars variables mentioned.
   //   Maybe something mentioned here: https://github.com/handlebars-lang/handlebars.js/issues/1207
   // Maybe designing around this package would be easier? https://github.com/oscaroox/next-mjml
 
-  const bodyFilePath = join(EMAIL_TEMPLATE_DIR, bodyFileName);
-  if (!existsSync(bodyFilePath)) {
-    throw new Error(
-      `The body template file ${bodyFilePath} could not be loaded.`
-    );
-  }
-  // load main template and include the referenced body template
-  const templateMjml = readFileSync(
-    join(EMAIL_TEMPLATE_DIR, MAIN_TEMPLATE_FILE_NAME),
-    "utf-8"
-  ).replace("{{bodyFileName}}", bodyFileName);
-  const templateHtml = mjmlToHtml(templateMjml, {
-    filePath: EMAIL_TEMPLATE_DIR,
-  });
+  // substitute body template in main template
+  const bodyMjml = MJML_TEMPLATE_MAP[bodyTemplate];
+  const templateMjml = mainTemplateMjml.replace("{{body}}", bodyMjml);
+  const templateHtml = mjmlToHtml(templateMjml);
   if (templateHtml.errors?.length > 0) {
     console.error(templateHtml.errors);
   }
@@ -101,10 +103,6 @@ function renderEmailTemplate(
   // TODO cache this template? Maybe with `Handlebars.precompile`?
   const subbedHtml = subbedHtmlTemplate(values);
 
-  const bodyMjml = readFileSync(
-    join(EMAIL_TEMPLATE_DIR, bodyFileName),
-    "utf-8"
-  );
   const generatedPlaintext = extractPlaintextFromMjml(bodyMjml);
   const subbedPlaintextTemplate = Handlebars.compile(generatedPlaintext);
   const subbedPlaintext = subbedPlaintextTemplate(values);
@@ -120,7 +118,7 @@ export async function sendPasswordResetEmail(
   values: { email: string; expiresDate: string; resetPasswordLink: string }
 ) {
   // TODO validate values? Or is type checking enough?
-  const renderedEmail = renderEmailTemplate("password-reset.mjml", values);
+  const renderedEmail = renderEmailTemplate("password-reset", values);
 
   return sendEmail({
     to: toEmail,
@@ -138,7 +136,7 @@ export async function sendPasswordResetConfirmationEmail(
   }
 ) {
   const renderedEmail = renderEmailTemplate(
-    "password-reset-confirmation.mjml",
+    "password-reset-confirmation",
     values
   );
   return sendEmail({
@@ -152,7 +150,7 @@ export async function sendInvitationEmail(
   toEmail: string,
   values: { expiresDate: string; acceptInvitationLink: string }
 ) {
-  const renderedEmail = renderEmailTemplate("invitation.mjml", values);
+  const renderedEmail = renderEmailTemplate("invitation", values);
   return sendEmail({
     to: toEmail,
     subject: "You're invited to use LyfeSchedule!",
@@ -164,7 +162,7 @@ export async function sendWelcomeEmail(
   toEmail: string,
   values: { signInLink: string }
 ) {
-  const renderedEmail = renderEmailTemplate("welcome.mjml", values);
+  const renderedEmail = renderEmailTemplate("welcome", values);
   return sendEmail({
     to: toEmail,
     subject: "Welcome to LyfeSchedule!",
