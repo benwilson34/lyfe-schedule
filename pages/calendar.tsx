@@ -231,7 +231,6 @@ export default function CalendarView() {
   const renderDayInfo = useCallback(
     (tasks: Task[]) => {
       if (!dayInfoSettings.isShowing) return null;
-      if (tasks.length === 0) return `0 tasks 😌`;
 
       const completedTasks = tasks.filter((task) => task.completedDate);
       const remainingTasks = tasks.filter((task) => !task.completedDate);
