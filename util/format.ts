@@ -22,7 +22,7 @@ export const formatTimeEstimate = (timeEstimateMins: number) => {
   if (mins > 0) {
     durationString += `${mins}m`;
   }
-  return '0m';
+  return durationString || '0m';
 }
 
 export const formatPercentage = (float: number) => `${Math.round(float * 100)}%`;
