@@ -8,6 +8,7 @@ import {
   SMTP_PASSWORD,
   SMTP_PORT,
   SMTP_USER,
+  SMTP_HEADERS,
 } from "@/util/env";
 import mjmlToHtml from "mjml";
 import Handlebars from "handlebars";
@@ -47,6 +48,9 @@ const transport = createTransport({
 export async function sendEmail(options: MailOptions) {
   if (!options.from) {
     options.from = DEFAULT_FROM_EMAIL;
+  }
+  if (SMTP_HEADERS) {
+    options.headers = SMTP_HEADERS;
   }
   return transport.sendMail(options);
 }

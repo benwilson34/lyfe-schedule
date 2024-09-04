@@ -9,6 +9,7 @@ export const SMTP_HOST_URL = process.env.SMTP_HOST_URL!;
 export const SMTP_PORT = parseInt(process.env.SMTP_PORT!);
 export const SMTP_USER = process.env.SMTP_USER!;
 export const SMTP_PASSWORD = process.env.SMTP_PASSWORD!;
+export const SMTP_HEADERS: Record<string, any> = JSON.parse(process.env.SMTP_HEADERS || 'null');
 export const DEFAULT_FROM_EMAIL = process.env.DEFAULT_FROM_EMAIL!;
 export const PASSWORD_RESET_TOKEN_TTL_MINS = parseInt(process.env.PASSWORD_RESET_TOKEN_TTL_MINS || '') || (60 * 2); // default to 2 hours
 export const INVITATION_TOKEN_TTL_MINS = parseInt(process.env.INVITATION_TOKEN_TTL_MINS || '') || (60 * 24 * 7); // default to 7 days
