@@ -198,7 +198,10 @@ export function AddEditTaskModal({
         endDate: getCanonicalDatestring(endDate),
       } as UpdateTaskDto);
 
-      afterSave(taskToSave as Task);
+      afterSave({ 
+        ...taskToSave,
+        id: task.id,
+      } as Task);
       handleClose();
       // TODO show some confimation message
     } catch (error) {
