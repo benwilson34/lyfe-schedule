@@ -87,6 +87,18 @@ input[type=number][disabled] {
 }
 
 
+.loader {
+  @apply aspect-square;
+  @apply rounded-full;
+  @apply border-2;
+  @apply border-transparent;
+  @apply border-r-onwarning;
+  @apply border-b-onwarning;
+  animation: l2 0.65s infinite linear;
+}
+@keyframes l2 {to{transform: rotate(1turn)}}
+
+
 /* TODO move to own file? */
 
 /* prevent the options menu from "popping" during transitions, see https://stackoverflow.com/a/19311234 */
@@ -111,6 +123,11 @@ input[type=number][disabled] {
   @apply border-ondisabled;
 }
 
+.task__completed .loader {
+  @apply border-r-ondisabled;
+  @apply border-b-ondisabled;
+}
+
 .task__priority-low {
   @apply bg-general-100 text-onlight;
 }
@@ -119,12 +136,22 @@ input[type=number][disabled] {
   @apply bg-general-200;
 }
 
+.task__priority-low .loader {
+  @apply border-r-onlight;
+  @apply border-b-onlight;
+}
+
 .task__priority-med {
   @apply bg-warning text-onwarning;
 }
 
 .task__priority-med .task__checkbox {
   @apply bg-ondark;
+}
+
+.task__priority-med .loader {
+  @apply border-r-onwarning;
+  @apply border-b-onwarning;
 }
 
 .task__priority-high {
@@ -137,4 +164,9 @@ input[type=number][disabled] {
 
 .task__priority-high .task__checkbox {
   @apply bg-ondark;
+}
+
+.task__priority-high .loader {
+  @apply border-r-ondark;
+  @apply border-b-ondark;
 }

@@ -78,6 +78,7 @@ export default function TaskCard({
     showDeleteModal,
   } = useModalContext();
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const floating = useFloating({
     middleware: [
       autoPlacement({
@@ -93,10 +94,12 @@ export default function TaskCard({
   const isCheckboxDisabled = isCompleted || !selectedDay.isSame(dayjs(), "day");
 
   const handleCheckboxClick = async () => {
-    // TODO animate
+    setIsLoading(true);
     const completedDate = new Date();
     await completeTask(task.id, completedDate);
+    // TODO animate checkmark
     afterComplete(assign(task, { completedDate }), selectedDay);
+    setIsLoading(false);
   };
 
   const handleEditOptionClick = () => {
@@ -106,17 +109,21 @@ export default function TaskCard({
   const handleConfirmedCompleteTaskOnAnotherDay = async (
     completedDate: Date
   ) => {
+    setIsLoading(true);
     await completeTask(task.id, completedDate);
     afterComplete(
       assign(task, { completedDate: dayjs(completedDate) }),
       dayjs(completedDate)
     );
+    setIsLoading(false);
   };
 
   const handlePostponeOptionClick = async (postponeDay: Dayjs) => {
     // TODO try-catch?
+    setIsLoading(true);
     await postponeTask(task.id, postponeDay);
     afterPostpone(task, postponeDay);
+    setIsLoading(false);
   };
 
   const handlePostponeToAnotherDayOptionClick = () => {
@@ -132,8 +139,10 @@ export default function TaskCard({
 
   const handleConfirmedDelete = async () => {
     // TODO try-catch?
+    setIsLoading(true);
     await deleteTask(task.id);
     afterDelete(task);
+    setIsLoading(false);
   };
 
   const handleDeleteOptionClick = () => {
@@ -149,30 +158,39 @@ export default function TaskCard({
         }`}
       >
         <div className="flex justify-start items-center">
-          <div
-            // TODO style disabled checkbox
-            className={`task__checkbox shrink-0 mr-3 cursor-pointer w-4 h-4 rounded-[.25rem] relative`}
-            onClick={() => {
-              if (isCheckboxDisabled) return;
-              handleCheckboxClick();
-            }}
-          >
-            {isCompleted && (
-              <FontAwesomeIcon
-                icon={faCheck}
-                className="text-2xl absolute top-[-.35rem]"
-              ></FontAwesomeIcon>
-            )}
-          </div>
+          {isLoading ? (
+            // TODO take tailwind classes instead
+            // <PulseLoader color="#F5F3DE" className="shrink-0 mr-3 w-4 h-4 relative" />
+            <div className="loader shrink-0 mr-3 w-4 h-4 relative" />
+          ) : (
+            <div
+              // TODO style disabled checkbox
+              className={`task__checkbox shrink-0 mr-3 cursor-pointer w-4 h-4 rounded-[.25rem] relative`}
+              onClick={() => {
+                if (isCheckboxDisabled) return;
+                handleCheckboxClick();
+              }}
+            >
+              {isCompleted && (
+                <FontAwesomeIcon
+                  icon={faCheck}
+                  className="text-2xl absolute top-[-.35rem]"
+                ></FontAwesomeIcon>
+              )}
+            </div>
+          )}
+
           <div>
             <span className="mr-3 text-base font-semibold leading-none">
               {title}
             </span>
+
             <span className="mr-3 text-sm italic">
               {formatTimeEstimate(timeEstimateMins ?? 0)}
             </span>
           </div>
         </div>
+
         <div className="flex justify-end items-center">
           <span
             className={`mr-3 ${
@@ -194,6 +212,7 @@ export default function TaskCard({
 
           <TaskOptionsMenu
             task={task}
+            isDisabled={isLoading}
             selectedDay={selectedDay}
             onMenuOpenChange={(isOpen: boolean) => setIsOptionsMenuOpen(isOpen)}
             onEditClick={handleEditOptionClick}
@@ -206,7 +225,7 @@ export default function TaskCard({
         </div>
       </div>
 
-      <Overlay isVisible={isOptionsMenuOpen} durationMs={150}/>
+      <Overlay isVisible={isOptionsMenuOpen} durationMs={150} />
     </>
   );
 }

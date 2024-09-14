@@ -42,6 +42,7 @@ const Day: Record<string, number> = {
 
 export default function TaskOptionsMenu({
   task,
+  isDisabled,
   buttonClasses = "",
   selectedDay,
   onMenuOpenChange = () => {},
@@ -53,6 +54,7 @@ export default function TaskOptionsMenu({
   floating,
 }: {
   task: Task;
+  isDisabled: boolean;
   buttonClasses?: string;
   selectedDay: Dayjs;
   onMenuOpenChange: (isOpen: boolean) => void;
@@ -67,14 +69,17 @@ export default function TaskOptionsMenu({
   const selectedDayIsToday = selectedDay.isSame(dayjs().startOf("day"), "day");
   const selectedDayIsWeekend = [Day.SAT, Day.SUN].includes(selectedDay.day());
 
-  const getNextDayOfWeek = useCallback((selectedDay: Dayjs, dayOfWeek: number) => {
-    const currentWeekday = selectedDay.day();
-    if (currentWeekday === dayOfWeek) {
-      return selectedDay.add(7, "day");
-    }
-    const daysToAdd = (dayOfWeek - currentWeekday + 7) % 7;
-    return selectedDay.add(daysToAdd, "day");
-  }, []);
+  const getNextDayOfWeek = useCallback(
+    (selectedDay: Dayjs, dayOfWeek: number) => {
+      const currentWeekday = selectedDay.day();
+      if (currentWeekday === dayOfWeek) {
+        return selectedDay.add(7, "day");
+      }
+      const daysToAdd = (dayOfWeek - currentWeekday + 7) % 7;
+      return selectedDay.add(daysToAdd, "day");
+    },
+    []
+  );
 
   const nextDay = selectedDay.add(1, "day");
   const weekendDay = getNextDayOfWeek(selectedDay, Day.SAT);
@@ -183,7 +188,7 @@ export default function TaskOptionsMenu({
                     >
                       Next week ({formatShownDate(nextWeekDay)})
                     </div>
-                    <div 
+                    <div
                       onClick={() => {
                         onPostponeToAnotherDayClick();
                         close();
@@ -210,7 +215,9 @@ export default function TaskOptionsMenu({
                     aria-hidden="true"
                   />
                   <div>
-                    <span className="font-semibold">Complete on a previous day</span>
+                    <span className="font-semibold">
+                      Complete on a previous day
+                    </span>
                   </div>
                 </div>
 
@@ -253,7 +260,10 @@ export default function TaskOptionsMenu({
 
         return (
           <>
-            <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6">
+            <Popover.Button
+              disabled={isDisabled}
+              className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6"
+            >
               {/* <FontAwesomeIcon icon={faEllipsis} className="text-transparent group-hover/task:text-gray-500" /> */}
               <FontAwesomeIcon icon={faEllipsis} className={buttonClasses} />
             </Popover.Button>

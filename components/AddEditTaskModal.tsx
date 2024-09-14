@@ -198,7 +198,7 @@ export function AddEditTaskModal({
         endDate: getCanonicalDatestring(endDate),
       } as UpdateTaskDto);
 
-      afterSave({ 
+      afterSave({
         ...taskToSave,
         id: task.id,
       } as Task);
@@ -272,12 +272,15 @@ export function AddEditTaskModal({
                       >
                         {isNewTask ? "Add" : "Edit"} task
                       </Dialog.Title>
+
                       <div className="">
                         <div className="flex w-full max-w-full mb-4 px-4 py-2 bg-general-100 shadow-md rounded-xl">
                           <span className="mr-2 font-semibold">
                             Title<span className="text-attention">*</span>:
                           </span>
+
                           {/* <div className="flex-grow bg-warning"></div> */}
+
                           <input
                             className="flex-grow min-w-0 bg-transparent border-b-[1px] border-general"
                             type="text"
@@ -288,11 +291,13 @@ export function AddEditTaskModal({
 
                         <div className="mb-4 ring-2 ring-general-200 rounded-lg p-2">
                           <div className="font-semibold">Schedule:</div>
+
                           <div className="text-sm text-general-200 leading-none italic">
                             {/* TODO this would be better as a tooltip */}
                             Click once to choose a single day. Click again to
                             choose a range.
                           </div>
+
                           <CalendarPicker
                             value={[
                               startDate.startOf("day").toDate(),
@@ -300,22 +305,27 @@ export function AddEditTaskModal({
                             ]}
                             onClickDay={handleClickDay}
                             tileContent={tileContent}
-                            // disabled={isLoading || lockedField === "startDate"}
+                            // disabled={isLoading}
                             className="mx-auto mb-4"
                           />
+
                           <div className="flex flex-col px-4 py-2 bg-disabled-100 rounded-xl text-ondisabled">
                             <div>
                               <span className="mr-2 font-semibold">
                                 Start Date:
                               </span>
+
                               {formatDate(startDate)}
                             </div>
+
                             <div>
                               <span className="mr-2 font-semibold">
                                 End Date:
                               </span>
+
                               {formatDate(endDate)}
                             </div>
+
                             <div>
                               <span className="mr-2 font-semibold">Range:</span>
                               <input
@@ -373,13 +383,17 @@ export function AddEditTaskModal({
                             className="inline-block mr-2"
                             checked={isRepeating}
                           ></input>
+
                           <div className="inline-block">
                             <FontAwesomeIcon
                               icon={faArrowsRotate}
                               className="mr-2"
                             ></FontAwesomeIcon>
+
                             <span className="mr-2 font-semibold">Repeat:</span>
+
                             <span className="mr-2">every</span>
+
                             <input
                               type="number"
                               value={repeatDays}
@@ -391,6 +405,7 @@ export function AddEditTaskModal({
                               className="w-8 mr-2 text-center"
                               disabled={isLoading || !isRepeating}
                             ></input>
+
                             <span>days</span>
                           </div>
                         </div>
@@ -415,9 +430,11 @@ export function AddEditTaskModal({
                               icon={faHourglass}
                               className="mr-2"
                             ></FontAwesomeIcon>
+
                             <span className="mr-2 font-semibold">
                               Time Estimate:
                             </span>
+
                             <input
                               type="number"
                               onChange={(e) =>
@@ -430,6 +447,7 @@ export function AddEditTaskModal({
                               disabled={isLoading || !hasTimeEstimate}
                               className="w-8 mr-2 text-center"
                             ></input>
+
                             <span>minutes</span>
                           </div>
                         </div>
@@ -467,6 +485,9 @@ export function AddEditTaskModal({
                     onClick={isNewTask ? onAddButtonClick : onSaveButtonClick}
                     disabled={!isValid || isLoading}
                   >
+                    {isLoading && (
+                      <div className="loader border-r-ondark border-b-ondark mr-3 w-4 h-4 relative" />
+                    )}
                     {isNewTask ? "Add" : "Save"}
                   </button>
                 </div>
