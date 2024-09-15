@@ -166,7 +166,7 @@ export default function TaskCard({
           ) : (
             <div
               // TODO style disabled checkbox
-              className={`task__checkbox shrink-0 mr-3 cursor-pointer w-4 h-4 rounded-[.25rem] relative`}
+              className={`task__checkbox shrink-0 mr-3 cursor-pointer w-4 h-4 rounded-[.25rem] relative box-content bg-ondark border`}
               onClick={() => {
                 if (isCheckboxDisabled) return;
                 handleCheckboxClick();
