@@ -1,10 +1,10 @@
 import type { TaskViewModel as Task } from "@/types/task.viewModel";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import TaskOptionsMenu from "./TaskOptionsMenu";
-import { formatTimeEstimate } from "@/util/format";
+import { formatRepeatInterval, formatTimeEstimate } from "@/util/format";
 import { calculatePriority } from "@/util/date";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faArrowsRotate, faHourglass } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
 import { autoPlacement, useFloating } from "@floating-ui/react";
 import { completeTask, deleteTask, postponeTask } from "@/services/api.service";
@@ -68,6 +68,7 @@ export default function TaskCard({
     startDate,
     rangeDays,
     endDate,
+    repeatDays,
     isProjected,
     completedDate,
   } = task;
@@ -153,7 +154,7 @@ export default function TaskCard({
     <>
       <div
         ref={floating.refs.setReference}
-        className={`task group/task relative flex justify-between items-center max-w-lg w-full mb-2 px-3 py-2 ${taskClass} shadow-lg rounded-xl text-sm ${
+        className={`task group/task relative flex justify-between items-stretch max-w-lg w-full px-3 py-2 ${taskClass} shadow-md rounded-xl text-sm ${
           isOptionsMenuOpen ? "task--selected" : ""
         }`}
       >
@@ -180,35 +181,54 @@ export default function TaskCard({
             </div>
           )}
 
-          <div>
+          <div className="flex flex-col space-y-2">
             <span className="mr-3 text-base font-semibold leading-none">
               {title}
             </span>
 
-            <span className="mr-3 text-sm italic">
-              {formatTimeEstimate(timeEstimateMins ?? 0)}
-            </span>
+            {/* TODO tags */}
+            {/* <span className="mr-3 text-sm font-light leading-none">
+              #weekly-goals #chores
+            </span> */}
           </div>
         </div>
 
-        <div className="flex justify-end items-center">
-          <span
-            className={`mr-3 ${
-              isProjected ? "underline decoration-dotted" : ""
-            } text-sm`}
-          >
-            <div className="whitespace-nowrap">
-              {formatDateRange(startDate, endDate, rangeDays)}
-              {daysOverEndDate > 0 && (
-                <span
-                  className={`task__overdue-chip border rounded-md ml-1 pl-1 pr-1`}
-                >
-                  +{daysOverEndDate}
+        <div className="flex items-center">
+          <div className="flex flex-col h-full justify-between mr-3">
+            <div
+              className={`${
+                isProjected ? "underline decoration-dotted" : ""
+              } text-sm flex justify-end`}
+            >
+              <div className="whitespace-nowrap">
+                {formatDateRange(startDate, endDate, rangeDays)}
+
+                {daysOverEndDate > 0 && (
+                  <span
+                    className={`task__overdue-chip border rounded-md ml-1 pl-1 pr-1`}
+                  >
+                    +{daysOverEndDate}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              {timeEstimateMins && (
+                <span className="text-sm italic whitespace-nowrap">
+                  <FontAwesomeIcon icon={faHourglass} className="mr-0.5" />
+                  {formatTimeEstimate(timeEstimateMins)}
+                </span>
+              )}
+
+              {repeatDays && (
+                <span className="text-sm italic whitespace-nowrap">
+                  <FontAwesomeIcon icon={faArrowsRotate} className="mr-0.5" />
+                  {formatRepeatInterval(repeatDays)}
                 </span>
               )}
             </div>
-          </span>
-          {/* <span className="text-sm">({calculatedPriority.toFixed(2)})</span> */}
+          </div>
 
           <TaskOptionsMenu
             task={task}

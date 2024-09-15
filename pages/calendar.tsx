@@ -343,14 +343,15 @@ export default function CalendarView() {
         </div>
       </section>
 
-      <section className={`flex min-h-screen flex-col items-center pl-8 pr-8`}>
+      <section className={`flex min-h-screen flex-col items-center pl-8 pr-8 space-y-3`}>
         <div
           onClick={handleAddButtonClick}
-          className="max-w-lg w-full mb-2 px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
+          className="max-w-lg w-full px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
         >
           <FontAwesomeIcon icon={faCirclePlus} className="ml-0.5 mr-3" />
           <span>Add task</span>
         </div>
+
         {isDayTasksLoading ? (
           // TODO take tailwind classes instead
           <PulseLoader color="#d5dedb" className="mt-4" />

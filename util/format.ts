@@ -12,7 +12,10 @@ export function formatFriendlyFullDate(day: Dayjs): string {
   return day.format('dddd YYYY-MM-DD HH:mm:ss Z');
 }
 
-export const formatTimeEstimate = (timeEstimateMins: number) => {
+export const formatTimeEstimate = (timeEstimateMins: number): string => {
+  if (!timeEstimateMins) {
+    return '';
+  }
   let durationString = '';
   const hours = Math.floor(timeEstimateMins / 60);
   if (hours > 0) {
@@ -26,3 +29,21 @@ export const formatTimeEstimate = (timeEstimateMins: number) => {
 }
 
 export const formatPercentage = (float: number) => `${Math.round(float * 100)}%`;
+
+export const formatRepeatInterval = (repeatDays: number): string => {
+  if (!repeatDays) {
+    return '';
+  }
+  return `${repeatDays}d`;
+  // let durationString = '';
+  // const DAYS_PER_WEEK = 7;
+  // const weeks = Math.floor(repeatDays / DAYS_PER_WEEK);
+  // if (weeks > 0) {
+  //   durationString += `${weeks}w`;
+  // }
+  // const days = repeatDays % DAYS_PER_WEEK;
+  // if (days > 0) {
+  //   durationString += `${days}d`;
+  // }
+  // return durationString;
+}
