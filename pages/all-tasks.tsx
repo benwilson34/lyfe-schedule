@@ -1,5 +1,8 @@
 import type { TaskDto } from "@/types/task.dto";
-import { taskDtoToViewModel, type TaskViewModel as Task } from "@/types/task.viewModel";
+import {
+  taskDtoToViewModel,
+  type TaskViewModel as Task,
+} from "@/types/task.viewModel";
 import { useState, useCallback } from "react";
 import { getToken } from "next-auth/jwt";
 import dayjs from "@/lib/dayjs";
@@ -30,7 +33,9 @@ export const getServerSideProps = (async (context: any) => {
   }
   const userId = token.sub!;
 
-  const initTasks: TaskDto[] = (await getManyTasks(userId)).map(convertTaskDaoToDto);
+  const initTasks: TaskDto[] = (await getManyTasks(userId)).map(
+    convertTaskDaoToDto
+  );
   return {
     props: {
       initTasks,
@@ -42,11 +47,15 @@ export default function AllTasksView({ initTasks }: { initTasks: TaskDto[] }) {
   const {
     isVisible: isSidebarVisible,
     toggleVisibility: toggleSidebarVisibility,
-  } = useSidebarContext();
+  } = useSidebarContext(); // TODO remove?
   const { showAddEditModal } = useModalContext();
 
   // TODO gonna have to check `initTasks` when switching pages I think
-  const [tasks, setTasks] = useState<Task[]>((initTasks.map(taskDtoToViewModel) as Task[]).sort((a, b) => a.startDate.isAfter(b.startDate) ? 1 : -1));
+  const [tasks, setTasks] = useState<Task[]>(
+    (initTasks.map(taskDtoToViewModel) as Task[]).sort((a, b) =>
+      a.startDate.isAfter(b.startDate) ? 1 : -1
+    )
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // useEffect(() => {
@@ -99,10 +108,12 @@ export default function AllTasksView({ initTasks }: { initTasks: TaskDto[] }) {
         </div>
       </section> */}
 
-      <section className={`flex min-h-screen flex-col items-center pl-8 pr-8`}>
+      <section
+        className={`flex min-h-screen flex-col items-center pl-8 pr-8 space-y-3`}
+      >
         <div
           onClick={handleAddButtonClick}
-          className="max-w-lg w-full mb-2 px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
+          className="max-w-lg w-full px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
         >
           <FontAwesomeIcon icon={faCirclePlus} className="ml-0.5 mr-3" />
           <span>Add task</span>
