@@ -4,7 +4,11 @@ import TaskOptionsMenu from "./TaskOptionsMenu";
 import { formatRepeatInterval, formatTimeEstimate } from "@/util/format";
 import { calculatePriority } from "@/util/date";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faArrowsRotate, faHourglass } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCheck,
+  faArrowsRotate,
+  faHourglass,
+} from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
 import { autoPlacement, useFloating } from "@floating-ui/react";
 import { completeTask, deleteTask, postponeTask } from "@/services/api.service";
@@ -181,7 +185,10 @@ export default function TaskCard({
             </div>
           )}
 
-          <div className="flex flex-col space-y-2">
+          <div
+            className="flex flex-col space-y-2"
+            style={{ wordBreak: "break-word" }}
+          >
             <span className="mr-3 text-base font-semibold leading-none">
               {title}
             </span>
