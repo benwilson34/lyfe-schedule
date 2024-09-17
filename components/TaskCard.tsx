@@ -13,18 +13,15 @@ import { useModalContext } from "@/contexts/modal-context";
 import { assign } from "lodash";
 import Overlay from "./Overlay";
 
-const getTaskClass = (task: Task, priority: number) => {
+const getTaskClass = (task: Task, selectedDay: dayjs.Dayjs) => {
   if (task.completedDate) {
     return "task__completed";
   }
-  if (priority < 0.5) {
-    return "task__priority-low";
+  if (selectedDay.isAfter(task.endDate, 'day')) {
+    return "task__priority-high";
   }
-  if (priority < 1) {
-    return "task__priority-med";
-  }
-  // else overdue
-  return "task__priority-high";
+  // else regular priority
+  return "task__priority-low";
 };
 
 const formatStartDate = (startDate: dayjs.Dayjs) => {
@@ -88,8 +85,8 @@ export default function TaskCard({
       }),
     ],
   });
-  const calculatedPriority = calculatePriority(startDate, endDate, selectedDay);
-  const taskClass = getTaskClass(task, calculatedPriority);
+  // const calculatedPriority = calculatePriority(startDate, endDate, selectedDay);
+  const taskClass = getTaskClass(task, selectedDay);
   // const calculatedPoints = Math.round(calculatedPriority * (timeEstimateMins ?? 0));
   const daysOverEndDate = selectedDay.diff(endDate, "day");
   const isCompleted = !!completedDate;

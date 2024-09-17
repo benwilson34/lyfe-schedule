@@ -142,19 +142,6 @@ input[type=number][disabled] {
   @apply border-b-onlight;
 }
 
-.task__priority-med {
-  @apply bg-warning text-onwarning;
-}
-
-.task__priority-med .task__checkbox {
-  @apply border-onwarning;
-}
-
-.task__priority-med .loader {
-  @apply border-r-onwarning;
-  @apply border-b-onwarning;
-}
-
 .task__priority-high {
   @apply bg-attention text-onattention;
 }
