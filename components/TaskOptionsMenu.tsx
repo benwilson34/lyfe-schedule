@@ -262,7 +262,7 @@ export default function TaskOptionsMenu({
           <>
             <Popover.Button
               disabled={isDisabled}
-              className="inline-flex items-center gap-x-1 text-base font-semibold leading-6"
+              className="text-base font-semibold"
             >
               {/* <FontAwesomeIcon icon={faEllipsis} className="text-transparent group-hover/task:text-gray-500" /> */}
               <FontAwesomeIcon icon={faEllipsis} className={buttonClasses} />
