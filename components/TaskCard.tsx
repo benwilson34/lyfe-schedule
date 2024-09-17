@@ -4,11 +4,8 @@ import TaskOptionsMenu from "./TaskOptionsMenu";
 import { formatRepeatInterval, formatTimeEstimate } from "@/util/format";
 import { calculatePriority } from "@/util/date";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCheck,
-  faArrowsRotate,
-  faHourglass,
-} from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
+import { faCalendar, faClock } from "@fortawesome/free-regular-svg-icons";
 import { useState } from "react";
 import { autoPlacement, useFloating } from "@floating-ui/react";
 import { completeTask, deleteTask, postponeTask } from "@/services/api.service";
@@ -46,7 +43,7 @@ const formatDateRange = (
   rangeDays: number
 ) => {
   return `${formatStartDate(startDate)}${
-    rangeDays > 1 ? ` — ${formatEndDate(startDate, endDate)}` : ""
+    rangeDays > 1 ? `–${formatEndDate(startDate, endDate)}` : ""
   }`;
 };
 
@@ -154,65 +151,68 @@ export default function TaskCard({
     showDeleteModal(task, handleConfirmedDelete);
   };
 
+  const renderTags = () => (
+    <>
+      {/* TODO tags */}
+      {/* <div className="text-sm leading-none mt-2">
+        #weekly-goals #choooooooores
+      </div> */}
+    </>
+  );
+
   return (
     <>
       <div
         ref={floating.refs.setReference}
-        className={`task group/task relative flex justify-between items-stretch max-w-lg w-full px-3 py-2 ${taskClass} shadow-md rounded-xl text-sm ${
+        className={`task group/task relative flex justify-between items-center space-x-3 max-w-lg w-full px-3 py-2 ${taskClass} shadow-md rounded-xl text-sm ${
           isOptionsMenuOpen ? "task--selected" : ""
         }`}
       >
-        <div className="flex justify-start items-center">
-          {isLoading ? (
-            // TODO take tailwind classes instead
-            // <PulseLoader color="#F5F3DE" className="shrink-0 mr-3 w-4 h-4 relative" />
-            <div className="loader shrink-0 mr-3 w-4 h-4 relative" />
-          ) : (
-            <div
-              // TODO style disabled checkbox
-              className={`task__checkbox shrink-0 mr-3 cursor-pointer w-4 h-4 rounded-[.25rem] relative box-content bg-ondark border`}
-              onClick={() => {
-                if (isCheckboxDisabled) return;
-                handleCheckboxClick();
-              }}
-            >
-              {isCompleted && (
-                <FontAwesomeIcon
-                  icon={faCheck}
-                  className="text-2xl absolute top-[-.35rem]"
-                ></FontAwesomeIcon>
-              )}
-            </div>
-          )}
-
+        {isLoading ? (
+          <div className="loader shrink-0 mr-3 w-4 h-4 relative" />
+        ) : (
           <div
-            className="flex flex-col space-y-2"
+            // TODO style disabled checkbox
+            className={`task__checkbox shrink-0 cursor-pointer w-4 h-4 rounded-[.25rem] relative box-content bg-ondark border-2`}
+            onClick={() => {
+              if (isCheckboxDisabled) return;
+              handleCheckboxClick();
+            }}
+          >
+            {isCompleted && (
+              <FontAwesomeIcon
+                icon={faCheck}
+                className="text-2xl absolute top-[-.35rem]"
+              ></FontAwesomeIcon>
+            )}
+          </div>
+        )}
+
+        {/* content area */}
+        <div className="flex-grow flex flex-col justify-between xs:space-x-3 xs:flex-row">
+          <div
+            className="flex flex-col justify-center"
             style={{ wordBreak: "break-word" }}
           >
-            <span className="mr-3 text-base font-semibold leading-none">
-              {title}
-            </span>
+            <div className="text-base font-semibold leading-none">{title}</div>
 
-            {/* TODO tags */}
-            {/* <span className="mr-3 text-sm font-light leading-none">
-              #weekly-goals #chores
-            </span> */}
+            <div className="hidden xs:block">{renderTags()}</div>
           </div>
-        </div>
 
-        <div className="flex items-center">
-          <div className="flex flex-col h-full justify-between mr-3">
+          <div className="flex flex-row flex-wrap xs:justify-between xs:flex-col mt-2 xs:mt-0">
             <div
               className={`${
                 isProjected ? "underline decoration-dotted" : ""
-              } text-sm flex justify-end`}
+              } text-sm flex justify-end mr-3 xs:mr-0`}
             >
               <div className="whitespace-nowrap">
+                <FontAwesomeIcon icon={faCalendar} className="mr-1" />
+
                 {formatDateRange(startDate, endDate, rangeDays)}
 
                 {daysOverEndDate > 0 && (
                   <span
-                    className={`task__overdue-chip border rounded-md ml-1 pl-1 pr-1`}
+                    className={`task__overdue-chip border rounded-md ml-1 pl-0.5 pr-1`}
                   >
                     +{daysOverEndDate}
                   </span>
@@ -223,7 +223,7 @@ export default function TaskCard({
             <div className="flex justify-end space-x-3">
               {timeEstimateMins && (
                 <span className="text-sm italic whitespace-nowrap">
-                  <FontAwesomeIcon icon={faHourglass} className="mr-0.5" />
+                  <FontAwesomeIcon icon={faClock} className="mr-0.5" />
                   {formatTimeEstimate(timeEstimateMins)}
                 </span>
               )}
@@ -237,19 +237,23 @@ export default function TaskCard({
             </div>
           </div>
 
-          <TaskOptionsMenu
-            task={task}
-            isDisabled={isLoading}
-            selectedDay={selectedDay}
-            onMenuOpenChange={(isOpen: boolean) => setIsOptionsMenuOpen(isOpen)}
-            onEditClick={handleEditOptionClick}
-            onPostponeClick={handlePostponeOptionClick}
-            onPostponeToAnotherDayClick={handlePostponeToAnotherDayOptionClick}
-            onCompleteOnAnotherDayClick={handleCompleteOnAnotherDayOptionClick}
-            onDeleteClick={handleDeleteOptionClick}
-            floating={floating}
-          />
+          <div className="block xs:hidden" style={{ wordBreak: "break-word" }}>
+            {renderTags()}
+          </div>
         </div>
+
+        <TaskOptionsMenu
+          task={task}
+          isDisabled={isLoading}
+          selectedDay={selectedDay}
+          onMenuOpenChange={(isOpen: boolean) => setIsOptionsMenuOpen(isOpen)}
+          onEditClick={handleEditOptionClick}
+          onPostponeClick={handlePostponeOptionClick}
+          onPostponeToAnotherDayClick={handlePostponeToAnotherDayOptionClick}
+          onCompleteOnAnotherDayClick={handleCompleteOnAnotherDayOptionClick}
+          onDeleteClick={handleDeleteOptionClick}
+          floating={floating}
+        />
       </div>
 
       <Overlay isVisible={isOptionsMenuOpen} durationMs={150} />
