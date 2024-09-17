@@ -21,7 +21,8 @@ import {
 // import './editTaskModal.css';
 import { Exo_2 } from "next/font/google";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowsRotate, faHourglass } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
+import { faCalendar, faClock } from "@fortawesome/free-regular-svg-icons";
 import { TaskViewModel as Task } from "@/types/task.viewModel";
 import { OnClickFunc, TileContentFunc } from "react-calendar";
 import { createTask, updateTask } from "@/services/api.service";
@@ -229,7 +230,236 @@ export function AddEditTaskModal({
     []
   );
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
+
+  const renderModalBody = () => (
+    <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-background text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+      <div className="px-8 sm:px-12 pt-4">
+        <div className="sm:flex sm:items-start">
+          <div className="mt-3">
+            <Dialog.Title
+              as="h3"
+              className="text-lg text-center font-semibold leading-6 uppercase mb-6"
+            >
+              {isNewTask ? "Add" : "Edit"} task
+            </Dialog.Title>
+
+            <div className="">
+              <div className="flex w-full max-w-full mb-4 px-4 py-2 bg-general-100 shadow-md rounded-xl">
+                <span className="mr-2 font-semibold">
+                  Title<span className="text-attention">*</span>:
+                </span>
+
+                {/* <div className="flex-grow bg-warning"></div> */}
+
+                <input
+                  className="flex-grow min-w-0 bg-transparent border-b-[1px] border-general"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                ></input>
+              </div>
+
+              <div className="mb-4 ring-2 ring-general-200 rounded-lg p-2">
+                <div className="font-semibold">
+                  <FontAwesomeIcon
+                    icon={faCalendar}
+                    className="mr-1"
+                  ></FontAwesomeIcon>
+                  Schedule:
+                </div>
+
+                <div className="text-sm text-general-200 leading-none italic">
+                  {/* TODO this would be better as a tooltip */}
+                  Click once to choose a single day. Click again to choose a
+                  range.
+                </div>
+
+                <CalendarPicker
+                  value={[
+                    startDate.startOf("day").toDate(),
+                    endDate.endOf("day").toDate(),
+                  ]}
+                  onClickDay={handleClickDay}
+                  tileContent={tileContent}
+                  // disabled={isLoading}
+                  className="mx-auto mb-4"
+                />
+
+                <div className="flex flex-col px-4 py-2 bg-disabled-100 rounded-xl text-ondisabled">
+                  <div>
+                    <span className="mr-2 font-semibold">Start Date:</span>
+
+                    {formatDate(startDate)}
+                  </div>
+
+                  <div>
+                    <span className="mr-2 font-semibold">End Date:</span>
+
+                    {formatDate(endDate)}
+                  </div>
+
+                  <div>
+                    <span className="mr-2 font-semibold">Range:</span>
+                    <input
+                      type="number"
+                      onChange={(e) =>
+                        setRangeDays(parseInt(e.target.value, 10))
+                      }
+                      value={rangeDays}
+                      min={0}
+                      disabled={isLoading || lockedField === "rangeDays"}
+                      className="w-8 mr-2 text-center"
+                    ></input>
+                    days
+                  </div>
+                </div>
+              </div>
+
+              {/* <div className="flex flex-col mb-6 px-4 py-2 bg-disabled-100 rounded-xl text-ondisabled">
+              <div>
+                <span className="mr-2 font-semibold">
+                  Start Date:
+                </span>
+                {formatDate(startDate)}
+              </div>
+              <div>
+                <span className="mr-2 font-semibold">End Date:</span>
+                {formatDate(endDate)}
+              </div>
+              <div>
+                <span className="mr-2 font-semibold">Range:</span>
+                <input
+                  type="number"
+                  onChange={(e) => setRangeDays(e.target.value)}
+                  value={rangeDays}
+                  min={0}
+                  disabled={isLoading || lockedField === "rangeDays"}
+                  className="w-12 mr-2"
+                ></input>
+                days
+              </div>
+            </div> */}
+
+              <div
+                className={`flex items-center mb-4 px-4 py-2 ${
+                  isRepeating
+                    ? "bg-general-100 shadow-md"
+                    : "bg-disabled-100 text-ondisabled"
+                } rounded-xl`}
+              >
+                <input
+                  type="checkbox"
+                  onChange={(e) => setIsRepeating(e.target.checked)}
+                  className="inline-block mr-2"
+                  checked={isRepeating}
+                ></input>
+
+                <div className="inline-block">
+                  <FontAwesomeIcon
+                    icon={faArrowsRotate}
+                    className="mr-1"
+                  ></FontAwesomeIcon>
+
+                  <span className="mr-2 font-semibold">Repeat:</span>
+
+                  <span className="mr-2">every</span>
+
+                  <input
+                    type="number"
+                    value={repeatDays}
+                    onChange={(e) =>
+                      setRepeatDays(parseInt(e.target.value, 10))
+                    }
+                    min={1}
+                    step={1}
+                    className="w-8 mr-2 text-center"
+                    disabled={isLoading || !isRepeating}
+                  ></input>
+
+                  <span>days</span>
+                </div>
+              </div>
+
+              <div
+                className={`flex items-center mb-2 px-4 py-2 ${
+                  hasTimeEstimate
+                    ? "bg-general-100 shadow-md"
+                    : "bg-disabled-100 text-ondisabled"
+                } rounded-xl`}
+              >
+                <input
+                  type="checkbox"
+                  onChange={(e) => setHasTimeEstimate(e.target.checked)}
+                  className="inline-block mr-2"
+                  checked={hasTimeEstimate}
+                ></input>
+                <div className="inline-block">
+                  <FontAwesomeIcon
+                    icon={faClock}
+                    className="mr-1"
+                  ></FontAwesomeIcon>
+
+                  <span className="mr-2 font-semibold">Time Estimate:</span>
+
+                  <input
+                    type="number"
+                    onChange={(e) =>
+                      setTimeEstimateMins(parseInt(e.target.value, 10))
+                    }
+                    value={timeEstimateMins}
+                    min={0}
+                    disabled={isLoading || !hasTimeEstimate}
+                    className="w-8 mr-2 text-center"
+                  ></input>
+
+                  <span>minutes</span>
+                </div>
+              </div>
+              {/*
+            <div className="mb-4">
+              <p>
+                End date: {endDate.toString()}
+              </p>
+              <Calendar onChange={(d) => setEndDate(dayjs(d))} value={endDate.toDate()} disabled={isLoading || lockedField === 'endDate'} />
+            </div>
+            <div className="mb-4">
+              Range:&nbsp;
+              <input type="number" onChange={(e) => setRangeDays(e.target.value)} value={rangeDays} min={0} disabled={isLoading || lockedField === 'rangeDays'} className="w-12"></input> days
+            </div>
+*/}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-10 py-3 flex flex-row justify-between">
+        <button
+          type="button"
+          className="inline-flex justify-center items-center rounded-full px-5 py-1 text-sm font-semibold shadow-md ring-1 ring-inset ring-general hover:bg-gray-50 mt-0 w-32 uppercase"
+          onClick={() => handleClose()}
+          ref={cancelButtonRef}
+          disabled={isLoading}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          className="inline-flex justify-center items-center rounded-full px-5 py-1 text-sm font-semibold shadow-md ml-3 w-32 bg-accent text-ondark disabled:bg-disabled-200 uppercase"
+          onClick={isNewTask ? onAddButtonClick : onSaveButtonClick}
+          disabled={!isValid || isLoading}
+        >
+          {isLoading && (
+            <div className="loader border-r-ondark border-b-ondark mr-3 w-4 h-4 relative" />
+          )}
+          {isNewTask ? "Add" : "Save"}
+        </button>
+      </div>
+    </Dialog.Panel>
+  );
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -262,236 +492,7 @@ export function AddEditTaskModal({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-background text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                <div className="px-8 sm:px-12 pt-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mt-3">
-                      <Dialog.Title
-                        as="h3"
-                        className="text-lg text-center font-semibold leading-6 uppercase mb-6"
-                      >
-                        {isNewTask ? "Add" : "Edit"} task
-                      </Dialog.Title>
-
-                      <div className="">
-                        <div className="flex w-full max-w-full mb-4 px-4 py-2 bg-general-100 shadow-md rounded-xl">
-                          <span className="mr-2 font-semibold">
-                            Title<span className="text-attention">*</span>:
-                          </span>
-
-                          {/* <div className="flex-grow bg-warning"></div> */}
-
-                          <input
-                            className="flex-grow min-w-0 bg-transparent border-b-[1px] border-general"
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                          ></input>
-                        </div>
-
-                        <div className="mb-4 ring-2 ring-general-200 rounded-lg p-2">
-                          <div className="font-semibold">Schedule:</div>
-
-                          <div className="text-sm text-general-200 leading-none italic">
-                            {/* TODO this would be better as a tooltip */}
-                            Click once to choose a single day. Click again to
-                            choose a range.
-                          </div>
-
-                          <CalendarPicker
-                            value={[
-                              startDate.startOf("day").toDate(),
-                              endDate.endOf("day").toDate(),
-                            ]}
-                            onClickDay={handleClickDay}
-                            tileContent={tileContent}
-                            // disabled={isLoading}
-                            className="mx-auto mb-4"
-                          />
-
-                          <div className="flex flex-col px-4 py-2 bg-disabled-100 rounded-xl text-ondisabled">
-                            <div>
-                              <span className="mr-2 font-semibold">
-                                Start Date:
-                              </span>
-
-                              {formatDate(startDate)}
-                            </div>
-
-                            <div>
-                              <span className="mr-2 font-semibold">
-                                End Date:
-                              </span>
-
-                              {formatDate(endDate)}
-                            </div>
-
-                            <div>
-                              <span className="mr-2 font-semibold">Range:</span>
-                              <input
-                                type="number"
-                                onChange={(e) =>
-                                  setRangeDays(parseInt(e.target.value, 10))
-                                }
-                                value={rangeDays}
-                                min={0}
-                                disabled={
-                                  isLoading || lockedField === "rangeDays"
-                                }
-                                className="w-8 mr-2 text-center"
-                              ></input>
-                              days
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* <div className="flex flex-col mb-6 px-4 py-2 bg-disabled-100 rounded-xl text-ondisabled">
-                          <div>
-                            <span className="mr-2 font-semibold">
-                              Start Date:
-                            </span>
-                            {formatDate(startDate)}
-                          </div>
-                          <div>
-                            <span className="mr-2 font-semibold">End Date:</span>
-                            {formatDate(endDate)}
-                          </div>
-                          <div>
-                            <span className="mr-2 font-semibold">Range:</span>
-                            <input
-                              type="number"
-                              onChange={(e) => setRangeDays(e.target.value)}
-                              value={rangeDays}
-                              min={0}
-                              disabled={isLoading || lockedField === "rangeDays"}
-                              className="w-12 mr-2"
-                            ></input>
-                            days
-                          </div>
-                        </div> */}
-
-                        <div
-                          className={`flex items-center mb-4 px-4 py-2 ${
-                            isRepeating
-                              ? "bg-general-100 shadow-md"
-                              : "bg-disabled-100 text-ondisabled"
-                          } rounded-xl`}
-                        >
-                          <input
-                            type="checkbox"
-                            onChange={(e) => setIsRepeating(e.target.checked)}
-                            className="inline-block mr-2"
-                            checked={isRepeating}
-                          ></input>
-
-                          <div className="inline-block">
-                            <FontAwesomeIcon
-                              icon={faArrowsRotate}
-                              className="mr-2"
-                            ></FontAwesomeIcon>
-
-                            <span className="mr-2 font-semibold">Repeat:</span>
-
-                            <span className="mr-2">every</span>
-
-                            <input
-                              type="number"
-                              value={repeatDays}
-                              onChange={(e) =>
-                                setRepeatDays(parseInt(e.target.value, 10))
-                              }
-                              min={1}
-                              step={1}
-                              className="w-8 mr-2 text-center"
-                              disabled={isLoading || !isRepeating}
-                            ></input>
-
-                            <span>days</span>
-                          </div>
-                        </div>
-
-                        <div
-                          className={`flex items-center mb-2 px-4 py-2 ${
-                            hasTimeEstimate
-                              ? "bg-general-100 shadow-md"
-                              : "bg-disabled-100 text-ondisabled"
-                          } rounded-xl`}
-                        >
-                          <input
-                            type="checkbox"
-                            onChange={(e) =>
-                              setHasTimeEstimate(e.target.checked)
-                            }
-                            className="inline-block mr-2"
-                            checked={hasTimeEstimate}
-                          ></input>
-                          <div className="inline-block">
-                            <FontAwesomeIcon
-                              icon={faHourglass}
-                              className="mr-2"
-                            ></FontAwesomeIcon>
-
-                            <span className="mr-2 font-semibold">
-                              Time Estimate:
-                            </span>
-
-                            <input
-                              type="number"
-                              onChange={(e) =>
-                                setTimeEstimateMins(
-                                  parseInt(e.target.value, 10)
-                                )
-                              }
-                              value={timeEstimateMins}
-                              min={0}
-                              disabled={isLoading || !hasTimeEstimate}
-                              className="w-8 mr-2 text-center"
-                            ></input>
-
-                            <span>minutes</span>
-                          </div>
-                        </div>
-                        {/*
-                        <div className="mb-4">
-                          <p>
-                            End date: {endDate.toString()}
-                          </p>
-                          <Calendar onChange={(d) => setEndDate(dayjs(d))} value={endDate.toDate()} disabled={isLoading || lockedField === 'endDate'} />
-                        </div>
-                        <div className="mb-4">
-                          Range:&nbsp;
-                          <input type="number" onChange={(e) => setRangeDays(e.target.value)} value={rangeDays} min={0} disabled={isLoading || lockedField === 'rangeDays'} className="w-12"></input> days
-                        </div>
-  */}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="px-10 py-3 flex flex-row justify-between">
-                  <button
-                    type="button"
-                    className="inline-flex justify-center items-center rounded-full px-5 py-1 text-sm font-semibold shadow-md ring-1 ring-inset ring-general hover:bg-gray-50 mt-0 w-32 uppercase"
-                    onClick={() => handleClose()}
-                    ref={cancelButtonRef}
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="button"
-                    className="inline-flex justify-center items-center rounded-full px-5 py-1 text-sm font-semibold shadow-md ml-3 w-32 bg-accent text-ondark disabled:bg-disabled-200 uppercase"
-                    onClick={isNewTask ? onAddButtonClick : onSaveButtonClick}
-                    disabled={!isValid || isLoading}
-                  >
-                    {isLoading && (
-                      <div className="loader border-r-ondark border-b-ondark mr-3 w-4 h-4 relative" />
-                    )}
-                    {isNewTask ? "Add" : "Save"}
-                  </button>
-                </div>
-              </Dialog.Panel>
+              {renderModalBody()}
             </Transition.Child>
           </div>
         </div>
