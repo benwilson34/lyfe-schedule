@@ -109,7 +109,7 @@ export default function AllTasksView({ initTasks }: { initTasks: TaskDto[] }) {
       </section> */}
 
       <section
-        className={`flex min-h-screen flex-col items-center pl-8 pr-8 space-y-3`}
+        className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-3`}
       >
         <div
           onClick={handleAddButtonClick}

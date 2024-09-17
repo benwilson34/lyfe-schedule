@@ -343,7 +343,7 @@ export default function CalendarView() {
         </div>
       </section>
 
-      <section className={`flex min-h-screen flex-col items-center pl-8 pr-8 space-y-3`}>
+      <section className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-3`}>
         <div
           onClick={handleAddButtonClick}
           className="max-w-lg w-full px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
