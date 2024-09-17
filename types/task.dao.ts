@@ -48,6 +48,7 @@ export function convertTaskDaoToDto(
     endDate,
     repeatDays,
     isProjected,
+    tags,
     completedDate,
     actions,
   } = taskDao;
@@ -61,6 +62,7 @@ export function convertTaskDaoToDto(
     endDate: getCanonicalDatestring(endDate, false),
     ...(repeatDays && { repeatDays }),
     ...(isProjected && { isProjected }),
+    ...(tags && { tags }),
     ...(completedDate && {
       completedDate: getCanonicalDatestring(completedDate, false),
     }),
@@ -85,6 +87,7 @@ export function convertCreateTaskDtoToDao(
     rangeDays,
     endDate,
     repeatDays,
+    tags,
     completedDate,
     actions,
   } = createTaskDto;
@@ -95,6 +98,7 @@ export function convertCreateTaskDtoToDao(
     rangeDays,
     endDate: dayjs.utc(endDate).toDate(),
     ...(repeatDays && { repeatDays }),
+    ...(tags && { tags }),
     ...(completedDate && { completedDate: dayjs.utc(completedDate).toDate() }),
     ...(actions && {
       actions: actions.map((action) => ({
@@ -117,6 +121,7 @@ export function convertUpdateTaskDtoToDao(
     rangeDays,
     endDate,
     repeatDays,
+    tags,
     completedDate,
   } = updateTaskDto;
   return {
@@ -126,6 +131,7 @@ export function convertUpdateTaskDtoToDao(
     ...(rangeDays && { rangeDays }),
     ...(endDate && { endDate: dayjs.utc(endDate).toDate() }),
     ...(repeatDays && { repeatDays }), // TODO this could also be a "remove" operation...
+    ...(tags && { tags }),
     ...(completedDate && { completedDate }),
   } as UpdateTaskDao;
 }

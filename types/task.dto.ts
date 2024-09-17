@@ -26,7 +26,7 @@ export type TaskDto = {
   repeatDays?: number;
   // repeatIdiom?: string,
   isProjected?: boolean; // calculated field (not part of the data model)
-  // TODO tags?: string[],
+  tags?: string[],
   completedDate?: string;
   actions?: Action[];
   priority?: number; // calculated field (not part of the data model)

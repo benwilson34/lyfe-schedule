@@ -17,7 +17,7 @@ const getTaskClass = (task: Task, selectedDay: dayjs.Dayjs) => {
   if (task.completedDate) {
     return "task__completed";
   }
-  if (selectedDay.isAfter(task.endDate, 'day')) {
+  if (selectedDay.isAfter(task.endDate, "day")) {
     return "task__priority-high";
   }
   // else regular priority
@@ -68,6 +68,7 @@ export default function TaskCard({
     endDate,
     repeatDays,
     isProjected,
+    tags,
     completedDate,
   } = task;
   const {
@@ -148,14 +149,20 @@ export default function TaskCard({
     showDeleteModal(task, handleConfirmedDelete);
   };
 
-  const renderTags = () => (
-    <>
-      {/* TODO tags */}
-      {/* <div className="text-sm leading-none mt-2">
-        #weekly-goals #choooooooores
-      </div> */}
-    </>
-  );
+  const renderTags = (tags?: string[]) => {
+    if (!tags || tags.length === 0) {
+      return null;
+    }
+    return (
+      <>
+        <div className="flex flex-wrap gap-x-2 text-sm leading-none mt-2">
+          {tags.map((tag) => (
+            <div key={tag}>#{tag}</div>
+          ))}
+        </div>
+      </>
+    );
+  };
 
   return (
     <>
@@ -193,7 +200,7 @@ export default function TaskCard({
           >
             <div className="text-base font-semibold leading-none">{title}</div>
 
-            <div className="hidden xs:block">{renderTags()}</div>
+            <div className="hidden xs:block">{renderTags(tags)}</div>
           </div>
 
           <div className="flex flex-row flex-wrap xs:justify-between xs:flex-col mt-2 xs:mt-0">
@@ -235,7 +242,7 @@ export default function TaskCard({
           </div>
 
           <div className="block xs:hidden" style={{ wordBreak: "break-word" }}>
-            {renderTags()}
+            {renderTags(tags)}
           </div>
         </div>
 

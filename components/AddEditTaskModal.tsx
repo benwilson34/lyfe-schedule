@@ -52,6 +52,7 @@ export function AddEditTaskModal({
 }) {
   const isNewTask = useMemo(() => !task, [task]);
   const [title, setTitle] = useState(task?.title || "");
+  const [inputTags, setInputTags] = useState(task?.tags?.join(" ") || "");
   // TODO handle `useStartTime === true`
   const [startDate, setStartDate] = useState(
     task?.startDate || initialStartDate || dayjs()
@@ -138,10 +139,18 @@ export function AddEditTaskModal({
     [isRepeating, startDate, repeatDays]
   );
 
+  const getTagsFromInputTags = (inputTags: string): string[] => {
+    return inputTags
+      .split(/\s/)
+      .map((token) => token.trim())
+      .filter((token) => token.length > 0);
+  };
+
   const onAddButtonClick = useCallback(async () => {
     try {
       const taskToAdd: Partial<Task> = {
         title: title!,
+        ...(inputTags.length > 0 && { tags: getTagsFromInputTags(inputTags) }),
         startDate: dayjs(startDate),
         endDate: dayjs(endDate),
         rangeDays: rangeDays!,
@@ -169,6 +178,7 @@ export function AddEditTaskModal({
     }
   }, [
     title,
+    inputTags,
     startDate,
     endDate,
     rangeDays,
@@ -184,6 +194,7 @@ export function AddEditTaskModal({
     try {
       const taskToSave: Partial<Task> = {
         title,
+        ...(inputTags.length > 0 && { tags: getTagsFromInputTags(inputTags) }),
         startDate: dayjs(startDate),
         endDate: dayjs(endDate),
         rangeDays,
@@ -213,6 +224,7 @@ export function AddEditTaskModal({
     }
   }, [
     title,
+    inputTags,
     startDate,
     endDate,
     rangeDays,
@@ -247,18 +259,27 @@ export function AddEditTaskModal({
             </Dialog.Title>
 
             <div className="">
-              <div className="flex w-full max-w-full mb-4 px-4 py-2 bg-general-100 shadow-md rounded-xl">
+              <div className="flex w-full max-w-full mb-4 px-4 py-2 bg-general-100 rounded-xl">
                 <span className="mr-2 font-semibold">
-                  Title<span className="text-attention">*</span>:
+                  Title<span className="text-onattention">*</span>:
                 </span>
-
-                {/* <div className="flex-grow bg-warning"></div> */}
 
                 <input
                   className="flex-grow min-w-0 bg-transparent border-b-[1px] border-general"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                ></input>
+              </div>
+
+              <div className="flex w-full max-w-full mb-4 px-4 py-2 bg-general-100 rounded-xl">
+                <span className="mr-2 font-semibold">Tags:</span>
+
+                <input
+                  className="flex-grow min-w-0 bg-transparent border-b-[1px] border-general"
+                  type="text"
+                  value={inputTags}
+                  onChange={(e) => setInputTags(e.target.value)}
                 ></input>
               </div>
 
@@ -346,7 +367,7 @@ export function AddEditTaskModal({
               <div
                 className={`flex items-center mb-4 px-4 py-2 ${
                   isRepeating
-                    ? "bg-general-100 shadow-md"
+                    ? "bg-general-100"
                     : "bg-disabled-100 text-ondisabled"
                 } rounded-xl`}
               >
@@ -386,7 +407,7 @@ export function AddEditTaskModal({
               <div
                 className={`flex items-center mb-2 px-4 py-2 ${
                   hasTimeEstimate
-                    ? "bg-general-100 shadow-md"
+                    ? "bg-general-100"
                     : "bg-disabled-100 text-ondisabled"
                 } rounded-xl`}
               >
