@@ -51,7 +51,7 @@ export default function CalendarView() {
     const fetchData = async () => {
       try {
         const [shownStartDay, shownEndDay] = shownDateRange;
-        const dayTasks = await getTasksForDayRange(shownStartDay, shownEndDay)
+        const dayTasks = await getTasksForDayRange(shownStartDay, shownEndDay);
         setDayTasks(dayTasks);
       } catch (maybeError) {
         console.error(maybeError);
@@ -61,27 +61,35 @@ export default function CalendarView() {
     fetchData();
   }, [shownDateRange]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const newSelectedDayTasks = await getTasksForDay(selectedDay);
-        setSelectedDayTasks(
-          newSelectedDayTasks[formatDayKey(selectedDay)].map(taskDtoToViewModel)
-        );
-      } catch (maybeError) {
-        console.error(maybeError);
-        // TODO display some error message
-      }
-    };
-    fetchData();
-  }, []); // only on first load
+  useEffect(
+    () => {
+      const fetchData = async () => {
+        try {
+          const newSelectedDayTasks = await getTasksForDay(selectedDay);
+          setSelectedDayTasks(
+            newSelectedDayTasks[formatDayKey(selectedDay)].map(
+              taskDtoToViewModel
+            )
+          );
+        } catch (maybeError) {
+          console.error(maybeError);
+          // TODO display some error message
+        }
+      };
+      fetchData();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [] // only on first load
+  );
 
   const handleSelectedDayChange = async (date: Date) => {
     try {
       setSelectedDay(dayjs(date));
       setIsDayTasksLoading(true);
       // if the date is "today", use the current time too
-      const adjustedDate = dayjs(date).isSame(dayjs(), 'day') ? dayjs() : dayjs(date);
+      const adjustedDate = dayjs(date).isSame(dayjs(), "day")
+        ? dayjs()
+        : dayjs(date);
       const dayTasks = await getTasksForDay(adjustedDate);
       const selectedDayTasks =
         dayTasks[formatDayKey(adjustedDate)].map(taskDtoToViewModel);
@@ -96,13 +104,17 @@ export default function CalendarView() {
   // Maybe this should be moved to `util/tasks`?
   // See `pages/api/tasks/index :: getTasksForDay` for similar logic
   // Will not take projected repeating tasks into consideration
-  const shallTaskAppearOnDay = (task: Task, targetDay: Dayjs, currentDay: Dayjs): boolean => {
-    const targetDayIsAfterCurrentDay = targetDay.isAfter(currentDay, 'day');
+  const shallTaskAppearOnDay = (
+    task: Task,
+    targetDay: Dayjs,
+    currentDay: Dayjs
+  ): boolean => {
+    const targetDayIsAfterCurrentDay = targetDay.isAfter(currentDay, "day");
     if (!targetDayIsAfterCurrentDay) {
-      return !task.startDate.isAfter(targetDay, 'day');
+      return !task.startDate.isAfter(targetDay, "day");
     }
-    return task.startDate.isSame(targetDay, 'day');
-  }
+    return task.startDate.isSame(targetDay, "day");
+  };
 
   const afterAddTask = (task: Task) => {
     const currentDay = dayjs();
@@ -145,7 +157,7 @@ export default function CalendarView() {
     }
     // else, remove it
     console.log(`removing ${task.title}`); // TODO remove
-    setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id))
+    setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
   };
 
   const afterPostponeTask = async (task: Task) => {
@@ -343,7 +355,9 @@ export default function CalendarView() {
         </div>
       </section>
 
-      <section className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-3`}>
+      <section
+        className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-3`}
+      >
         <div
           onClick={handleAddButtonClick}
           className="max-w-lg w-full px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
