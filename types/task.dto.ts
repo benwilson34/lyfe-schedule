@@ -1,3 +1,5 @@
+import { Patchable } from "@/util/types";
+
 export type Action = {
   timestamp: Date;
 };
@@ -26,7 +28,7 @@ export type TaskDto = {
   repeatDays?: number;
   // repeatIdiom?: string,
   isProjected?: boolean; // calculated field (not part of the data model)
-  tags?: string[],
+  tags?: string[];
   completedDate?: string;
   actions?: Action[];
   priority?: number; // calculated field (not part of the data model)
@@ -37,6 +39,6 @@ export type CreateTaskDto = Omit<
   "id" | "userId" | "isProjected" | "priority"
 >;
 
-export type UpdateTaskDto = Partial<
+export type PatchTaskDto = Patchable<
   Omit<TaskDto, "id" | "userId" | "isProjected" | "priority" | "actions">
 >;

@@ -1,12 +1,12 @@
 import { ObjectId, OptionalId, WithoutId, WithId } from "mongodb";
 import {
   CreateTaskDto,
-  UpdateTaskDto,
+  PatchTaskDto,
   isPostponeAction,
   type TaskDto,
 } from "./task.dto";
 import dayjs from "@/lib/dayjs";
-import { Modify } from "@/util/types";
+import { Modify, Patchable } from "@/util/types";
 import { getCanonicalDatestring } from "@/util/date";
 
 export type TaskDaoWithCalculatedFields = WithId<
@@ -31,8 +31,17 @@ export type TaskDao = Omit<
 
 export type CreateTaskDao = WithoutId<TaskDao>;
 
-export type UpdateTaskDao = WithoutId<
-  Partial<Omit<TaskDao, "userId" | "actions">>
+// export type UpdateTaskDao = WithoutId<
+//   Partial<Omit<TaskDao, "userId" | "actions">>
+// >;
+
+export type PatchTaskDao = Patchable<
+  WithoutId<Omit<TaskDao, "userId" | "actions">>
+>;
+
+// not a fan of this approach but it works for now
+export type InternalPatchTaskDao = Patchable<
+  WithoutId<TaskDao>
 >;
 
 export function convertTaskDaoToDto(
@@ -70,7 +79,10 @@ export function convertTaskDaoToDto(
       actions: actions.map((action) => ({
         timestamp: getCanonicalDatestring(action.timestamp, false),
         ...(isPostponeAction(action) && {
-          postponeUntilDate: getCanonicalDatestring(action.postponeUntilDate, false),
+          postponeUntilDate: getCanonicalDatestring(
+            action.postponeUntilDate,
+            false
+          ),
         }),
       })),
     }),
@@ -111,27 +123,24 @@ export function convertCreateTaskDtoToDao(
   } as TaskDao;
 }
 
-export function convertUpdateTaskDtoToDao(
-  updateTaskDto: UpdateTaskDto
-): UpdateTaskDao {
-  const {
-    title,
-    timeEstimateMins,
-    startDate,
-    rangeDays,
-    endDate,
-    repeatDays,
-    tags,
-    completedDate,
-  } = updateTaskDto;
+// should this even be handled here?
+export function convertPatchTaskDtoToDao(
+  patchTaskDto: PatchTaskDto
+): PatchTaskDao {
+  const { startDate, endDate, completedDate } = patchTaskDto;
   return {
-    ...(title && { title }),
-    ...(timeEstimateMins && { timeEstimateMins }), // TODO this could also be a "remove" operation. This dao is less like the others...
-    ...(startDate && { startDate: dayjs.utc(startDate).toDate() }),
-    ...(rangeDays && { rangeDays }),
-    ...(endDate && { endDate: dayjs.utc(endDate).toDate() }),
-    ...(repeatDays && { repeatDays }), // TODO this could also be a "remove" operation...
-    ...(tags && { tags }),
-    ...(completedDate && { completedDate }),
-  } as UpdateTaskDao;
+    ...patchTaskDto,
+    ...(startDate && {
+      startDate: { ...startDate, value: dayjs.utc(startDate.value).toDate() },
+    }),
+    ...(endDate && {
+      endDate: { ...endDate, value: dayjs.utc(endDate.value).toDate() },
+    }),
+    ...(completedDate && {
+      completedDate: {
+        ...completedDate,
+        value: dayjs.utc(completedDate.value).toDate(),
+      },
+    }),
+  } as PatchTaskDao;
 }

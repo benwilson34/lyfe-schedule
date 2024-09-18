@@ -25,9 +25,10 @@ import { faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
 import { faCalendar, faClock } from "@fortawesome/free-regular-svg-icons";
 import { TaskViewModel as Task } from "@/types/task.viewModel";
 import { OnClickFunc, TileContentFunc } from "react-calendar";
-import { createTask, updateTask } from "@/services/api.service";
-import { CreateTaskDto, UpdateTaskDto } from "@/types/task.dto";
+import { createTask, patchTask } from "@/services/api.service";
+import { CreateTaskDto, PatchTaskDto } from "@/types/task.dto";
 import { getCanonicalDatestring } from "@/util/date";
+import { isEqual } from "lodash";
 
 // TODO why is this needed even though the font is included in `_app`?
 const exo2 = Exo_2({ subsets: ["latin"] });
@@ -50,7 +51,6 @@ export function AddEditTaskModal({
   afterSave: (task: Task) => void;
   initialStartDate: Dayjs | null;
 }) {
-  const isNewTask = useMemo(() => !task, [task]);
   const [title, setTitle] = useState(task?.title || "");
   const [inputTags, setInputTags] = useState(task?.tags?.join(" ") || "");
   // TODO handle `useStartTime === true`
@@ -61,20 +61,58 @@ export function AddEditTaskModal({
   const [endDate, setEndDate] = useState(
     task?.endDate || initialStartDate || dayjs()
   );
-  const [rangeDays, setRangeDays] = useState(task?.rangeDays || 1);
-  const [isRepeating, setIsRepeating] = useState(!!task?.repeatDays || false);
+  const [rangeDays, setRangeDays] = useState(task ? task.rangeDays : 1);
+  const [hasRepeatDays, setHasRepeatDays] = useState(
+    task ? !!task.repeatDays : false
+  );
   const [repeatDays, setRepeatDays] = useState(task?.repeatDays || 1);
   const [hasTimeEstimate, setHasTimeEstimate] = useState(
-    !!(task?.timeEstimateMins || true)
+    task ? !!task.timeEstimateMins : true
   );
   const [timeEstimateMins, setTimeEstimateMins] = useState(
     task?.timeEstimateMins || 15
   );
   const [isLoading, setIsLoading] = useState(false);
   const [mostRecentlySetDate, setMostRecentlySetDate] = useState(Bound.END);
-
   // type DateField = 'startDate' | 'endDate' | 'rangeDays';
   const [lockedField, setLockedField] = useState("rangeDays");
+
+  const isNewTask = useMemo(() => !task, [task]);
+  // repeatDays patch cases:
+  // if not task.repeatDays and not isRepeating, no action.
+  // if not task.repeatDays and isRepeating, update.
+  // if task.repeatDays and isRepeating and equal to input repeatDays, no action.
+  // if task.repeatDays and isRepeating and not equal to input repeatDays, update.
+  // if task.repeatDays and not isRepeating, remove.
+  const repeatDaysNeedsRemove = useMemo(
+    () => !isNewTask && !!(task.repeatDays && !hasRepeatDays),
+    [isNewTask, task, hasRepeatDays]
+  );
+  const repeatDaysNeedsUpdate = useMemo(
+    () =>
+      !isNewTask &&
+      !!(
+        (!task.repeatDays && hasRepeatDays) ||
+        (task.repeatDays && hasRepeatDays && task.repeatDays !== repeatDays)
+      ),
+    [isNewTask, task, hasRepeatDays, repeatDays]
+  );
+  // timeEstimate has same patch cases as above
+  const timeEstimateNeedsRemove = useMemo(
+    () => !isNewTask && !!(task.timeEstimateMins && !hasTimeEstimate),
+    [isNewTask, task, hasTimeEstimate]
+  );
+  const timeEstimateNeedsUpdate = useMemo(
+    () =>
+      !isNewTask &&
+      !!(
+        (!task.timeEstimateMins && hasTimeEstimate) ||
+        (task.timeEstimateMins &&
+          hasTimeEstimate &&
+          task.timeEstimateMins !== timeEstimateMins)
+      ),
+    [isNewTask, task, hasTimeEstimate, timeEstimateMins]
+  );
 
   const cancelButtonRef = useRef(null);
 
@@ -87,11 +125,53 @@ export function AddEditTaskModal({
     throw new Error("Not implemented yet");
   }, [lockedField, startDate, endDate]);
 
+  const getTagsFromInputTags = (inputTags: string): string[] => {
+    return inputTags
+      .split(/\s/)
+      .map((token) => token.trim())
+      .filter((token) => token.length > 0);
+  };
+
+  const hasChangedFields = useMemo<boolean>(() => {
+    // early-exit for performance, return value doesn't matter
+    if (isNewTask) {
+      return false;
+    }
+    const parsedInputTags = getTagsFromInputTags(inputTags);
+    return (
+      title !== task.title ||
+      !isEqual(parsedInputTags, task.tags) ||
+      !startDate.isSame(task.startDate, "day") ||
+      !endDate.isSame(task.endDate, "day") ||
+      rangeDays !== task.rangeDays ||
+      repeatDaysNeedsRemove ||
+      repeatDaysNeedsUpdate ||
+      timeEstimateNeedsRemove ||
+      timeEstimateNeedsUpdate
+    );
+  }, [
+    isNewTask,
+    task,
+    title,
+    inputTags,
+    startDate,
+    endDate,
+    rangeDays,
+    repeatDaysNeedsRemove,
+    repeatDaysNeedsUpdate,
+    timeEstimateNeedsRemove,
+    timeEstimateNeedsUpdate,
+  ]);
+
   const isValid = useMemo(() => {
     // TODO validate new task
     const isValidTitle = typeof title === "string" && title.trim().length > 0;
-    return isValidTitle;
-  }, [title]);
+    if (isNewTask) {
+      return isValidTitle;
+    }
+    // else, editing a task
+    return isValidTitle && hasChangedFields;
+  }, [title, isNewTask, hasChangedFields]);
 
   const handleClickDay = useCallback<OnClickFunc>(
     (value) => {
@@ -117,7 +197,7 @@ export function AddEditTaskModal({
   const tileContent = useCallback<TileContentFunc>(
     ({ date, view }) => {
       if (view !== "month") return null;
-      if (!isRepeating) return emptyDayTileContent;
+      if (!hasRepeatDays) return emptyDayTileContent;
       const startOfDate = dayjs(date).startOf("day");
       if (startOfDate < dayjs().startOf("day") || startOfDate < startDate) {
         return emptyDayTileContent;
@@ -136,15 +216,8 @@ export function AddEditTaskModal({
       }
       return emptyDayTileContent;
     },
-    [isRepeating, startDate, repeatDays]
+    [hasRepeatDays, startDate, repeatDays]
   );
-
-  const getTagsFromInputTags = (inputTags: string): string[] => {
-    return inputTags
-      .split(/\s/)
-      .map((token) => token.trim())
-      .filter((token) => token.length > 0);
-  };
 
   const onAddButtonClick = useCallback(async () => {
     try {
@@ -154,7 +227,7 @@ export function AddEditTaskModal({
         startDate: dayjs(startDate),
         endDate: dayjs(endDate),
         rangeDays: rangeDays!,
-        ...(isRepeating && { repeatDays }),
+        ...(hasRepeatDays && { repeatDays }),
         ...(hasTimeEstimate && { timeEstimateMins }),
       };
 
@@ -182,7 +255,7 @@ export function AddEditTaskModal({
     startDate,
     endDate,
     rangeDays,
-    isRepeating,
+    hasRepeatDays,
     repeatDays,
     hasTimeEstimate,
     timeEstimateMins,
@@ -192,28 +265,56 @@ export function AddEditTaskModal({
 
   const onSaveButtonClick = useCallback(async () => {
     try {
-      const taskToSave: Partial<Task> = {
-        title,
-        ...(inputTags.length > 0 && { tags: getTagsFromInputTags(inputTags) }),
-        startDate: dayjs(startDate),
-        endDate: dayjs(endDate),
-        rangeDays,
-        ...(isRepeating && { repeatDays }),
-        ...(hasTimeEstimate && { timeEstimateMins }),
+      // create patch object
+      const parsedInputTags = getTagsFromInputTags(inputTags);
+
+      const taskToPatch: PatchTaskDto = {
+        ...(title !== task.title && { title: { op: "update", value: title } }),
+        ...(!isEqual(parsedInputTags, task.tags) && {
+          tags: {
+            op: parsedInputTags.length === 0 ? "remove" : "update",
+            value: parsedInputTags,
+          },
+        }),
+        ...(!startDate.isSame(task.startDate, "day") && {
+          startDate: { op: "update", value: getCanonicalDatestring(startDate) }, //dayjs?
+        }),
+        ...(!endDate.isSame(task.endDate, "day") && {
+          endDate: { op: "update", value: getCanonicalDatestring(endDate) },
+        }),
+        ...(rangeDays !== task.rangeDays && {
+          rangeDays: { op: "update", value: rangeDays },
+        }),
+        ...((repeatDaysNeedsRemove || repeatDaysNeedsUpdate) && {
+          repeatDays: {
+            op: repeatDaysNeedsRemove ? "remove" : "update",
+            value: repeatDays,
+          },
+        }),
+        ...((timeEstimateNeedsRemove || timeEstimateNeedsUpdate) && {
+          timeEstimateMins: {
+            op: timeEstimateNeedsRemove ? "remove" : "update",
+            value: timeEstimateMins,
+          },
+        }),
       };
 
       setIsLoading(true);
 
-      await updateTask(task.id, {
-        ...taskToSave,
-        startDate: getCanonicalDatestring(startDate),
-        endDate: getCanonicalDatestring(endDate),
-      } as UpdateTaskDto);
+      await patchTask(task.id, taskToPatch);
 
-      afterSave({
-        ...taskToSave,
-        id: task.id,
-      } as Task);
+      const savedTask = {
+        ...task,
+        title,
+        tags: inputTags.length > 0 ? parsedInputTags : undefined,
+        startDate: dayjs(startDate),
+        endDate: dayjs(endDate),
+        rangeDays: rangeDays!,
+        repeatDays: hasRepeatDays ? repeatDays : undefined,
+        timeEstimateMins: hasTimeEstimate ? timeEstimateMins : undefined,
+      } as Task;
+
+      afterSave(savedTask);
       handleClose();
       // TODO show some confimation message
     } catch (error) {
@@ -228,10 +329,14 @@ export function AddEditTaskModal({
     startDate,
     endDate,
     rangeDays,
-    isRepeating,
+    hasRepeatDays,
     repeatDays,
+    repeatDaysNeedsRemove,
+    repeatDaysNeedsUpdate,
     hasTimeEstimate,
     timeEstimateMins,
+    timeEstimateNeedsRemove,
+    timeEstimateNeedsUpdate,
     task,
     afterSave,
     handleClose,
@@ -366,16 +471,16 @@ export function AddEditTaskModal({
 
               <div
                 className={`flex items-center mb-4 px-4 py-2 ${
-                  isRepeating
+                  hasRepeatDays
                     ? "bg-general-100"
                     : "bg-disabled-100 text-ondisabled"
                 } rounded-xl`}
               >
                 <input
                   type="checkbox"
-                  onChange={(e) => setIsRepeating(e.target.checked)}
+                  onChange={(e) => setHasRepeatDays(e.target.checked)}
                   className="inline-block mr-2"
-                  checked={isRepeating}
+                  checked={hasRepeatDays}
                 ></input>
 
                 <div className="inline-block">
@@ -397,7 +502,7 @@ export function AddEditTaskModal({
                     min={1}
                     step={1}
                     className="w-8 mr-2 text-center"
-                    disabled={isLoading || !isRepeating}
+                    disabled={isLoading || !hasRepeatDays}
                   ></input>
 
                   <span>days</span>

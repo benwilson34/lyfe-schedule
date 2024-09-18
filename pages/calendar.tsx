@@ -99,8 +99,6 @@ export default function CalendarView() {
   const shallTaskAppearOnDay = (task: Task, targetDay: Dayjs, currentDay: Dayjs): boolean => {
     const targetDayIsAfterCurrentDay = targetDay.isAfter(currentDay, 'day');
     if (!targetDayIsAfterCurrentDay) {
-      console.log(`${targetDay} is before/equal to ${currentDay}`); // TODO remove
-      console.log(`${task.startDate} is before/equal to ${targetDay}: ${!task.startDate.isAfter(targetDay, 'day')}`); // TODO remove
       return !task.startDate.isAfter(targetDay, 'day');
     }
     return task.startDate.isSame(targetDay, 'day');
@@ -110,6 +108,7 @@ export default function CalendarView() {
     const currentDay = dayjs();
     if (shallTaskAppearOnDay(task, selectedDay, currentDay)) {
       setSelectedDayTasks((tasks) => [...tasks, task]);
+      return;
     }
     console.log("new task is after selected day; not adding it");
   };
@@ -135,6 +134,7 @@ export default function CalendarView() {
     const currentDay = dayjs();
     if (shallTaskAppearOnDay(task, selectedDay, currentDay)) {
       // update in list
+      console.log(`updating in list:`, task); // TODO remove
       setSelectedDayTasks((tasks) =>
         tasks.map((t) => {
           if (t.id !== task.id) return t;

@@ -1,4 +1,9 @@
-import type { TaskDao, CreateTaskDao, UpdateTaskDao } from "@/types/task.dao";
+import type {
+  TaskDao,
+  CreateTaskDao,
+  PatchTaskDao,
+  InternalPatchTaskDao,
+} from "@/types/task.dao";
 import {
   MongoClient,
   Collection,
@@ -82,26 +87,33 @@ export async function addTask(newTask: CreateTaskDao): Promise<string> {
   return insertResult.insertedId.toString();
 }
 
-export async function updateTask(
+export async function patchTask(
   id: ObjectId | string,
-  task: UpdateTaskDao
-): Promise<string> {
+  task: InternalPatchTaskDao
+): Promise<{ didModify: boolean }> {
   await initIfNeeded();
   // TODO validate task
   const oid = id instanceof ObjectId ? id : new ObjectId(id);
   // FIXME need to learn how "casting" in Typescript should work
 
-  const { modifiedCount } = await taskCollection!.updateOne(
-    { _id: oid },
-    { $set: { ...task } }
-  );
-
-  if (modifiedCount !== 1) {
-    throw new Error(
-      `Modified ${modifiedCount} documents instead of 1. Maybe there weren't any actual changes in the set?`
-    );
+  const updateObject: Record<string, any> = {};
+  const removeFields = [];
+  for (const entry of Object.entries(task)) {
+    const [fieldName, patchData] = entry;
+    if (patchData.op === "update") {
+      updateObject[fieldName] = patchData.value;
+    }
+    if (patchData.op === "remove") {
+      removeFields.push(fieldName);
+    }
   }
-  return oid.toString();
+
+  const { modifiedCount } = await taskCollection!.updateOne({ _id: oid }, [
+    ...(Object.keys(updateObject).length > 0 ? [{ $set: updateObject }] : []),
+    ...(removeFields.length > 0 ? [{ $unset: removeFields }] : []),
+  ]);
+
+  return { didModify: modifiedCount === 1 };
 }
 
 export async function deleteTask(id: ObjectId | string): Promise<string> {

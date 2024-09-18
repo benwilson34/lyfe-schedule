@@ -7,7 +7,7 @@
  * @todo should wrap these functions with try-catch to log and display more user-friendly error message?
  */
 
-import { CreateTaskDto, TaskDto, UpdateTaskDto } from "@/types/task.dto";
+import { CreateTaskDto, PatchTaskDto, TaskDto } from "@/types/task.dto";
 import { Dayjs } from "@/lib/dayjs";
 import { getCanonicalDatestring } from "@/util/date";
 import { getTimezoneOffsetHeader } from "@/util/timezoneOffset";
@@ -83,7 +83,7 @@ export async function createTask(task: CreateTaskDto) {
   return taskId;
 }
 
-export async function updateTask(taskId: string, task: UpdateTaskDto) {
+export async function patchTask(taskId: string, task: PatchTaskDto) {
   const { taskId: modifiedId } = await request<{ taskId: string }>(
     "PATCH",
     `/api/tasks/${taskId}`,

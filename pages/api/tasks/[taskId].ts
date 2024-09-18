@@ -8,16 +8,16 @@ import ErrorResponse, {
 } from "@/models/ErrorResponse";
 import {
   getTaskById as getTaskByIdFromDb,
-  updateTask as updateTaskInDb,
+  patchTask as patchTaskInDb,
   deleteTask as deleteTaskInDb,
   addTask,
 } from "@/services/mongo.service";
 import SuccessResponse from "@/models/SuccessResponse";
-import { CreateTaskDao, convertUpdateTaskDtoToDao } from "@/types/task.dao";
+import { CreateTaskDao, convertPatchTaskDtoToDao } from "@/types/task.dao";
 import dayjs from "@/lib/dayjs";
 import { stripOffset } from "@/util/date";
 
-async function updateTask(req: NextApiRequest, res: NextApiResponse) {
+async function patchTask(req: NextApiRequest, res: NextApiResponse) {
   try {
     // auth
     const token = await getToken({ req });
@@ -42,14 +42,26 @@ async function updateTask(req: NextApiRequest, res: NextApiResponse) {
       unauthenticatedErrorResponse.send(res);
       return;
     }
-    // TODO validate updateTask
-    const updateTask = convertUpdateTaskDtoToDao(req.body);
-    const modifiedId = await updateTaskInDb(taskId, updateTask);
-    if (!modifiedId) {
-      throw new Error(`Failed to update task with id "${taskId}"`);
+    // TODO validate patchTask
+    const patchTask = convertPatchTaskDtoToDao(req.body);
+    const noChangesErrorResponse = new ErrorResponse({
+      status: 400,
+      errorCode: "invalidFields",
+      title: "Failed to patch task: no changes to task",
+      detail: `Failed to patch task because no valid changes were supplied.`,
+    });
+    if (Object.keys(patchTask).length === 0) {
+      noChangesErrorResponse.send(res);
+      return;
+    }
+
+    const { didModify } = await patchTaskInDb(taskId, patchTask);
+    if (!didModify) {
+      noChangesErrorResponse.send(res);
+      return;
     }
     new SuccessResponse({
-      data: { taskId: modifiedId },
+      data: { taskId },
     }).send(res);
   } catch (error) {
     console.error(error);
@@ -98,15 +110,19 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
     }
     // TODO validate :)
 
-    task.completedDate = dayjs.utc(completedDateFromReq).toDate();
+    const completedDate = dayjs.utc(completedDateFromReq).toDate();
 
-    await updateTaskInDb(taskId, task);
+    await patchTaskInDb(taskId, {
+      completedDate: {
+        op: "update",
+        value: completedDate,
+      },
+    });
 
     if (task.repeatDays) {
-      const newStartDate = dayjs.utc(task.completedDate).add(
-        task.repeatDays,
-        "days"
-      ); // should be `dayjs.utc()`?
+      const newStartDate = dayjs
+        .utc(task.completedDate)
+        .add(task.repeatDays, "days"); // should be `dayjs.utc()`?
       // there might be a better way, but this explicit approach gives me the most confidence
       const newTask: CreateTaskDao = {
         userId: task.userId,
@@ -185,12 +201,16 @@ async function postponeTask(req: NextApiRequest, res: NextApiResponse) {
       timestamp: stripOffset(dayjs()).toDate(),
       postponeUntilDate: dayjs.utc(postponeUntilDate).toDate(),
     };
-    if (task.actions) {
-      task.actions.push(postponeAction);
-    } else {
-      task.actions = [postponeAction];
-    }
-    await updateTaskInDb(taskId, task);
+    const actions =
+      task.actions && task.actions.length > 0
+        ? [...task.actions, postponeAction]
+        : [postponeAction];
+    await patchTaskInDb(taskId, {
+      actions: {
+        op: "update",
+        value: actions,
+      },
+    });
     new SuccessResponse().send(res);
   } catch (maybeError) {
     console.error(maybeError);
@@ -279,7 +299,7 @@ export default async function handler(
   console.log(`${req.method} ${req.url}`); // TODO replace with proper logging
   switch (req.method?.toUpperCase()) {
     case "PATCH":
-      await updateTask(req, res);
+      await patchTask(req, res);
       break;
     case "PUT":
       await operateOnTask(req, res);
