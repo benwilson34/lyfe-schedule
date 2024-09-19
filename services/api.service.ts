@@ -12,6 +12,7 @@ import { Dayjs } from "@/lib/dayjs";
 import { getCanonicalDatestring } from "@/util/date";
 import { getTimezoneOffsetHeader } from "@/util/timezoneOffset";
 
+// TODO add optional URLSearchParams param and update usages below
 async function request<T extends Record<string, any> = {}>(
   method: string,
   endpoint: string,
@@ -35,6 +36,18 @@ async function request<T extends Record<string, any> = {}>(
 
 export async function decryptJwt() {
   return request<{ userId: string; isAdmin: boolean }>("GET", "/api/auth/jwt");
+}
+
+export async function getTasks({ tag = "" }: { tag: string }) {
+  const params = new URLSearchParams();
+  if (tag.length > 0) {
+    params.append("tag", tag);
+  }
+  const { tasks } = await request<{ tasks: TaskDto[] }>(
+    "GET",
+    `/api/tasks?${params.toString()}`
+  );
+  return tasks;
 }
 
 export async function getTasksForDay(day: Dayjs) {
@@ -94,4 +107,12 @@ export async function patchTask(taskId: string, task: PatchTaskDto) {
 
 export async function deleteTask(taskId: string) {
   return request("DELETE", `/api/tasks/${taskId}`);
+}
+
+export async function getTagCounts() {
+  const { tagCounts } = await request<{ tagCounts: Record<string, number> }>(
+    "GET",
+    `/api/tags`
+  );
+  return tagCounts;
 }

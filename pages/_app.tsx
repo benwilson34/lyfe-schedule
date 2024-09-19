@@ -32,6 +32,7 @@ function Modals() {
     selectedTask,
     afterSave,
     initialStartDate,
+    initialTags,
     onCalendarPickerConfirm,
     onConfirmActionConfirm,
   } = useModalContext();
@@ -51,6 +52,7 @@ function Modals() {
           afterSave={afterSave!}
           task={selectedTask!}
           initialStartDate={initialStartDate}
+          initialTags={initialTags}
         />
       )}
 

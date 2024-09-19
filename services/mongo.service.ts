@@ -43,7 +43,8 @@ export async function getManyTasks(
   {
     targetDay,
     includeCompleted = false,
-  }: { targetDay?: Date; includeCompleted?: boolean } = {}
+    withTag = "",
+  }: { targetDay?: Date; includeCompleted?: boolean; withTag?: string } = {}
 ): Promise<TaskDao[]> {
   await initIfNeeded();
 
@@ -60,6 +61,7 @@ export async function getManyTasks(
     userId: userOid,
     completedDate: { $exists: false },
     ...(adjustedDate && { startDate: { $lt: adjustedDate } }),
+    ...(withTag.length > 0 && { tags: { $in: [withTag] } }),
   };
   const tasks = await taskCollection!.find(filter).toArray();
 
@@ -133,6 +135,42 @@ export async function deleteAllTasks(
   const userOid = userId instanceof ObjectId ? userId : new ObjectId(userId);
   const deleteResult = await taskCollection!.deleteMany({ userId: userOid });
   return deleteResult.deletedCount;
+}
+
+export async function getAllTags(
+  userId: string | ObjectId
+): Promise<Record<string, number>> {
+  await initIfNeeded();
+  const userOid = userId instanceof ObjectId ? userId : new ObjectId(userId);
+  const tagCounts = await taskCollection!
+    .aggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          userId: userOid,
+          tags: {
+            $exists: true,
+          },
+        },
+      },
+      {
+        $unwind: {
+          path: "$tags",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$tags",
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+    ])
+    .toArray();
+  return Object.fromEntries(
+    tagCounts.map(({ _id: tag, count }) => [tag, count])
+  );
 }
 
 export async function addUser(

@@ -12,6 +12,7 @@ import { completeTask, deleteTask, postponeTask } from "@/services/api.service";
 import { useModalContext } from "@/contexts/modal-context";
 import { assign } from "lodash";
 import Overlay from "./Overlay";
+import { useRouter } from "next/navigation";
 
 const getTaskClass = (task: Task, selectedDay: dayjs.Dayjs) => {
   if (task.completedDate) {
@@ -92,6 +93,7 @@ export default function TaskCard({
   const daysOverEndDate = selectedDay.diff(endDate, "day");
   const isCompleted = !!completedDate;
   const isCheckboxDisabled = isCompleted || !selectedDay.isSame(dayjs(), "day");
+  const router = useRouter();
 
   const handleCheckboxClick = async () => {
     setIsLoading(true);
@@ -102,8 +104,12 @@ export default function TaskCard({
     setIsLoading(false);
   };
 
+  const handleTagClick = (tagName: string) => {
+    router.push(`/tagged/${tagName}`);
+  };
+
   const handleEditOptionClick = () => {
-    showAddEditModal(task, afterEdit, selectedDay);
+    showAddEditModal(task, afterEdit, { initialStartDate: selectedDay });
   };
 
   const handleConfirmedCompleteTaskOnAnotherDay = async (
@@ -154,13 +160,13 @@ export default function TaskCard({
       return null;
     }
     return (
-      <>
-        <div className="flex flex-wrap gap-x-2 text-sm leading-none mt-2">
-          {tags.map((tag) => (
-            <div key={tag}>#{tag}</div>
-          ))}
-        </div>
-      </>
+      <div className="flex flex-wrap gap-x-2 text-sm leading-none mt-2">
+        {tags.map((tag) => (
+          <div key={tag} className="cursor-pointer" onClick={() => handleTagClick(tag)}>
+            #{tag}
+          </div>
+        ))}
+      </div>
     );
   };
 

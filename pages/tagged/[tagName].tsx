@@ -3,7 +3,7 @@ import {
   taskDtoToViewModel,
   type TaskViewModel as Task,
 } from "@/types/task.viewModel";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { getToken } from "next-auth/jwt";
 import dayjs from "@/lib/dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,6 +15,7 @@ import { GetServerSideProps } from "next";
 import { useModalContext } from "@/contexts/modal-context";
 import { getManyTasks } from "@/services/mongo.service";
 import NavBar from "@/components/NavBar";
+import { getTasks } from "@/services/api.service";
 
 export const getServerSideProps = (async (context: any) => {
   // TODO this would be better as a util function
@@ -26,18 +27,27 @@ export const getServerSideProps = (async (context: any) => {
     return { props: {} };
   }
   const userId = token.sub!;
+  const { tagName } = context.query;
+  // TODO validate tagName? Redirect?
 
-  const initTasks: TaskDto[] = (await getManyTasks(userId)).map(
-    convertTaskDaoToDto
-  );
+  const initTasks: TaskDto[] = (
+    await getManyTasks(userId, { withTag: tagName })
+  ).map(convertTaskDaoToDto);
   return {
     props: {
+      tagName,
       initTasks,
     },
   };
 }) satisfies GetServerSideProps;
 
-export default function AllTasksView({ initTasks }: { initTasks: TaskDto[] }) {
+export default function TaggedTasksView({
+  tagName,
+  initTasks,
+}: {
+  tagName: string;
+  initTasks: TaskDto[];
+}) {
   const { showAddEditModal } = useModalContext();
 
   // TODO gonna have to check `initTasks` when switching pages I think
@@ -48,26 +58,30 @@ export default function AllTasksView({ initTasks }: { initTasks: TaskDto[] }) {
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const [shownStartDay, shownEndDay] = shownDateRange;
-  //       const dayTasks = await getTasksForDayRange(shownStartDay, shownEndDay);
-  //       setDayTasks(dayTasks);
-  //     } catch (maybeError) {
-  //       console.error(maybeError);
-  //       // TODO display some error message
-  //     }
-  //   };
-  //   fetchData();
-  // }, [shownDateRange]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setTasks([]);
+        setIsLoading(true);
+        const tasks = (await getTasks({ tag: tagName })).map(
+          taskDtoToViewModel
+        );
+        setTasks(tasks);
+        setIsLoading(false);
+      } catch (maybeError) {
+        console.error(maybeError);
+        // TODO display some error message
+      }
+    };
+    fetchData();
+  }, [tagName]);
 
   const afterAddTask = (task: Task) => {
     setTasks((tasks) => [...tasks, task]);
   };
 
   const handleAddButtonClick = () => {
-    showAddEditModal(null, afterAddTask);
+    showAddEditModal(null, afterAddTask, { initialTags: [tagName] });
   };
 
   const updateTasks = (task: Task) => {
@@ -88,7 +102,9 @@ export default function AllTasksView({ initTasks }: { initTasks: TaskDto[] }) {
       <NavBar />
 
       <section className={`flex flex-col items-center pr-8 pl-8 mb-6`}>
-        <h1 className="mb-1 mt-10 text-4xl font-bold">All Tasks</h1>
+        <h1 className="mb-1 mt-10 text-4xl text-center font-bold w-full truncate">
+          #{tagName}
+        </h1>
       </section>
 
       {/* <section>

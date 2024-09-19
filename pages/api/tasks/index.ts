@@ -188,10 +188,12 @@ async function getMultipleTasks(req: NextApiRequest, res: NextApiResponse) {
       targetDay: targetDayString,
       targetStartDay: targetStartDayString,
       targetEndDay: targetEndDayString,
+      tag: withTagString = "",
     }: {
       targetDay?: string;
       targetStartDay?: string;
       targetEndDay?: string;
+      tag?: string;
     } = req.query;
 
     const sendMappedDayTasks = (dayTasks: Record<string, TaskDao[]>) => {
@@ -219,6 +221,7 @@ async function getMultipleTasks(req: NextApiRequest, res: NextApiResponse) {
     const currentDay = dayjs.utc().subtract(timezoneOffset, "minute").toDate();
 
     // handle day-task-type requests
+    // TODO support filters like `withTag`
     if (targetDayString) {
       const parsedTargetDay = dayjs.utc(targetDayString);
       const dayKey = formatDayKey(parsedTargetDay);
@@ -243,7 +246,10 @@ async function getMultipleTasks(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // handle task-list-type requests
-    const tasks = (await getManyTasks(userId)).map(convertTaskDaoToDto);
+    const filter = {
+      ...(withTagString.length > 0 && { withTag: withTagString }),
+    };
+    const tasks = (await getManyTasks(userId, filter)).map(convertTaskDaoToDto);
     new SuccessResponse({
       data: { tasks },
     }).send(res);

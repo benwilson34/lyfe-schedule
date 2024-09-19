@@ -44,15 +44,17 @@ export function AddEditTaskModal({
   task,
   afterSave,
   initialStartDate,
+  initialTags,
 }: {
   isOpen: boolean;
   handleClose: () => void;
   task: Task;
   afterSave: (task: Task) => void;
   initialStartDate: Dayjs | null;
+  initialTags: string[] | null;
 }) {
   const [title, setTitle] = useState(task?.title || "");
-  const [inputTags, setInputTags] = useState(task?.tags?.join(" ") || "");
+  const [inputTags, setInputTags] = useState((task?.tags || initialTags)?.join(" ") || "");
   // TODO handle `useStartTime === true`
   const [startDate, setStartDate] = useState(
     task?.startDate || initialStartDate || dayjs()

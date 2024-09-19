@@ -16,12 +16,16 @@ export type ModalContext = {
   selectedTask: Task | null;
   afterSave: ((task: Task) => void) | null;
   initialStartDate: Dayjs | null;
+  initialTags: string[] | null;
   onCalendarPickerConfirm: ((selectedDay: Date) => void) | null;
   onConfirmActionConfirm: (() => void) | null;
   showAddEditModal: (
     selectedTask: Task | null,
     afterSave: (task: Task) => void,
-    initialStartDate?: Dayjs | null
+    options?: {
+      initialStartDate?: Dayjs | null;
+      initialTags?: string[] | null;
+    }
   ) => void;
   showPostponeToModal: (
     selectedTask: Task,
@@ -43,10 +47,11 @@ export default function ModalContextProvider({
 }) {
   const [currentModal, setCurrentModal] = useState<Modal>("none");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [afterSave, setAfterSave] = useState<
-    ((task: Task) => void) | null
-  >(null);
+  const [afterSave, setAfterSave] = useState<((task: Task) => void) | null>(
+    null
+  );
   const [initialStartDate, setInitialStartDate] = useState<Dayjs | null>(null);
+  const [initialTags, setInitialTags] = useState<string[] | null>(null);
   const [onCalendarPickerConfirm, setOnCalendarPickerConfirm] = useState<
     ((selectedDay: Date) => void) | null
   >(null);
@@ -57,12 +62,19 @@ export default function ModalContextProvider({
   const showAddEditModal = (
     selectedTask: Task | null,
     afterSave: (task: Task, isAdding: boolean) => void,
-    initialStartDate: Dayjs | null = null
+    {
+      initialStartDate = null,
+      initialTags = null,
+    }: {
+      initialStartDate?: Dayjs | null;
+      initialTags?: string[] | null;
+    } = {}
   ) => {
     setCurrentModal("edit");
     setSelectedTask(selectedTask);
     setAfterSave(() => afterSave);
     setInitialStartDate(initialStartDate);
+    setInitialTags(initialTags);
   };
 
   const showPostponeToModal = (
@@ -97,6 +109,7 @@ export default function ModalContextProvider({
         selectedTask,
         afterSave,
         initialStartDate,
+        initialTags,
         onCalendarPickerConfirm,
         onConfirmActionConfirm,
         showAddEditModal,
