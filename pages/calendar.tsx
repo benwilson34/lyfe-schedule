@@ -126,7 +126,7 @@ export default function CalendarView() {
   };
 
   const handleAddButtonClick = () => {
-    showAddEditModal(null, afterAddTask, selectedDay);
+    showAddEditModal(null, afterAddTask, { initialStartDate: selectedDay });
   };
 
   const afterCompleteTask = (task: Task, completeDay: Dayjs) => {
