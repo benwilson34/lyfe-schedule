@@ -193,7 +193,7 @@ export default function TaskOptionsMenu({
                         onPostponeToAnotherDayClick();
                         close();
                       }}
-                      className="hover:bg-gray-50"
+                      className="hover:bg-gray-50 cursor-pointer"
                     >
                       Another day
                     </div>

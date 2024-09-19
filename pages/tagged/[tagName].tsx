@@ -115,7 +115,7 @@ export default function TaggedTasksView({
       </section> */}
 
       <section
-        className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-3`}
+        className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-4`}
       >
         <div
           onClick={handleAddButtonClick}

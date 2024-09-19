@@ -6,7 +6,7 @@
   --on-light-rgb: 0 97 206;
   --on-dark-rgb: 245 243 222;
   --on-warning-rgb: 126 88 33;
-  --on-attention-rgb: 155 34 25;
+  /* --on-attention-rgb: 155 34 25; */
   --on-disabled-rgb: 84 84 84;
   --background-rgb: 245 243 222;
   --disabled-100-rgb: 218 215 196;
@@ -14,9 +14,9 @@
   --general-500-rgb: 0 97 206;
   --general-200-rgb: 164 192 215;
   --general-100-rgb: 213 222 219;
-  --accent-rgb: 87 207 126;
+  --accent-rgb: 0 193 167;
   --warning-rgb: 245 228 174;
-  --attention-rgb: 236 198 183;
+  --attention-rgb: 212 47 131;
 }
 
 /* TODO support dark theme */
@@ -93,8 +93,8 @@ input[type=number][disabled] {
   @apply rounded-full;
   @apply border-2;
   @apply border-transparent;
-  @apply border-r-onwarning;
-  @apply border-b-onwarning;
+  @apply border-r-onlight;
+  @apply border-b-onlight;
   animation: l2 0.65s infinite linear;
 }
 @keyframes l2 {to{transform: rotate(1turn)}}
@@ -137,24 +137,26 @@ input[type=number][disabled] {
   @apply border-onlight;
 }
 
-.task__priority-low .loader {
+/* .task__priority-low .loader {
   @apply border-r-onlight;
   @apply border-b-onlight;
-}
+} */
 
 .task__priority-high {
-  @apply bg-attention text-onattention;
+  /* @apply bg-attention text-onattention; */
+  @apply bg-general-100 text-onlight;
 }
 
-.task__priority-high .task__overdue-chip {
+/* .task__priority-high .task__overdue-chip {
   @apply border-onattention;
-}
+} */
 
 .task__priority-high .task__checkbox {
-  @apply border-onattention;
+  /* @apply border-onattention; */
+  @apply border-onlight;
 }
 
-.task__priority-high .loader {
+/* .task__priority-high .loader {
   @apply border-r-onattention;
   @apply border-b-onattention;
-}
+} */

@@ -87,7 +87,7 @@ export default function Sidebar() {
     <>
       {/* <Panel defaultSize={30} minSize={20} order={1}> */}
       <div
-        className={`h-full max-h-full w-72 px-2 pb-2 flex flex-col bg-general text-ondark top-0 z-20 fixed transition-transform duration-400 ease-in-out ${
+        className={`h-full max-h-full w-72 px-2 pb-2 flex flex-col bg-general text-ondark top-0 z-50 fixed transition-transform duration-400 ease-in-out ${
           isVisible ? "" : "-translate-x-full"
         }`}
         ref={ref}

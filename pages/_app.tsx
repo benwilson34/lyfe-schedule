@@ -7,7 +7,6 @@ import ModalContextProvider, {
   useModalContext,
 } from "@/contexts/modal-context";
 import SidebarContextProvider from "@/contexts/sidebar-context";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import Sidebar from "@/components/Sidebar";
 import { AddEditTaskModal } from "@/components/AddEditTaskModal";
 import { CalendarPickerModal } from "@/components/CalendarPickerModal";
@@ -225,18 +224,9 @@ export default function App({ Component, pageProps }: AppProps) {
               <Init />
 
               <main className={exo2.className}>
-                {/* <PanelGroup
-                  direction="horizontal"
-                  className={`max-h-screen flex`}
-                > */}
-                  <Sidebar />
+                <Component {...pageProps} />
 
-                  {/* <PanelResizeHandle className="w-2 border-l-2 border-gray-500/25" /> */}
-
-                  {/* <Panel minSize={50} order={2}> */}
-                    <Component {...pageProps} />
-                  {/* </Panel>
-                </PanelGroup> */}
+                <Sidebar />
 
                 <Modals />
               </main>

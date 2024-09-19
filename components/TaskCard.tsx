@@ -6,7 +6,7 @@ import { calculatePriority } from "@/util/date";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
 import { faCalendar, faClock } from "@fortawesome/free-regular-svg-icons";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { autoPlacement, useFloating } from "@floating-ui/react";
 import { completeTask, deleteTask, postponeTask } from "@/services/api.service";
 import { useModalContext } from "@/contexts/modal-context";
@@ -88,6 +88,10 @@ export default function TaskCard({
     ],
   });
   // const calculatedPriority = calculatePriority(startDate, endDate, selectedDay);
+  const isOverdue = useMemo(
+    () => selectedDay.isAfter(task.endDate, "day"),
+    [selectedDay, task]
+  );
   const taskClass = getTaskClass(task, selectedDay);
   // const calculatedPoints = Math.round(calculatedPriority * (timeEstimateMins ?? 0));
   const daysOverEndDate = selectedDay.diff(endDate, "day");
@@ -162,7 +166,11 @@ export default function TaskCard({
     return (
       <div className="flex flex-wrap gap-x-2 text-sm leading-none mt-2">
         {tags.map((tag) => (
-          <div key={tag} className="cursor-pointer" onClick={() => handleTagClick(tag)}>
+          <div
+            key={tag}
+            className="cursor-pointer"
+            onClick={() => handleTagClick(tag)}
+          >
             #{tag}
           </div>
         ))}
@@ -174,10 +182,16 @@ export default function TaskCard({
     <>
       <div
         ref={floating.refs.setReference}
-        className={`task group/task relative flex justify-between items-center space-x-3 max-w-lg w-full px-3 py-2 ${taskClass} shadow-md rounded-xl text-sm ${
+        className={`task group/task relative flex justify-between items-center gap-x-3 max-w-lg w-full px-3 py-2 ${taskClass} shadow-md rounded-xl text-sm ${
           isOptionsMenuOpen ? "task--selected" : ""
         }`}
       >
+        {isOverdue && (
+          <div className="bg-attention text-ondark text-xs italic whitespace-nowrap rounded-full pb-1 pt-0.5 pl-1 pr-2 absolute -top-3 -left-5 border-2 border-r-background border-b-background border-t-transparent border-l-transparent bg-clip-padding">
+            +{daysOverEndDate} days
+          </div>
+        )}
+
         {isLoading ? (
           <div className="loader shrink-0 mr-3 w-4 h-4 relative" />
         ) : (
@@ -215,18 +229,22 @@ export default function TaskCard({
                 isProjected ? "underline decoration-dotted" : ""
               } text-sm flex justify-end mr-3 xs:mr-0`}
             >
-              <div className="whitespace-nowrap">
+              <div
+                className={`whitespace-nowrap ${
+                  isOverdue ? "text-attention" : ""
+                }`}
+              >
                 <FontAwesomeIcon icon={faCalendar} className="mr-1" />
 
                 {formatDateRange(startDate, endDate, rangeDays)}
 
-                {daysOverEndDate > 0 && (
+                {/* {daysOverEndDate > 0 && (
                   <span
                     className={`task__overdue-chip border rounded-md ml-1 pl-0.5 pr-1`}
                   >
                     +{daysOverEndDate}
                   </span>
-                )}
+                )} */}
               </div>
             </div>
 

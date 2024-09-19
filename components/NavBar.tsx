@@ -7,13 +7,13 @@ export default function NavBar() {
   const { toggleVisibility: toggleSidebarVisibility } = useSidebarContext();
 
   return (
-    <div className="fixed flex w-full justify-between text-lg top-2 px-2">
-      <div>
+    <div className="fixed flex w-full justify-between text-lg leading-none top-0 p-2 z-10 bg-background sm:bg-transparent">
+      <div className="">
         <FontAwesomeIcon
           icon={faBars}
           className="cursor-pointer hover:bg-gray-500/25"
           onClick={toggleSidebarVisibility}
-        ></FontAwesomeIcon>
+        />
       </div>
 
       <a
@@ -23,7 +23,7 @@ export default function NavBar() {
         <FontAwesomeIcon
           icon={faCircleQuestion}
           className="cursor-pointer hover:bg-gray-500/25"
-        ></FontAwesomeIcon>
+        />
       </a>
     </div>
   );

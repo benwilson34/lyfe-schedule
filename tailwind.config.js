@@ -22,7 +22,7 @@ module.exports = {
         onlight: "rgb(var(--on-light-rgb) / <alpha-value>)",
         ondark: "rgb(var(--on-dark-rgb) / <alpha-value>)",
         onwarning: "rgb(var(--on-warning-rgb) / <alpha-value>)",
-        onattention: "rgb(var(--on-attention-rgb) / <alpha-value>)",
+        // onattention: "rgb(var(--on-attention-rgb) / <alpha-value>)",
         disabled: {
           100: "rgb(var(--disabled-100-rgb) / <alpha-value>)",
           DEFAULT: "rgb(var(--disabled-200-rgb) / <alpha-value>)",
@@ -30,6 +30,9 @@ module.exports = {
         },
         ondisabled: "rgb(var(--on-disabled-rgb) / <alpha-value>)",
       },
+      // fontSize: {
+      //   "2xs": ["0.5rem", "0.75rem"],
+      // },
       screens: {
         xs: "480px",
       },

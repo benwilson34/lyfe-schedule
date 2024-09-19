@@ -368,7 +368,7 @@ export function AddEditTaskModal({
             <div className="">
               <div className="flex w-full max-w-full mb-4 px-4 py-2 bg-general-100 rounded-xl">
                 <span className="mr-2 font-semibold">
-                  Title<span className="text-onattention">*</span>:
+                  Title<span className="text-attention">*</span>:
                 </span>
 
                 <input

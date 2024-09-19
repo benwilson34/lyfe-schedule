@@ -132,6 +132,12 @@
   color: rgb(var(--disabled-200-rgb));
 }
 
+.react-calendar__month-view__days__day--neighboringMonth > abbr,
+.react-calendar__decade-view__years__year--neighboringDecade > abbr,
+.react-calendar__century-view__decades__decade--neighboringCentury > abbr {
+  color: rgb(var(--disabled-200-rgb));
+}
+
 .react-calendar__year-view .react-calendar__tile,
 .react-calendar__decade-view .react-calendar__tile,
 .react-calendar__century-view .react-calendar__tile {
@@ -166,7 +172,7 @@
 
 .react-calendar__tile--now > abbr {
   border: .0625rem solid rgb(var(--background-rgb)) !important;
-  padding: 0 .125rem .1rem .125rem;
+  padding: 0 .125rem 0 .125rem;
   border-radius: .25rem;
   left: calc(var(--day-label-left-pos) - .15rem);
   top: calc(var(--day-label-top-pos) - .0625rem);
