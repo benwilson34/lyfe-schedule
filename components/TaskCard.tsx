@@ -14,17 +14,6 @@ import { assign } from "lodash";
 import Overlay from "./Overlay";
 import { useRouter } from "next/navigation";
 
-const getTaskClass = (task: Task, selectedDay: dayjs.Dayjs) => {
-  if (task.completedDate) {
-    return "task__completed";
-  }
-  if (selectedDay.isAfter(task.endDate, "day")) {
-    return "task__priority-high";
-  }
-  // else regular priority
-  return "task__priority-low";
-};
-
 const formatStartDate = (startDate: dayjs.Dayjs) => {
   return startDate.format("MMM DD");
 };
@@ -88,7 +77,6 @@ export default function TaskCard({
     ],
   });
   // const calculatedPriority = calculatePriority(startDate, endDate, selectedDay);
-  const taskClass = getTaskClass(task, selectedDay);
   // const calculatedPoints = Math.round(calculatedPriority * (timeEstimateMins ?? 0));
   const daysOverEndDate = useMemo(
     () => selectedDay.startOf("day").diff(endDate.startOf("day"), "day"),
@@ -181,22 +169,24 @@ export default function TaskCard({
     <>
       <div
         ref={floating.refs.setReference}
-        className={`task group/task relative flex justify-between items-center gap-x-3 max-w-lg w-full px-3 py-2 ${taskClass} shadow-md rounded-xl text-sm ${
+        className={`task ${completedDate ? "task--completed" : ""} ${
           isOptionsMenuOpen ? "task--selected" : ""
-        }`}
+        } group/task relative flex justify-between items-center gap-x-3 max-w-lg w-full px-3 py-2 shadow-md rounded-xl text-sm`}
       >
         {daysOverEndDate > 0 && (
-          <div className="bg-attention text-ondark text-xs italic whitespace-nowrap rounded-full pb-1 pt-0.5 pl-1 pr-2 absolute -top-3 -left-5 border-2 border-r-background border-b-background border-t-transparent border-l-transparent bg-clip-padding">
+          <div className="task__overdue-chip text-xs italic whitespace-nowrap rounded-full pb-1 pt-0.5 pl-1 pr-2 absolute -top-3 -left-5 border-2 border-r-background border-b-background border-t-transparent border-l-transparent bg-clip-padding">
             +{daysOverEndDate} day{daysOverEndDate > 1 ? "s" : ""}
           </div>
         )}
 
         {isLoading ? (
-          <div className="loader shrink-0 mr-3 w-4 h-4 relative" />
+          <div className="loader task__loader shrink-0 box-content w-4 h-4" />
         ) : (
           <div
             // TODO style disabled checkbox
-            className={`task__checkbox shrink-0 cursor-pointer w-4 h-4 rounded-[.25rem] relative box-content bg-ondark border-2`}
+            className={`task__checkbox ${
+              isCheckboxDisabled ? "task__checkbox--disabled" : ""
+            } shrink-0 w-4 h-4 rounded-[.25rem] relative box-content bg-ondark border-2`}
             onClick={() => {
               if (isCheckboxDisabled) return;
               handleCheckboxClick();
@@ -229,9 +219,9 @@ export default function TaskCard({
               } text-sm flex justify-end mr-3 xs:mr-0`}
             >
               <div
-                className={`whitespace-nowrap ${
-                  daysOverEndDate > 0 ? "text-attention" : ""
-                }`}
+                className={`task__date-range ${
+                  daysOverEndDate > 0 ? "task__date-range--attention" : ""
+                } whitespace-nowrap`}
               >
                 <FontAwesomeIcon icon={faCalendar} className="mr-1" />
 

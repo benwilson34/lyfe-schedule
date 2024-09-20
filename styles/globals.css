@@ -102,61 +102,76 @@ input[type=number][disabled] {
 
 /* TODO move to own file? */
 
-/* prevent the options menu from "popping" during transitions, see https://stackoverflow.com/a/19311234 */
 .task {
+  @apply bg-general-100 text-onlight;
+  /* prevent the options menu from "popping" during transitions, see https://stackoverflow.com/a/19311234 */
   z-index: 0;
   transition: z-index 0.5s step-end;
 }
-.task.task--selected {
+
+.task--selected {
+  /* prevent the options menu from "popping" during transitions, see https://stackoverflow.com/a/19311234 */
   z-index: 20;
   transition: z-index 0.5s step-start;
 }
 
-.task__completed {
+.task--completed {
   @apply bg-disabled-100 text-ondisabled;
 }
 
-.task__completed .task__checkbox {
+.task__checkbox {
+  @apply border-onlight;
+  @apply cursor-pointer;
+}
+
+.task--completed .task__checkbox {
   @apply border-ondisabled;
 }
 
-.task__completed .task__overdue-chip {
-  @apply border-ondisabled;
+.task__checkbox--disabled {
+  @apply border-disabled-200;
+  @apply cursor-default;
 }
 
-.task__completed .loader {
+.task--completed .task__checkbox--disabled {
+  @apply border-ondisabled;
+  @apply cursor-default;
+}
+
+.task__checkbox--disabled::before {
+  @apply absolute;
+  content: "";
+  @apply border-t-2;
+  @apply border-t-disabled-200;
+  @apply w-[1.414rem];
+  @apply -rotate-45;
+  @apply top-2;
+  @apply -left-1;
+}
+
+.task--completed .task__checkbox--disabled::before {
+  display: none;
+}
+
+.task__overdue-chip {
+  @apply bg-attention text-ondark;
+}
+
+.task--completed .task__overdue-chip {
+  @apply bg-disabled-100 text-ondisabled;
+}
+
+/* default loader styles apply to active (not completed) tasks */
+
+.task--completed .task__loader {
   @apply border-r-ondisabled;
   @apply border-b-ondisabled;
 }
 
-.task__priority-low {
-  @apply bg-general-100 text-onlight;
+.task__date-range--attention {
+  @apply text-attention;
 }
 
-.task__priority-low .task__checkbox {
-  @apply border-onlight;
+.task--completed .task__date-range {
+  @apply text-inherit;
 }
-
-/* .task__priority-low .loader {
-  @apply border-r-onlight;
-  @apply border-b-onlight;
-} */
-
-.task__priority-high {
-  /* @apply bg-attention text-onattention; */
-  @apply bg-general-100 text-onlight;
-}
-
-/* .task__priority-high .task__overdue-chip {
-  @apply border-onattention;
-} */
-
-.task__priority-high .task__checkbox {
-  /* @apply border-onattention; */
-  @apply border-onlight;
-}
-
-/* .task__priority-high .loader {
-  @apply border-r-onattention;
-  @apply border-b-onattention;
-} */
