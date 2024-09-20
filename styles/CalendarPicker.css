@@ -46,16 +46,25 @@
 
 .react-calendar__navigation {
   display: flex;
+  justify-content: center;
   height: 2rem;
   /* margin-bottom: 1em; */
 }
 
 .react-calendar__navigation__arrow {
   min-width: 2rem;
+  border: 2px solid rgb(var(--general-200-rgb)) !important;
+  /* color: rgb(var(--general-200-rgb)); */
+}
+
+.react-calendar__navigation__label {
+  flex-grow: 0 !important;
+  min-width: 12rem;
 }
 
 .react-calendar__navigation button {
   /* min-width: 44px; */
+  border-radius: 0.75rem;
   background: none;
 }
 

@@ -1,17 +1,27 @@
 import type { CalendarProps, TileContentFunc } from "react-calendar";
 import dayjs from "@/lib/dayjs";
 import Calendar from "react-calendar";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faAngleLeft,
+  faAngleRight,
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
 
 export const emptyDayTileContent = <div className="h-full"></div>;
 
-export const contentClassName = 'react-calendar__month-view__days__day__content';
+export const contentClassName =
+  "react-calendar__month-view__days__day__content";
 
 export const onTileContent: TileContentFunc = ({ date, view }) => {
   const day = dayjs(date);
   if (view !== "month") return null;
   const dayIsInPast = day.startOf("day").isBefore(dayjs().startOf("day"));
   return (
-    <div className={`${contentClassName} flex flex-col justify-between items-start h-full w-full`}>
+    <div
+      className={`${contentClassName} flex flex-col justify-between items-start h-full w-full`}
+    >
       {/* TODO add default classes, see node_modules\react-calendar\dist\Calendar.css */}
       {/* <div className='grow'>
         <div className={`${dayIsInPast ? 'crossed text-gray-400' : ''} border-gray-400/25 border-r-2 border-b-2 rounded-br-md pr-1`}>{day.format('DD')}</div>
@@ -65,6 +75,8 @@ export function CalendarPicker(props: CalendarProps) {
     <Calendar
       calendarType="gregory"
       minDetail="decade"
+      nextLabel={<FontAwesomeIcon icon={faAngleRight} />}
+      prevLabel={<FontAwesomeIcon icon={faAngleLeft} />}
       prev2Label={null}
       next2Label={null}
       tileContent={onTileContent}
