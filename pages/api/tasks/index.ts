@@ -41,47 +41,59 @@ function handleError(maybeError: any, res: NextApiResponse) {
 
 // given list of incomplete tasks (from target day and before) and target day to project onto
 // for each task in list:
-//   - first determine "theoretical complete date" - today for over/due tasks, or the startDate otherwise
+//   - first determine "theoretical complete date" - today for active/overdue tasks, or the startDate otherwise
 //   - based on the "TCD" above, count days to determine projection. Assume repeat from complete date
 function getProjectedRepeatingTasksForDay(
   incompleteTasks: TaskDao[],
   targetDay: Date,
   currentDay: Date
 ): TaskDao[] {
+  const targetDayUtc = dayjs.utc(targetDay).startOf("day");
+  const currentDayUtc = dayjs.utc(currentDay).startOf("day");
   return incompleteTasks
     .filter((task) => {
-      const { startDate, repeatDays } = task;
+      // task.repeatDays must be >= 1 if defined
+      if (!task.repeatDays) {
+        return false;
+      }
+      const startDateUtc = dayjs.utc(task.startDate).startOf("day");
       const lastPostponeUntilDate = getLastPostponeUntilDate(task);
+      const lastPostponeUntilDateUtc =
+        lastPostponeUntilDate &&
+        dayjs.utc(lastPostponeUntilDate).startOf("day");
       // theoretical complete date has nothing to do with targetDay!
-      const theoreticalCompleteDate = dayjs
-        .utc(
-          lastPostponeUntilDate ||
-            (dayjs.utc(startDate).isAfter(dayjs.utc(currentDay), "day")
-              ? startDate
-              : currentDay)
-        )
-        .startOf("day");
-      if (!repeatDays) return false; // task.repeatDays must be >= 1 if defined
+      const theoreticalCompleteDateUtc =
+        lastPostponeUntilDateUtc ||
+        (startDateUtc.isAfter(currentDayUtc, "day")
+          ? startDateUtc
+          : currentDayUtc);
       // If the task's TCD is the same as the targetDay, the task is still open, so it doesn't need
       //   to be projected.
-      const targetIsSameDay = theoreticalCompleteDate.isSame(targetDay, "day");
+      const targetIsSameDay = theoreticalCompleteDateUtc.isSame(
+        targetDayUtc,
+        "day"
+      );
       // Assume for now that repeating tasks are being completed the first day they're open.
       //   Although it might be better to have some configurable "projection threshold value"
       //   that scales on [0,1] for [startDate,endDate].
       //   That could also be automatically tailored to the user by collecting an average over their
       //   previously completed tasks of when in the date range it was completed.
-      const startOfTargetDay = dayjs.utc(targetDay).startOf("day");
       const taskRepeatsOnTargetDay =
-        theoreticalCompleteDate.diff(startOfTargetDay, "day") % repeatDays ===
+        theoreticalCompleteDateUtc.diff(targetDayUtc, "day") % task.repeatDays ===
         0;
       return !targetIsSameDay && taskRepeatsOnTargetDay;
     })
     .map((task) => {
-      const offsetDays = dayjs.utc(targetDay).diff(task.startDate, "day");
+      const startDateUtc = dayjs.utc(task.startDate).startOf("day");
+      const offsetDays = targetDayUtc.diff(startDateUtc, "day");
       return {
         ...task,
-        startDate: dayjs.utc(task.startDate).add(offsetDays, "day").toDate(),
-        endDate: dayjs.utc(task.endDate).add(offsetDays, "day").toDate(),
+        startDate: startDateUtc.add(offsetDays, "day").toDate(),
+        endDate: dayjs
+          .utc(task.endDate)
+          .startOf("day")
+          .add(offsetDays, "day")
+          .toDate(),
         isProjected: true,
       };
     });

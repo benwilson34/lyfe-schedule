@@ -110,32 +110,34 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
     }
     // TODO validate :)
 
-    const completedDate = dayjs.utc(completedDateFromReq).toDate();
+    const completedDate = dayjs.utc(completedDateFromReq);
 
     await patchTaskInDb(taskId, {
       completedDate: {
         op: "update",
-        value: completedDate,
+        value: completedDate.toDate(),
       },
     });
 
     if (task.repeatDays) {
       const newStartDate = dayjs
-        .utc(task.completedDate)
-        .add(task.repeatDays, "days"); // should be `dayjs.utc()`?
+        .utc(completedDate)
+        .startOf("day") // strip clock time
+        .add(task.repeatDays, "days");
       // there might be a better way, but this explicit approach gives me the most confidence
       const newTask: CreateTaskDao = {
         userId: task.userId,
         title: task.title,
-        ...(task.timeEstimateMins && {
-          timeEstimateMins: task.timeEstimateMins,
-        }),
-        repeatDays: task.repeatDays,
-        rangeDays: task.rangeDays,
+        ...(task.tags && { tags: task.tags }),
         // TODO is the logic still this straightforward if the task has useStart/EndTime === true?
         // for now, assume "repeat from completedDate"
         startDate: newStartDate.toDate(),
         endDate: newStartDate.add(task.rangeDays - 1, "days").toDate(), // minus one because range is [start of startDate, end of endDate]
+        rangeDays: task.rangeDays,
+        repeatDays: task.repeatDays,
+        ...(task.timeEstimateMins && {
+          timeEstimateMins: task.timeEstimateMins,
+        }),
       };
       const createdTaskId = await addTask(newTask);
       if (!createdTaskId) {

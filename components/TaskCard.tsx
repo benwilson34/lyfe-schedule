@@ -88,13 +88,12 @@ export default function TaskCard({
     ],
   });
   // const calculatedPriority = calculatePriority(startDate, endDate, selectedDay);
-  const isOverdue = useMemo(
-    () => selectedDay.isAfter(task.endDate, "day"),
-    [selectedDay, task]
-  );
   const taskClass = getTaskClass(task, selectedDay);
   // const calculatedPoints = Math.round(calculatedPriority * (timeEstimateMins ?? 0));
-  const daysOverEndDate = selectedDay.diff(endDate, "day");
+  const daysOverEndDate = useMemo(
+    () => selectedDay.startOf("day").diff(endDate.startOf("day"), "day"),
+    [selectedDay, endDate]
+  );
   const isCompleted = !!completedDate;
   const isCheckboxDisabled = isCompleted || !selectedDay.isSame(dayjs(), "day");
   const router = useRouter();
@@ -186,9 +185,9 @@ export default function TaskCard({
           isOptionsMenuOpen ? "task--selected" : ""
         }`}
       >
-        {isOverdue && (
+        {daysOverEndDate > 0 && (
           <div className="bg-attention text-ondark text-xs italic whitespace-nowrap rounded-full pb-1 pt-0.5 pl-1 pr-2 absolute -top-3 -left-5 border-2 border-r-background border-b-background border-t-transparent border-l-transparent bg-clip-padding">
-            +{daysOverEndDate} days
+            +{daysOverEndDate} day{daysOverEndDate > 1 ? "s" : ""}
           </div>
         )}
 
@@ -231,7 +230,7 @@ export default function TaskCard({
             >
               <div
                 className={`whitespace-nowrap ${
-                  isOverdue ? "text-attention" : ""
+                  daysOverEndDate > 0 ? "text-attention" : ""
                 }`}
               >
                 <FontAwesomeIcon icon={faCalendar} className="mr-1" />
