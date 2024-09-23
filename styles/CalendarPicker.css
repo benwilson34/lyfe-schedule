@@ -120,9 +120,9 @@
   padding: .35rem;
 }
 
-.react-calendar__month-view__days__day--weekend {
-  /* color: #d10000; */
-}
+/* .react-calendar__month-view__days__day--weekend {
+  color: #d10000;
+} */
 
 .react-calendar__month-view__days__day > abbr {
   /* padding: .5rem 0 0 .5rem; */
