@@ -9,7 +9,7 @@ const DEFAULT_MONTH_INFO_SETTINGS = {
   dailyAverageSection: {
     isTaskCountShowing: true,
     isTimeEstimateShowing: true,
-    isTimePercentageShowing: true,
+    isTimePercentageShowing: false,
   },
 };
 export type MonthInfoSettings = typeof DEFAULT_MONTH_INFO_SETTINGS;
@@ -21,12 +21,12 @@ const DEFAULT_DAY_INFO_SETTINGS = {
   remainingTaskSection: {
     isTaskCountShowing: true,
     isTimeEstimateShowing: true,
-    isTimePercentageShowing: true,
+    isTimePercentageShowing: false,
   },
   completedTaskSection: {
     isTaskCountShowing: true,
     isTimeEstimateShowing: true,
-    isTimePercentageShowing: true,
+    isTimePercentageShowing: false,
   },
 };
 export type DayInfoSettings = typeof DEFAULT_DAY_INFO_SETTINGS;
