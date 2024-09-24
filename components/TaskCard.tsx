@@ -1,7 +1,7 @@
 import type { TaskViewModel as Task } from "@/types/task.viewModel";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import TaskOptionsMenu from "./TaskOptionsMenu";
-import { formatRepeatInterval, formatTimeEstimate } from "@/util/format";
+import { formatRepeatInterval, formatShownDate, formatTimeEstimate } from "@/util/format";
 import { calculatePriority } from "@/util/date";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
@@ -13,6 +13,7 @@ import { useModalContext } from "@/contexts/modal-context";
 import { assign } from "lodash";
 import Overlay from "./Overlay";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 const formatStartDate = (startDate: dayjs.Dayjs) => {
   return startDate.format("MMM DD");
@@ -86,10 +87,17 @@ export default function TaskCard({
   const isCheckboxDisabled = isCompleted || !selectedDay.isSame(dayjs(), "day");
   const router = useRouter();
 
+  const showToastForCreatedRepeatingTask = (startDateString: string) => {
+    toast(`Task will repeat on ${formatShownDate(dayjs(startDateString))}`);
+  };
+
   const handleCheckboxClick = async () => {
     setIsLoading(true);
     const completedDate = new Date();
-    await completeTask(task.id, completedDate);
+    const createdRepeatingTaskStartDate = await completeTask(task.id, completedDate);
+    if (createdRepeatingTaskStartDate) {
+      showToastForCreatedRepeatingTask(createdRepeatingTaskStartDate);
+    }
     // TODO animate checkmark
     afterComplete(assign(task, { completedDate }), selectedDay);
     setIsLoading(false);
@@ -107,11 +115,16 @@ export default function TaskCard({
     completedDate: Date
   ) => {
     setIsLoading(true);
-    await completeTask(task.id, completedDate);
+    const createdRepeatingTaskStartDate = await completeTask(task.id, completedDate);
+    const completeDay = dayjs(completedDate)
     afterComplete(
-      assign(task, { completedDate: dayjs(completedDate) }),
-      dayjs(completedDate)
+      assign(task, { completedDate: completeDay }),
+      completeDay
     );
+    toast(`Task completed on ${formatShownDate(completeDay)}`);
+    if (createdRepeatingTaskStartDate) {
+      showToastForCreatedRepeatingTask(createdRepeatingTaskStartDate);
+    }
     setIsLoading(false);
   };
 
@@ -119,6 +132,7 @@ export default function TaskCard({
     // TODO try-catch?
     setIsLoading(true);
     await postponeTask(task.id, postponeDay);
+    toast(`Task postponed to ${formatShownDate(postponeDay)}`);
     afterPostpone(task, postponeDay);
     setIsLoading(false);
   };
@@ -138,6 +152,7 @@ export default function TaskCard({
     // TODO try-catch?
     setIsLoading(true);
     await deleteTask(task.id);
+    toast(`Task deleted`);
     afterDelete(task);
     setIsLoading(false);
   };

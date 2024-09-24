@@ -4,13 +4,10 @@ import {
   type TaskViewModel as Task,
 } from "@/types/task.viewModel";
 import { useState, useCallback, useEffect } from "react";
-import { getToken } from "next-auth/jwt";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import { OnArgs, TileContentFunc } from "react-calendar/dist/cjs/shared/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCirclePlus } from "@fortawesome/free-solid-svg-icons";
-import { getTasksForDay as getTasksForDayFromDb } from "./api/tasks";
-import { convertTaskDaoToDto } from "@/types/task.dao";
 import { uniqBy } from "lodash";
 import {
   formatDayKey,
@@ -25,7 +22,6 @@ import {
 } from "@/components/CalendarPicker";
 import TaskCard from "@/components/TaskCard";
 import { PulseLoader } from "react-spinners";
-import { GetServerSideProps } from "next";
 import { useModalContext } from "@/contexts/modal-context";
 import { getTasksForDay, getTasksForDayRange } from "@/services/api.service";
 import { useSettingsContext } from "@/contexts/settings-context";
@@ -191,9 +187,7 @@ export default function CalendarView() {
       <div
         className={`${contentClassName} flex justify-center items-end w-full`}
       >
-        <div
-          className={`text-xs text-ondark italic mr-0.5 relative -bottom-1`}
-        >
+        <div className={`text-xs text-ondark italic mr-0.5 relative -bottom-1`}>
           {count}
         </div>
       </div>

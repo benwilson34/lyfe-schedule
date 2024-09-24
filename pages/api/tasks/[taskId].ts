@@ -15,7 +15,7 @@ import {
 import SuccessResponse from "@/models/SuccessResponse";
 import { CreateTaskDao, convertPatchTaskDtoToDao } from "@/types/task.dao";
 import dayjs from "@/lib/dayjs";
-import { stripOffset } from "@/util/date";
+import { getCanonicalDatestring, stripOffset } from "@/util/date";
 
 async function patchTask(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -144,7 +144,12 @@ async function completeTask(req: NextApiRequest, res: NextApiResponse) {
         // TODO send error response
       }
       new SuccessResponse({
-        data: { createdTaskId },
+        data: {
+          createdRepeatingTask: {
+            id: createdTaskId,
+            startDate: getCanonicalDatestring(newStartDate),
+          },
+        },
       }).send(res);
       return;
     }

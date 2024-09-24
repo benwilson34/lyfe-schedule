@@ -1,6 +1,3 @@
-import "@/styles/globals.css";
-import "@/styles/CalendarPicker.css";
-import "@/styles/react-toggle-style.css";
 import type { AppProps } from "next/app";
 import { Exo_2 } from "next/font/google";
 import ModalContextProvider, {
@@ -21,6 +18,12 @@ import SettingsContextProvider, {
 import AuthContextProvider, { useAuthContext } from "@/contexts/auth-context";
 import { decryptJwt } from "@/services/api.service";
 import Head from "next/head";
+import { ToastContainer } from "@/components/ToastContainer";
+
+import "@/styles/globals.css";
+import "@/styles/react-toggle-style.css";
+import "@/styles/CalendarPicker.css";
+import "@/styles/ToastContainer.css";
 
 const exo2 = Exo_2({ subsets: ["latin"] });
 
@@ -229,6 +232,8 @@ export default function App({ Component, pageProps }: AppProps) {
                 <Sidebar />
 
                 <Modals />
+
+                <ToastContainer />
               </main>
             </AuthContextProvider>
           </SettingsContextProvider>
