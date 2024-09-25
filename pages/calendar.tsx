@@ -3,12 +3,16 @@ import {
   taskDtoToViewModel,
   type TaskViewModel as Task,
 } from "@/types/task.viewModel";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import { OnArgs, TileContentFunc } from "react-calendar/dist/cjs/shared/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCirclePlus } from "@fortawesome/free-solid-svg-icons";
-import { uniqBy } from "lodash";
+import {
+  faArrowDownAZ,
+  faCheck,
+  faCirclePlus,
+} from "@fortawesome/free-solid-svg-icons";
+import { clone, uniqBy } from "lodash";
 import {
   formatDayKey,
   formatPercentage,
@@ -26,8 +30,23 @@ import { useModalContext } from "@/contexts/modal-context";
 import { getTasksForDay, getTasksForDayRange } from "@/services/api.service";
 import { useSettingsContext } from "@/contexts/settings-context";
 import NavBar from "@/components/NavBar";
+import {
+  Label,
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+} from "@headlessui/react";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
+
+// TODO asc and desc - assume desc for now
+enum SortMode {
+  StartDate = "Start Date",
+  EndDate = "End Date",
+  RangeDays = "Range",
+  ElapsedRatio = "Elapsed", // TODO name?
+}
 
 export default function CalendarView() {
   const { showAddEditModal } = useModalContext();
@@ -42,6 +61,9 @@ export default function CalendarView() {
   const [isDayTasksLoading, setIsDayTasksLoading] = useState<boolean>(false);
   // `TaskDto` at the moment because we're only displaying this data in aggregate (sums and such)
   const [dayTasks, setDayTasks] = useState<Record<string, TaskDto[]>>({});
+  const [selectedSort, setSelectedSort] = useState<SortMode>(
+    SortMode.StartDate
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,6 +99,44 @@ export default function CalendarView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [] // only on first load
   );
+
+  // TODO move to util module?
+  const sortTasksByStartDate = (taskA: Task, taskB: Task): number =>
+    taskA.startDate.isBefore(taskB.startDate) ? -1 : 1;
+  const sortTasksByEndDate = (taskA: Task, taskB: Task): number => {
+    console.log("task A", taskA);
+    console.log("task B", taskB);
+    return taskA.endDate.isBefore(taskB.endDate) ? -1 : 1;
+  }
+  const sortTasksByRange = (taskA: Task, taskB: Task): number =>
+    taskA.rangeDays < taskB.rangeDays ? -1 : 1;
+  const sortTasksByElapsed = (taskA: Task, taskB: Task): number =>
+    taskA.rangeDays < taskB.rangeDays ? -1 : 1; // TODO
+  const sortedSelectedDayTasks = useMemo(() => {
+    console.log("about to sort by", selectedSort); // TODO remove
+
+
+    // TODO enum equality here ain't working
+    const sortingFunc = (() => {
+      switch (String(selectedSort)) {
+        case SortMode.StartDate:
+          console.log("yep, it's StartDate")
+          return sortTasksByStartDate;
+        case SortMode.EndDate:
+          console.log("yep, it's EndDate")
+          return sortTasksByEndDate;
+        case SortMode.RangeDays:
+          return sortTasksByRange;
+        case SortMode.ElapsedRatio:
+          return sortTasksByElapsed;
+        default:
+          console.log("yep, it's none of these!");
+      }
+    })();
+    console.log(selectedDayTasks)
+    return clone(selectedDayTasks).sort(sortingFunc);
+  }, [selectedDayTasks, selectedSort]);
+  console.log("sortedSelectedDayTasks", sortedSelectedDayTasks);
 
   const handleSelectedDayChange = async (date: Date) => {
     try {
@@ -324,6 +384,56 @@ export default function CalendarView() {
     [dayInfoSettings, renderTaskCount]
   );
 
+  const renderSortOptions = () => {
+    return (
+      <Listbox value={selectedSort} onChange={setSelectedSort}>
+        <Label className="block text-sm">Sort</Label>
+
+        <div className="relative">
+          <ListboxButton className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm sm:leading-6">
+            <span className="flex items-center">
+              {/* <img alt="" src={selected.avatar} className="h-5 w-5 flex-shrink-0 rounded-full" /> */}
+              <span className="ml-3 block truncate">{selectedSort}</span>
+            </span>
+            <span className="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
+              {/* <ChevronUpDownIcon aria-hidden="true" className="h-5 w-5 text-gray-400" /> */}
+              <FontAwesomeIcon icon={faArrowDownAZ} />
+            </span>
+          </ListboxButton>
+
+          <ListboxOptions
+            transition
+            className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none data-[closed]:data-[leave]:opacity-0 data-[leave]:transition data-[leave]:duration-100 data-[leave]:ease-in sm:text-sm"
+          >
+            {Object.entries(SortMode).map(([sortMode, label]) => (
+              <ListboxOption
+                key={sortMode}
+                value={sortMode}
+                className="group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white"
+              >
+                <div className="flex items-center">
+                  {/* <img
+                    alt=""
+                    src={person.avatar}
+                    className="h-5 w-5 flex-shrink-0 rounded-full"
+                  /> */}
+                  <span className="ml-3 block truncate font-normal group-data-[selected]:font-semibold">
+                    {label}
+                  </span>
+                </div>
+
+                <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600 group-data-[focus]:text-white [.group:not([data-selected])_&]:hidden">
+                  {/* <CheckIcon aria-hidden="true" className="h-5 w-5" /> */}
+                  <FontAwesomeIcon icon={faCheck} />
+                </span>
+              </ListboxOption>
+            ))}
+          </ListboxOptions>
+        </div>
+      </Listbox>
+    );
+  };
+
   return (
     <div className="max-h-full overflow-auto">
       <NavBar />
@@ -350,6 +460,8 @@ export default function CalendarView() {
       <section
         className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-4`}
       >
+        <div>{renderSortOptions()}</div>
+
         <div
           onClick={handleAddButtonClick}
           className="max-w-lg w-full px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
@@ -362,7 +474,7 @@ export default function CalendarView() {
           // TODO take tailwind classes instead
           <PulseLoader color="#d5dedb" className="mt-4" />
         ) : (
-          selectedDayTasks?.map((task) => (
+          sortedSelectedDayTasks?.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
