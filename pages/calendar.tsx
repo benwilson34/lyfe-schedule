@@ -37,18 +37,20 @@ import {
   ListboxOption,
   ListboxOptions,
 } from "@headlessui/react";
+import { Enumify } from "enumify";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
-// TODO asc and desc - assume desc for now
-enum SortMode {
-  StartDate = "Start Date",
-  EndDate = "End Date",
-  RangeDays = "Range",
-  ElapsedRatio = "Elapsed", // TODO name?
-}
-
 export default function CalendarView() {
+  // TODO asc and desc - assume desc for now
+  class SortMode extends Enumify {
+    static StartDate = new SortMode();
+    static EndDate = new SortMode();
+    static RangeDays = new SortMode();
+    static Elapsed = new SortMode();
+    static _ = SortMode.closeEnum();
+  }
+
   const { showAddEditModal } = useModalContext();
   const { monthInfoSettings, dayInfoSettings } = useSettingsContext();
 
@@ -64,6 +66,9 @@ export default function CalendarView() {
   const [selectedSort, setSelectedSort] = useState<SortMode>(
     SortMode.StartDate
   );
+
+  console.log(">> testing enum equality 1:", SortMode.StartDate === SortMode.StartDate);
+  console.log(">> testing enum equality 2:", selectedSort.enumKey, SortMode.StartDate.enumKey, selectedSort.enumKey === SortMode.StartDate.enumKey);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -107,7 +112,7 @@ export default function CalendarView() {
     console.log("task A", taskA);
     console.log("task B", taskB);
     return taskA.endDate.isBefore(taskB.endDate) ? -1 : 1;
-  }
+  };
   const sortTasksByRange = (taskA: Task, taskB: Task): number =>
     taskA.rangeDays < taskB.rangeDays ? -1 : 1;
   const sortTasksByElapsed = (taskA: Task, taskB: Task): number =>
@@ -115,25 +120,25 @@ export default function CalendarView() {
   const sortedSelectedDayTasks = useMemo(() => {
     console.log("about to sort by", selectedSort); // TODO remove
 
-
     // TODO enum equality here ain't working
     const sortingFunc = (() => {
-      switch (String(selectedSort)) {
-        case SortMode.StartDate:
-          console.log("yep, it's StartDate")
+      console.log("selected sort", selectedSort, "is StartDate:", selectedSort.enumKey === SortMode.StartDate.enumKey); // TODO remove
+      switch (selectedSort.enumKey) {
+        case SortMode.StartDate.enumKey:
+          console.log("yep, it's StartDate");
           return sortTasksByStartDate;
-        case SortMode.EndDate:
-          console.log("yep, it's EndDate")
+        case SortMode.EndDate.enumKey:
+          console.log("yep, it's EndDate");
           return sortTasksByEndDate;
-        case SortMode.RangeDays:
+        case SortMode.RangeDays.enumKey:
           return sortTasksByRange;
-        case SortMode.ElapsedRatio:
+        case SortMode.Elapsed.enumKey:
           return sortTasksByElapsed;
         default:
           console.log("yep, it's none of these!");
       }
     })();
-    console.log(selectedDayTasks)
+    console.log(selectedDayTasks);
     return clone(selectedDayTasks).sort(sortingFunc);
   }, [selectedDayTasks, selectedSort]);
   console.log("sortedSelectedDayTasks", sortedSelectedDayTasks);
@@ -393,7 +398,9 @@ export default function CalendarView() {
           <ListboxButton className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm sm:leading-6">
             <span className="flex items-center">
               {/* <img alt="" src={selected.avatar} className="h-5 w-5 flex-shrink-0 rounded-full" /> */}
-              <span className="ml-3 block truncate">{selectedSort}</span>
+              <span className="ml-3 block truncate">
+                {selectedSort.enumKey}
+              </span>
             </span>
             <span className="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
               {/* <ChevronUpDownIcon aria-hidden="true" className="h-5 w-5 text-gray-400" /> */}
@@ -405,9 +412,9 @@ export default function CalendarView() {
             transition
             className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none data-[closed]:data-[leave]:opacity-0 data-[leave]:transition data-[leave]:duration-100 data-[leave]:ease-in sm:text-sm"
           >
-            {Object.entries(SortMode).map(([sortMode, label]) => (
+            {SortMode.enumValues.map((sortMode) => (
               <ListboxOption
-                key={sortMode}
+                key={sortMode.enumKey}
                 value={sortMode}
                 className="group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white"
               >
@@ -418,7 +425,7 @@ export default function CalendarView() {
                     className="h-5 w-5 flex-shrink-0 rounded-full"
                   /> */}
                   <span className="ml-3 block truncate font-normal group-data-[selected]:font-semibold">
-                    {label}
+                    {sortMode.enumKey}
                   </span>
                 </div>
 
