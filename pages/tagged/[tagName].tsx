@@ -3,7 +3,7 @@ import {
   taskDtoToViewModel,
   type TaskViewModel as Task,
 } from "@/types/task.viewModel";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { getToken } from "next-auth/jwt";
 import dayjs from "@/lib/dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -16,6 +16,17 @@ import { useModalContext } from "@/contexts/modal-context";
 import { getManyTasks } from "@/services/mongo.service";
 import NavBar from "@/components/NavBar";
 import { getTasks } from "@/services/api.service";
+import { calculatePriority } from "@/util/date";
+import { SortMode } from "@/util/enums";
+import {
+  sortTasksByStartDate,
+  sortTasksByEndDate,
+  sortTasksByRange,
+  sortTasksByTimeEstimate,
+  sortTasksByRepeatInterval,
+} from "@/util/task";
+import { clone } from "lodash";
+import SortControls from "@/components/SortControls";
 
 export const getServerSideProps = (async (context: any) => {
   // TODO this would be better as a util function
@@ -57,6 +68,8 @@ export default function TaggedTasksView({
     )
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedSort, setSelectedSort] = useState<SortMode>(SortMode.Priority);
+  const [isSortAscending, setIsSortAscending] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +88,38 @@ export default function TaggedTasksView({
     };
     fetchData();
   }, [tagName]);
+
+  const sortedTasks = useMemo(() => {
+    const selectedSortingFunc = (() => {
+      const today = dayjs().startOf("day");
+      switch (selectedSort) {
+        default:
+        case SortMode.Priority:
+          return (taskA: Task, taskB: Task): number =>
+            calculatePriority(taskA.startDate, taskA.endDate, today) <
+            calculatePriority(taskB.startDate, taskB.endDate, today)
+              ? -1
+              : 1;
+        case SortMode.StartDate:
+          return sortTasksByStartDate;
+        case SortMode.EndDate:
+          return sortTasksByEndDate;
+        case SortMode.RangeDays:
+          return sortTasksByRange;
+        case SortMode.TimeEstimate:
+          return sortTasksByTimeEstimate;
+        case SortMode.RepeatInterval:
+          return sortTasksByRepeatInterval;
+      }
+    })();
+    const sortDirection = isSortAscending ? 1 : -1;
+    let sortingFunc = (taskA: Task, taskB: Task): number =>
+      selectedSortingFunc(taskA, taskB) * sortDirection;
+    const sortedTasks = clone(tasks).sort(sortingFunc);
+    return sortedTasks;
+  }, [tasks, selectedSort, isSortAscending]);
+
+  const toggleSortDirection = () => setIsSortAscending(!isSortAscending);
 
   const afterAddTask = (task: Task) => {
     setTasks((tasks) => [...tasks, task]);
@@ -117,6 +162,20 @@ export default function TaggedTasksView({
       <section
         className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-4`}
       >
+        <div className="flex max-w-lg w-full items-center justify-between">
+          <div>
+            <SortControls
+              selectedSort={selectedSort}
+              setSelectedSort={setSelectedSort}
+              isSortAscending={isSortAscending}
+              toggleSortDirection={toggleSortDirection}
+              showCompletedTaskControl={false}
+            />
+          </div>
+
+          <div />
+        </div>
+
         <div
           onClick={handleAddButtonClick}
           className="max-w-lg w-full px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
@@ -124,11 +183,12 @@ export default function TaggedTasksView({
           <FontAwesomeIcon icon={faCirclePlus} className="ml-0.5 mr-3" />
           <span>Add task</span>
         </div>
+
         {isLoading ? (
           // TODO take tailwind classes instead
           <PulseLoader color="#d5dedb" className="mt-4" />
         ) : (
-          tasks?.map((task) => (
+          sortedTasks?.map((task) => (
             <TaskCard
               key={task.id}
               task={task}

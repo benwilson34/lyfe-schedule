@@ -3,12 +3,17 @@ import {
   taskDtoToViewModel,
   type TaskViewModel as Task,
 } from "@/types/task.viewModel";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import { OnArgs, TileContentFunc } from "react-calendar/dist/cjs/shared/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCirclePlus } from "@fortawesome/free-solid-svg-icons";
-import { uniqBy } from "lodash";
+import {
+  faArrowDownShortWide,
+  faArrowDownWideShort,
+  faCheck,
+  faCirclePlus,
+} from "@fortawesome/free-solid-svg-icons";
+import { clone, uniqBy } from "lodash";
 import {
   formatDayKey,
   formatPercentage,
@@ -26,6 +31,23 @@ import { useModalContext } from "@/contexts/modal-context";
 import { getTasksForDay, getTasksForDayRange } from "@/services/api.service";
 import { useSettingsContext } from "@/contexts/settings-context";
 import NavBar from "@/components/NavBar";
+import {
+  Label,
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+} from "@headlessui/react";
+import { calculatePriority } from "@/util/date";
+import {
+  sortTasksByEndDate,
+  sortTasksByRange,
+  sortTasksByRepeatInterval,
+  sortTasksByStartDate,
+  sortTasksByTimeEstimate,
+} from "@/util/task";
+import { SortMode } from "@/util/enums";
+import SortControls from "@/components/SortControls";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
@@ -42,6 +64,10 @@ export default function CalendarView() {
   const [isDayTasksLoading, setIsDayTasksLoading] = useState<boolean>(false);
   // `TaskDto` at the moment because we're only displaying this data in aggregate (sums and such)
   const [dayTasks, setDayTasks] = useState<Record<string, TaskDto[]>>({});
+  const [areCompletedTasksSortedFirst, setAreCompletedTasksSortedFirst] =
+    useState<boolean>(true);
+  const [selectedSort, setSelectedSort] = useState<SortMode>(SortMode.Priority);
+  const [isSortAscending, setIsSortAscending] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,6 +103,56 @@ export default function CalendarView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [] // only on first load
   );
+
+  const sortTasksByPriority = (taskA: Task, taskB: Task): number =>
+    calculatePriority(taskA.startDate, taskA.endDate, selectedDay) <
+    calculatePriority(taskB.startDate, taskB.endDate, selectedDay)
+      ? -1
+      : 1;
+
+  const sortedSelectedDayTasks = useMemo(() => {
+    const selectedSortingFunc = (() => {
+      switch (selectedSort) {
+        default:
+        case SortMode.Priority:
+          return sortTasksByPriority;
+        case SortMode.StartDate:
+          return sortTasksByStartDate;
+        case SortMode.EndDate:
+          return sortTasksByEndDate;
+        case SortMode.RangeDays:
+          return sortTasksByRange;
+        case SortMode.TimeEstimate:
+          return sortTasksByTimeEstimate;
+        case SortMode.RepeatInterval:
+          return sortTasksByRepeatInterval;
+      }
+    })();
+    const sortDirection = isSortAscending ? 1 : -1;
+    let sortingFunc = (taskA: Task, taskB: Task): number =>
+      selectedSortingFunc(taskA, taskB) * sortDirection;
+    // TODO use areCompletedTasksSortedFirst
+    if (areCompletedTasksSortedFirst) {
+      sortingFunc = (taskA: Task, taskB: Task): number => {
+        if (!!taskA.completedDate !== !!taskB.completedDate) {
+          return taskA.completedDate ? 1 : -1;
+        }
+        return selectedSortingFunc(taskA, taskB) * sortDirection;
+      };
+    }
+    const sortedTasks = clone(selectedDayTasks).sort(sortingFunc);
+    return sortedTasks;
+  }, [
+    selectedDayTasks,
+    selectedSort,
+    isSortAscending,
+    areCompletedTasksSortedFirst,
+  ]);
+
+  const toggleCompletedTasksSortedFirst = () =>
+    setAreCompletedTasksSortedFirst(!areCompletedTasksSortedFirst);
+
+  const toggleSortDirection = () => setIsSortAscending(!isSortAscending);
 
   const handleSelectedDayChange = async (date: Date) => {
     try {
@@ -332,6 +408,7 @@ export default function CalendarView() {
         <h1 className="mb-1 mt-10 text-4xl font-bold">
           {formatShownDate(selectedDay)}
         </h1>
+
         <CalendarPicker
           onChange={(d) => handleSelectedDayChange(d as Date)}
           value={selectedDay.toDate()}
@@ -343,6 +420,7 @@ export default function CalendarView() {
       <section className="mx-auto max-w-lg">
         <div className="flex flex-row justify-evenly mb-6">
           <div className="">{renderMonthInfo()}</div>
+
           <div className="">{renderDayInfo(selectedDayTasks)}</div>
         </div>
       </section>
@@ -350,11 +428,29 @@ export default function CalendarView() {
       <section
         className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-4`}
       >
+        <div className="flex max-w-lg w-full items-center justify-between">
+          <div>
+            <SortControls
+              selectedSort={selectedSort}
+              setSelectedSort={setSelectedSort}
+              isSortAscending={isSortAscending}
+              toggleSortDirection={toggleSortDirection}
+              areCompletedTasksSortedFirst={areCompletedTasksSortedFirst}
+              toggleAreCompletedTasksSortedFirst={
+                toggleCompletedTasksSortedFirst
+              }
+            />
+          </div>
+
+          <div />
+        </div>
+
         <div
           onClick={handleAddButtonClick}
           className="max-w-lg w-full px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
         >
           <FontAwesomeIcon icon={faCirclePlus} className="ml-0.5 mr-3" />
+
           <span>Add task</span>
         </div>
 
@@ -362,7 +458,7 @@ export default function CalendarView() {
           // TODO take tailwind classes instead
           <PulseLoader color="#d5dedb" className="mt-4" />
         ) : (
-          selectedDayTasks?.map((task) => (
+          sortedSelectedDayTasks?.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
