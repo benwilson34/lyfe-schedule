@@ -8,7 +8,8 @@ import dayjs, { Dayjs } from "@/lib/dayjs";
 import { OnArgs, TileContentFunc } from "react-calendar/dist/cjs/shared/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faArrowDownAZ,
+  faArrowDownShortWide,
+  faArrowDownWideShort,
   faCheck,
   faCirclePlus,
 } from "@fortawesome/free-solid-svg-icons";
@@ -37,20 +38,20 @@ import {
   ListboxOption,
   ListboxOptions,
 } from "@headlessui/react";
-import { Enumify } from "enumify";
+import { calculatePriority } from "@/util/date";
+import {
+  sortTasksByEndDate,
+  sortTasksByRange,
+  sortTasksByRepeatInterval,
+  sortTasksByStartDate,
+  sortTasksByTimeEstimate,
+} from "@/util/task";
+import { SortMode } from "@/util/enums";
+import SortControls from "@/components/SortControls";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
 
 export default function CalendarView() {
-  // TODO asc and desc - assume desc for now
-  class SortMode extends Enumify {
-    static StartDate = new SortMode();
-    static EndDate = new SortMode();
-    static RangeDays = new SortMode();
-    static Elapsed = new SortMode();
-    static _ = SortMode.closeEnum();
-  }
-
   const { showAddEditModal } = useModalContext();
   const { monthInfoSettings, dayInfoSettings } = useSettingsContext();
 
@@ -63,12 +64,10 @@ export default function CalendarView() {
   const [isDayTasksLoading, setIsDayTasksLoading] = useState<boolean>(false);
   // `TaskDto` at the moment because we're only displaying this data in aggregate (sums and such)
   const [dayTasks, setDayTasks] = useState<Record<string, TaskDto[]>>({});
-  const [selectedSort, setSelectedSort] = useState<SortMode>(
-    SortMode.StartDate
-  );
-
-  console.log(">> testing enum equality 1:", SortMode.StartDate === SortMode.StartDate);
-  console.log(">> testing enum equality 2:", selectedSort.enumKey, SortMode.StartDate.enumKey, selectedSort.enumKey === SortMode.StartDate.enumKey);
+  const [areCompletedTasksSortedFirst, setAreCompletedTasksSortedFirst] =
+    useState<boolean>(true);
+  const [selectedSort, setSelectedSort] = useState<SortMode>(SortMode.Priority);
+  const [isSortAscending, setIsSortAscending] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,43 +104,55 @@ export default function CalendarView() {
     [] // only on first load
   );
 
-  // TODO move to util module?
-  const sortTasksByStartDate = (taskA: Task, taskB: Task): number =>
-    taskA.startDate.isBefore(taskB.startDate) ? -1 : 1;
-  const sortTasksByEndDate = (taskA: Task, taskB: Task): number => {
-    console.log("task A", taskA);
-    console.log("task B", taskB);
-    return taskA.endDate.isBefore(taskB.endDate) ? -1 : 1;
-  };
-  const sortTasksByRange = (taskA: Task, taskB: Task): number =>
-    taskA.rangeDays < taskB.rangeDays ? -1 : 1;
-  const sortTasksByElapsed = (taskA: Task, taskB: Task): number =>
-    taskA.rangeDays < taskB.rangeDays ? -1 : 1; // TODO
-  const sortedSelectedDayTasks = useMemo(() => {
-    console.log("about to sort by", selectedSort); // TODO remove
+  const sortTasksByPriority = (taskA: Task, taskB: Task): number =>
+    calculatePriority(taskA.startDate, taskA.endDate, selectedDay) <
+    calculatePriority(taskB.startDate, taskB.endDate, selectedDay)
+      ? -1
+      : 1;
 
-    // TODO enum equality here ain't working
-    const sortingFunc = (() => {
-      console.log("selected sort", selectedSort, "is StartDate:", selectedSort.enumKey === SortMode.StartDate.enumKey); // TODO remove
-      switch (selectedSort.enumKey) {
-        case SortMode.StartDate.enumKey:
-          console.log("yep, it's StartDate");
-          return sortTasksByStartDate;
-        case SortMode.EndDate.enumKey:
-          console.log("yep, it's EndDate");
-          return sortTasksByEndDate;
-        case SortMode.RangeDays.enumKey:
-          return sortTasksByRange;
-        case SortMode.Elapsed.enumKey:
-          return sortTasksByElapsed;
+  const sortedSelectedDayTasks = useMemo(() => {
+    const selectedSortingFunc = (() => {
+      switch (selectedSort) {
         default:
-          console.log("yep, it's none of these!");
+        case SortMode.Priority:
+          return sortTasksByPriority;
+        case SortMode.StartDate:
+          return sortTasksByStartDate;
+        case SortMode.EndDate:
+          return sortTasksByEndDate;
+        case SortMode.RangeDays:
+          return sortTasksByRange;
+        case SortMode.TimeEstimate:
+          return sortTasksByTimeEstimate;
+        case SortMode.RepeatInterval:
+          return sortTasksByRepeatInterval;
       }
     })();
-    console.log(selectedDayTasks);
-    return clone(selectedDayTasks).sort(sortingFunc);
-  }, [selectedDayTasks, selectedSort]);
-  console.log("sortedSelectedDayTasks", sortedSelectedDayTasks);
+    const sortDirection = isSortAscending ? 1 : -1;
+    let sortingFunc = (taskA: Task, taskB: Task): number =>
+      selectedSortingFunc(taskA, taskB) * sortDirection;
+    // TODO use areCompletedTasksSortedFirst
+    if (areCompletedTasksSortedFirst) {
+      sortingFunc = (taskA: Task, taskB: Task): number => {
+        if (!!taskA.completedDate !== !!taskB.completedDate) {
+          return taskA.completedDate ? 1 : -1;
+        }
+        return selectedSortingFunc(taskA, taskB) * sortDirection;
+      };
+    }
+    const sortedTasks = clone(selectedDayTasks).sort(sortingFunc);
+    return sortedTasks;
+  }, [
+    selectedDayTasks,
+    selectedSort,
+    isSortAscending,
+    areCompletedTasksSortedFirst,
+  ]);
+
+  const toggleCompletedTasksSortedFirst = () =>
+    setAreCompletedTasksSortedFirst(!areCompletedTasksSortedFirst);
+
+  const toggleSortDirection = () => setIsSortAscending(!isSortAscending);
 
   const handleSelectedDayChange = async (date: Date) => {
     try {
@@ -389,58 +400,6 @@ export default function CalendarView() {
     [dayInfoSettings, renderTaskCount]
   );
 
-  const renderSortOptions = () => {
-    return (
-      <Listbox value={selectedSort} onChange={setSelectedSort}>
-        <Label className="block text-sm">Sort</Label>
-
-        <div className="relative">
-          <ListboxButton className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm sm:leading-6">
-            <span className="flex items-center">
-              {/* <img alt="" src={selected.avatar} className="h-5 w-5 flex-shrink-0 rounded-full" /> */}
-              <span className="ml-3 block truncate">
-                {selectedSort.enumKey}
-              </span>
-            </span>
-            <span className="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
-              {/* <ChevronUpDownIcon aria-hidden="true" className="h-5 w-5 text-gray-400" /> */}
-              <FontAwesomeIcon icon={faArrowDownAZ} />
-            </span>
-          </ListboxButton>
-
-          <ListboxOptions
-            transition
-            className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none data-[closed]:data-[leave]:opacity-0 data-[leave]:transition data-[leave]:duration-100 data-[leave]:ease-in sm:text-sm"
-          >
-            {SortMode.enumValues.map((sortMode) => (
-              <ListboxOption
-                key={sortMode.enumKey}
-                value={sortMode}
-                className="group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white"
-              >
-                <div className="flex items-center">
-                  {/* <img
-                    alt=""
-                    src={person.avatar}
-                    className="h-5 w-5 flex-shrink-0 rounded-full"
-                  /> */}
-                  <span className="ml-3 block truncate font-normal group-data-[selected]:font-semibold">
-                    {sortMode.enumKey}
-                  </span>
-                </div>
-
-                <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600 group-data-[focus]:text-white [.group:not([data-selected])_&]:hidden">
-                  {/* <CheckIcon aria-hidden="true" className="h-5 w-5" /> */}
-                  <FontAwesomeIcon icon={faCheck} />
-                </span>
-              </ListboxOption>
-            ))}
-          </ListboxOptions>
-        </div>
-      </Listbox>
-    );
-  };
-
   return (
     <div className="max-h-full overflow-auto">
       <NavBar />
@@ -449,6 +408,7 @@ export default function CalendarView() {
         <h1 className="mb-1 mt-10 text-4xl font-bold">
           {formatShownDate(selectedDay)}
         </h1>
+
         <CalendarPicker
           onChange={(d) => handleSelectedDayChange(d as Date)}
           value={selectedDay.toDate()}
@@ -460,6 +420,7 @@ export default function CalendarView() {
       <section className="mx-auto max-w-lg">
         <div className="flex flex-row justify-evenly mb-6">
           <div className="">{renderMonthInfo()}</div>
+
           <div className="">{renderDayInfo(selectedDayTasks)}</div>
         </div>
       </section>
@@ -467,13 +428,29 @@ export default function CalendarView() {
       <section
         className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-4`}
       >
-        <div>{renderSortOptions()}</div>
+        <div className="flex max-w-lg w-full items-center justify-between">
+          <div>
+            <SortControls
+              selectedSort={selectedSort}
+              setSelectedSort={setSelectedSort}
+              isSortAscending={isSortAscending}
+              toggleSortDirection={toggleSortDirection}
+              areCompletedTasksSortedFirst={areCompletedTasksSortedFirst}
+              toggleAreCompletedTasksSortedFirst={
+                toggleCompletedTasksSortedFirst
+              }
+            />
+          </div>
+
+          <div />
+        </div>
 
         <div
           onClick={handleAddButtonClick}
           className="max-w-lg w-full px-2 py-1 rounded-xl border-2 border-general-200 hover:bg-gray-200 hover:cursor-pointer text-general-200"
         >
           <FontAwesomeIcon icon={faCirclePlus} className="ml-0.5 mr-3" />
+
           <span>Add task</span>
         </div>
 

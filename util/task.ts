@@ -1,4 +1,7 @@
-import type { TaskViewModel as Task, TaskViewModel } from "@/types/task.viewModel";
+import type {
+  TaskViewModel as Task,
+  TaskViewModel,
+} from "@/types/task.viewModel";
 import type { TaskDao, TaskDaoWithCalculatedFields } from "@/types/task.dao";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import { last } from "lodash";
@@ -7,15 +10,19 @@ import { PostponeAction, isPostponeAction } from "@/types/task.dto";
 /**
  * Check `startDate`, `endDate`, and `rangeDays`. Two of the three should be provided, then the
  *    remaining one is calculated.
- * @param task 
+ * @param task
  */
 export function calculateDates(task: Task): Task {
-  const providedValues = [task.startDate, task.endDate, task.rangeDays].filter((v) => !!v);
+  const providedValues = [task.startDate, task.endDate, task.rangeDays].filter(
+    (v) => !!v
+  );
   if (providedValues.length !== 2) {
-    throw new Error(`Exactly two of the three date range values should be provided, got ${providedValues.length}`);
+    throw new Error(
+      `Exactly two of the three date range values should be provided, got ${providedValues.length}`
+    );
   }
 
-  const newTask: Task = {...task};
+  const newTask: Task = { ...task };
   if (newTask.startDate && newTask.endDate) {
     newTask.rangeDays = calculateRangeDays(newTask.startDate, newTask.endDate);
     return newTask;
@@ -28,24 +35,31 @@ export function calculateDates(task: Task): Task {
     newTask.startDate = calculateStartDate(newTask.endDate, newTask.rangeDays);
     return newTask;
   }
-  throw new Error('Unexpected value'); // Shouldn't get here
+  throw new Error("Unexpected value"); // Shouldn't get here
 }
 
-export function calculateRangeDays(startDate: Dayjs, endDate: Dayjs, useStartTime: boolean = false, useEndTime: boolean = false): number {
+export function calculateRangeDays(
+  startDate: Dayjs,
+  endDate: Dayjs,
+  useStartTime: boolean = false,
+  useEndTime: boolean = false
+): number {
   // TODO figure out how to calculate when useStartTime === true or useEndTime === true
   // When `useStartTime === false`, assume the "start time" is the beginning of the day, just after midnight.
   // When `useEndTime === false`, assume the "end time" is the end of the day, just before midnight.
-  const adjustedStartDate = useStartTime ? startDate : startDate.startOf('day');
-  const adjustedEndDate = useEndTime ? endDate : endDate.endOf('day').add(2, 'minutes'); // eh it works for now
-  return adjustedEndDate.diff(adjustedStartDate, 'days');
+  const adjustedStartDate = useStartTime ? startDate : startDate.startOf("day");
+  const adjustedEndDate = useEndTime
+    ? endDate
+    : endDate.endOf("day").add(2, "minutes"); // eh it works for now
+  return adjustedEndDate.diff(adjustedStartDate, "days");
 }
 
 export function calculateEndDate(startDate: Dayjs, rangeDays: number): Dayjs {
-  return startDate.add(rangeDays, 'days');
+  return startDate.add(rangeDays, "days");
 }
 
 export function calculateStartDate(endDate: Dayjs, rangeDays: number): Dayjs {
-  return endDate.subtract(rangeDays, 'days');
+  return endDate.subtract(rangeDays, "days");
 }
 
 export function verifyDateRange(task: Task): boolean {
@@ -53,14 +67,19 @@ export function verifyDateRange(task: Task): boolean {
   return false;
 }
 
-export function sortTasks(a: TaskDaoWithCalculatedFields, b: TaskDaoWithCalculatedFields): number {
+export function sortTasks(
+  a: TaskDaoWithCalculatedFields,
+  b: TaskDaoWithCalculatedFields
+): number {
   if (!!a.completedDate !== !!b.completedDate) {
     return a.completedDate ? 1 : -1;
   }
-  return (b.priority || 0) - (a.priority || 0)
+  return (b.priority || 0) - (a.priority || 0);
 }
 
-export function getLastPostponeUntilDate(task: TaskDao | TaskViewModel): Date | undefined {
+export function getLastPostponeUntilDate(
+  task: TaskDao | TaskViewModel
+): Date | undefined {
   // task.postponeActions are in chronological order
   return last(
     task.actions?.filter((a) => isPostponeAction(a)) as PostponeAction[]
@@ -81,4 +100,24 @@ export function isPostponeDateValid(task: TaskViewModel, day: Date) {
     startOfTargetDay.isAfter(dayjs().startOf("day")) &&
     startOfTargetDay.isAfter(taskEffectiveDay)
   );
+}
+
+export function sortTasksByStartDate(taskA: Task, taskB: Task): number {
+  return taskA.startDate.isBefore(taskB.startDate) ? -1 : 1;
+}
+
+export function sortTasksByEndDate(taskA: Task, taskB: Task): number {
+  return taskA.endDate.isBefore(taskB.endDate) ? -1 : 1;
+}
+
+export function sortTasksByRange(taskA: Task, taskB: Task): number {
+  return taskA.rangeDays < taskB.rangeDays ? -1 : 1;
+}
+
+export function sortTasksByTimeEstimate(taskA: Task, taskB: Task): number {
+  return (taskA.timeEstimateMins || 0) < (taskB.timeEstimateMins || 0) ? -1 : 1;
+}
+
+export function sortTasksByRepeatInterval(taskA: Task, taskB: Task): number {
+  return (taskA.repeatDays || 0) < (taskB.repeatDays || 0) ? -1 : 1;
 }
