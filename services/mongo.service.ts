@@ -61,7 +61,7 @@ export async function getManyTasks(
     userId: userOid,
     completedDate: { $exists: false },
     ...(adjustedDate && { startDate: { $lt: adjustedDate } }),
-    ...(withTag.length > 0 && { tags: { $in: [withTag] } }),
+    ...(withTag.length > 0 && { tags: withTag }),
   };
   const tasks = await taskCollection!.find(filter).toArray();
 
@@ -147,9 +147,8 @@ export async function getAllTags(
       {
         $match: {
           userId: userOid,
-          tags: {
-            $exists: true,
-          },
+          completedDate: { $exists: false },
+          tags: { $exists: true },
         },
       },
       {
@@ -161,9 +160,7 @@ export async function getAllTags(
       {
         $group: {
           _id: "$tags",
-          count: {
-            $sum: 1,
-          },
+          count: { $sum: 1 },
         },
       },
     ])

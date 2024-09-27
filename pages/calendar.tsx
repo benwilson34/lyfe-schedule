@@ -7,12 +7,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import { OnArgs, TileContentFunc } from "react-calendar/dist/cjs/shared/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faArrowDownShortWide,
-  faArrowDownWideShort,
-  faCheck,
-  faCirclePlus,
-} from "@fortawesome/free-solid-svg-icons";
+import { faCirclePlus } from "@fortawesome/free-solid-svg-icons";
 import { clone, uniqBy } from "lodash";
 import {
   formatDayKey,
@@ -31,13 +26,6 @@ import { useModalContext } from "@/contexts/modal-context";
 import { getTasksForDay, getTasksForDayRange } from "@/services/api.service";
 import { useSettingsContext } from "@/contexts/settings-context";
 import NavBar from "@/components/NavBar";
-import {
-  Label,
-  Listbox,
-  ListboxButton,
-  ListboxOption,
-  ListboxOptions,
-} from "@headlessui/react";
 import { calculatePriority } from "@/util/date";
 import {
   sortTasksByEndDate,
