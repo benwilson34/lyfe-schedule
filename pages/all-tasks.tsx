@@ -53,9 +53,7 @@ export default function AllTasksView({ initTasks }: { initTasks: TaskDto[] }) {
 
   // TODO gonna have to check `initTasks` when switching pages I think
   const [tasks, setTasks] = useState<Task[]>(
-    (initTasks.map(taskDtoToViewModel) as Task[]).sort((a, b) =>
-      a.startDate.isAfter(b.startDate) ? 1 : -1
-    )
+    initTasks.map(taskDtoToViewModel) as Task[]
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedSort, setSelectedSort] = useState<SortMode>(SortMode.Priority);
