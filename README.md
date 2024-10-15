@@ -1,8 +1,21 @@
-# Next.js
+# LyfeSchedule
+
+> *the todo app for people that get things done eventually™*
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
+
+### Installation
+
+You'll need the following dependencies:
+
+1. Node.js, at least v18.16.0
+1. MongoDB connection string - either a local installation, or a remote instance, like on MongoDB Atlas for example
+
+Finally, install Node dependencies:
+
+
 
 ### Environment
 
