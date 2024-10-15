@@ -147,7 +147,7 @@ export default function Sidebar() {
             </div>
           )}
 
-          <a href="mailto:benwcodes@gmail.com?subject=LyfeSchedule%20Feedback&body=I%20have%20some%20feedback%20about%20LyfeSchedule%3A%0A%0A">
+          <a href="mailto:feedback@lyfeschedule.com?subject=LyfeSchedule%20Feedback&body=I%20have%20some%20feedback%20about%20LyfeSchedule%3A%0A%0A">
             <div className="cursor-pointer hover:bg-gray-500/25">
               <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
               send feedback
