@@ -30,6 +30,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 - Webpack (build and bundling tools)
 - Nodemailer, MJML, and Handlebars (email templating & sending)
 - NextAuth.js (user authentication)
+- Jest (automated testing)
 
 ## Run the App
 
@@ -59,6 +60,37 @@ pnpm install
 
 See the [`.env.example`](./.env.example) for info on required and optional environment variables. Either create a `.env.local` file at the project root or define the variables another way.
 
+### Run the server
+
+TODO production server steps
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. Pages will auto-update as you edit and save the files.
+
+## Development
+
+TODO contribution guide
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+
+### Installation and Environment
+
+Same as the [Installation](#installation) and [Environment](#environment) sections above.
+
 ### Run the dev server
 
 First, run the development server:
@@ -73,16 +105,15 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. Pages will auto-update as you edit and save the files.
 
-## Contribution
+### Testing
 
-TODO contribution guide
+This project uses Jest for automated testing. Run the tests:
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+```bash
+npm test
+# or
+npm run test:watch
+```
 
 ### Suggested tools
 

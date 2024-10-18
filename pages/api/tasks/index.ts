@@ -1,12 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
-  isPostponeAction,
-  PostponeAction,
-  type TaskDto,
-} from "@/types/task.dto";
-import type { ApiResponse } from "@/types/apiResponse";
-import {
   getManyTasks,
   addTask,
   deleteAllTasks as deleteAllTasksInDb,
@@ -16,9 +10,8 @@ import ErrorResponse, {
   unauthenticatedErrorResponse,
 } from "@/models/ErrorResponse";
 import SuccessResponse from "@/models/SuccessResponse";
-import dayjs, { Dayjs } from "@/lib/dayjs";
+import dayjs from "@/lib/dayjs";
 import {
-  calculateEndDate,
   getLastPostponeUntilDate,
   sortTasks,
 } from "@/util/task";
@@ -27,7 +20,7 @@ import {
   convertCreateTaskDtoToDao,
   convertTaskDaoToDto,
 } from "@/types/task.dao";
-import { assign, last } from "lodash";
+import { assign } from "lodash";
 import { getToken } from "next-auth/jwt";
 import { ObjectId } from "mongodb";
 import { formatDayKey } from "@/util/format";
