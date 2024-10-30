@@ -38,12 +38,13 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 You'll need the following dependencies:
 
-1. Node.js, at least v18.16.0
-1. npm, yarn, or pnpm
+1. Node.js, at least v18.16.0.
+1. npm, yarn, or pnpm.
 1. MongoDB connection string - either a local installation, or a remote instance, like on MongoDB Atlas for example.
    1. Create a database, recommended name `LyfeSchedule_beta` and initial collection `user`. Keep the defaults for all other options.
-1. For account management (e.g. sending invites, resetting passwords), you will need a SMTP email service
-1. A local clone of this repo
+1. A SMTP email service.
+   1. For a local instance or for testing, consider using a dummy SMTP server like [smtp4dev](https://github.com/rnwood/smtp4dev) or [maildev](https://github.com/maildev/maildev).
+1. A clone of this repo.
 
 Finally, install Node dependencies:
 
