@@ -11,6 +11,7 @@ import {
   MonthInfoSettings,
 } from "@/contexts/settings-context";
 import { Exo_2 } from "next/font/google";
+import { deleteAllTasks } from "@/services/api.service";
 
 // TODO why is this needed even though the font is included in `_app`?
 const exo2 = Exo_2({ subsets: ["latin"] });
@@ -51,17 +52,18 @@ export function SettingsModal({
   }, []);
 
   const onConfirmDeleteAllTasksButtonClick = useCallback(async () => {
-    const result = await fetch(`/api/tasks`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    if (result.status !== 200) {
-      throw new Error("Failed to delete tasks.");
+    if (isLoading) {
+      return;
     }
-    const { data } = await result.json();
-  }, []);
+    try {
+      setIsLoading(true);
+      await deleteAllTasks();
+    } catch (maybeError: any) {
+      // TODO display error message
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLoading, setIsLoading]);
 
   const cancelButtonRef = useRef(null);
 

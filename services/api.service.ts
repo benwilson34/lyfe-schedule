@@ -17,11 +17,13 @@ async function request<T extends Record<string, any> | undefined = undefined>({
   endpoint,
   body,
   params,
+  okResponseCodes = [200],
 }: {
   method: string;
   endpoint: string;
   body?: Record<string, any>;
   params?: URLSearchParams;
+  okResponseCodes?: number[];
 }): Promise<T> {
   const fullEndpoint = `${endpoint}${params ? `?${params.toString()}` : ""}`;
   const result = await fetch(fullEndpoint, {
@@ -37,7 +39,8 @@ async function request<T extends Record<string, any> | undefined = undefined>({
     data: T;
     detail: string;
   };
-  if (result.status !== 200) {
+  // not sure I like handling the error here but it works for now
+  if (!okResponseCodes.includes(result.status)) {
     throw new Error(detail || `Request to ${method} ${endpoint} failed.`);
   }
   return data;
@@ -143,12 +146,31 @@ export async function deleteTask(taskId: string) {
   await request({ method: "DELETE", endpoint: `/api/tasks/${taskId}` });
 }
 
+export async function deleteAllTasks() {
+  await request({ method: "DELETE", endpoint: `/api/tasks` });
+}
+
 export async function getTagCounts() {
   const { tagCounts } = await request<{ tagCounts: Record<string, number> }>({
     method: "GET",
-    endpoint: `/api/tags`,
+    endpoint: "/api/tags",
   });
   return tagCounts;
+}
+
+export async function registerUserFromInvitation(
+  token: string,
+  password: string
+) {
+  await request({
+    method: "PUT",
+    endpoint: "/api/users",
+    body: {
+      operation: "register-from-invitation",
+      token,
+      password,
+    },
+  });
 }
 
 export async function registerUser(email: string, password: string) {
@@ -156,5 +178,41 @@ export async function registerUser(email: string, password: string) {
     method: "POST",
     endpoint: "/api/users",
     body: { email, password },
+  });
+}
+
+export async function requestResetPassword(email: string) {
+  await request({
+    method: "PUT",
+    endpoint: "/api/users",
+    body: {
+      operation: "request-reset-password",
+      email,
+    },
+    // we don't want to give away whether the email was found or not, thus 401 response is ok
+    okResponseCodes: [200, 401],
+  });
+}
+
+export async function setNewPassword(token: string, password: string) {
+  await request({
+    method: "PUT",
+    endpoint: "/api/users",
+    body: {
+      operation: "set-new-password",
+      token,
+      password,
+    },
+  });
+}
+
+export async function sendInvitation(inviteeEmail: string) {
+  await request({
+    method: "PUT",
+    endpoint: "/api/users",
+    body: {
+      operation: "send-invitation",
+      inviteeEmail,
+    },
   });
 }

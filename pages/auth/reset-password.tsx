@@ -1,21 +1,18 @@
 import { TokenPayloadDto } from "@/types/tokenPayload.dto";
 import { GetServerSideProps } from "next";
 import { getTokenPayload } from "../api/users";
-import { ReactFragment, useState } from "react";
-import { delay } from "@/util/delay";
+import { useState } from "react";
 import { PulseLoader } from "react-spinners";
+import { setNewPassword } from "@/services/api.service";
 
 export const getServerSideProps = (async (context) => {
-  // TODO check token/fetch payload
   const { token } = context.query;
   if (!token || Array.isArray(token)) {
-    // TODO initial error props
     return { props: {} };
   }
 
   const tokenPayload = await getTokenPayload(token, 'request-password-reset');
   if (!tokenPayload) {
-    // TODO handle invalid/expired token
     return { props: {} };
   }
 
@@ -74,22 +71,8 @@ export default function ResetPasswordPage({
       }
       setIsLoading(true);
 
-      const result = await fetch(`/api/users`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          operation: "set-new-password",
-          token: tokenPayload!.token,
-          password: password1,
-        }),
-      });
-      if (result.status !== 200) {
-        const body = await result.json();
-        console.error(body);
-        throw new Error("Failed to complete operation.");
-      }
+      await setNewPassword(tokenPayload!.token, password1);
+
       setMajorMessage({
         body: (
           <>

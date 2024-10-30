@@ -1,6 +1,5 @@
-import { delay } from "@/util/delay";
+import { requestResetPassword } from "@/services/api.service";
 import { GetServerSideProps } from "next";
-import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 
@@ -33,20 +32,9 @@ export default function RequestResetPassword({
         return;
       }
       setIsLoading(true);
-      const result = await fetch(`/api/users`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          operation: "request-reset-password",
-          email,
-        }),
-      });
-      // we don't want to give away whether the email was found or not, thus 401 response is ok
-      if (result.status !== 200 && result.status !== 401) {
-        throw new Error("Failed to complete operation.");
-      }
+
+      await requestResetPassword(email);
+
       setMessage(
         `If ${email} was in our system, a password reset email was sent to that address. Check your inbox and/or spam folder.`
       );

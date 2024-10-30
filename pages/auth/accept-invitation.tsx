@@ -3,18 +3,16 @@ import { GetServerSideProps } from "next";
 import { getTokenPayload } from "../api/users";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
+import { registerUserFromInvitation } from "@/services/api.service";
 
 export const getServerSideProps = (async (context) => {
-  // TODO check token/fetch payload
   const { token } = context.query;
   if (!token || Array.isArray(token)) {
-    // TODO initial error props
     return { props: {} };
   }
 
   const tokenPayload = await getTokenPayload(token, "send-invitation");
   if (!tokenPayload) {
-    // TODO handle invalid/expired token
     return { props: {} };
   }
   // TODO should check if invitee email already exists here too?
@@ -74,22 +72,8 @@ export default function AcceptInvitationPage({
       }
       setIsLoading(true);
 
-      const result = await fetch(`/api/users`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          operation: "register-from-invitation",
-          token: tokenPayload!.token,
-          password: password1,
-        }),
-      });
-      if (result.status !== 200) {
-        const body = await result.json();
-        console.error(body);
-        throw new Error("Failed to complete operation.");
-      }
+      await registerUserFromInvitation(tokenPayload!.token, password1);
+
       setMajorMessage({
         body: (
           <>

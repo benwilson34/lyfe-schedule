@@ -1,11 +1,10 @@
-import { TokenPayloadDto } from "@/types/tokenPayload.dto";
 import { GetServerSideProps } from "next";
-import { getTokenPayload } from "../api/users";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 import { getToken } from "next-auth/jwt";
 import { ADMIN_USER_ID } from "@/util/env";
 import NavBar from "@/components/NavBar";
+import { sendInvitation } from "@/services/api.service";
 
 export const getServerSideProps = (async (context) => {
   // check session token to confirm it's an admin
@@ -57,21 +56,8 @@ export default function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
       // TODO validate email
       setIsLoading(true);
 
-      const result = await fetch(`/api/users`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          operation: "send-invitation",
-          inviteeEmail: email,
-        }),
-      });
-      if (result.status !== 200) {
-        const body = await result.json();
-        console.error(body);
-        throw new Error("Failed to complete operation.");
-      }
+      await sendInvitation(email);
+
       setMajorMessage({
         body: (
           <>
