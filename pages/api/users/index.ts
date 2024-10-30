@@ -25,12 +25,11 @@ import {
   ADMIN_USER_ID,
   BASE_URL,
   INVITATION_TOKEN_TTL_MINS,
+  IS_REGISTRATION_INVITE_ONLY,
   PASSWORD_RESET_TOKEN_TTL_MINS,
 } from "@/util/env";
 import { formatFriendlyFullDate } from "@/util/format";
-import {
-  tokenPayloadDaoToDto,
-} from "@/types/tokenPayload.dao";
+import { tokenPayloadDaoToDto } from "@/types/tokenPayload.dao";
 import { TokenPayloadAction } from "@/types/tokenPayload.dto";
 import { getToken } from "next-auth/jwt";
 
@@ -99,7 +98,9 @@ async function requestResetPassword(req: NextApiRequest, res: NextApiResponse) {
 
     // generate token payload
     const token = generateToken();
-    const expiresDate = dayjs.utc().add(PASSWORD_RESET_TOKEN_TTL_MINS, "minutes");
+    const expiresDate = dayjs
+      .utc()
+      .add(PASSWORD_RESET_TOKEN_TTL_MINS, "minutes");
     const insertedId = await addTokenPayload({
       token,
       action: "request-password-reset",
@@ -143,7 +144,8 @@ export async function getTokenPayload(
   if (!tokenPayload) {
     return null;
   }
-  const isExpired = tokenPayload && dayjs.utc().isAfter(tokenPayload.expiresDate);
+  const isExpired =
+    tokenPayload && dayjs.utc().isAfter(tokenPayload.expiresDate);
   if (isExpired || tokenPayload.action !== action) {
     return null;
   }
@@ -353,6 +355,57 @@ async function registerFromInvitation(
   }
 }
 
+// TODO refactor this and `registerFromInvitation` above
+async function register(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    if (IS_REGISTRATION_INVITE_ONLY) {
+      new ErrorResponse({
+        status: 401,
+        errorCode: "unauthorized",
+        title: "Could not register: unauthorized",
+        detail: `Registrations without an invitation are not allowed at this time.`,
+      }).send(res);
+      return;
+    }
+    const { email, password } = req.body;
+    // TODO validate
+    if (!email || !password) {
+      new ErrorResponse({
+        status: 400,
+        errorCode: "invalidFields",
+        title: "Could not set password: invalid fields",
+        detail: `The password could not be set because one or more fields were invalid. TODO more details.`,
+      }).send(res);
+      return;
+    }
+    const existingUser = await getUserByEmail(email);
+    if (existingUser) {
+      new ErrorResponse({
+        status: 400,
+        errorCode: "invalidFields",
+        title: "Could not register new user: email already in use",
+        detail: `A user with email "${email}" could not be registered because that email is already in use by another user.`,
+      }).send(res);
+      return;
+    }
+
+    // insert user
+    const hashedPassword = await hashPassword(password);
+    const insertedId = await addUser({ email, hashedPassword });
+    if (!insertedId) {
+      throw new Error(`Could not insert new user!`);
+    }
+
+    await sendWelcomeEmail(email, {
+      signInLink: BASE_URL,
+    });
+    new SuccessResponse().send(res);
+  } catch (maybeError) {
+    console.error(maybeError);
+    internalErrorResponse.send(res);
+  }
+}
+
 async function operateOnUsers(req: NextApiRequest, res: NextApiResponse) {
   // TODO validate body?
   const { operation, ...options } = req.body;
@@ -399,9 +452,9 @@ export default async function handler(
   res: NextApiResponse
 ) {
   switch (req.method?.toUpperCase()) {
-    // case "POST":
-    // TODO register new user?
-    // break;
+    case "POST":
+      await register(req, res);
+      break;
     case "PUT":
       await operateOnUsers(req, res);
       break;

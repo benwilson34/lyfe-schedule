@@ -150,3 +150,11 @@ export async function getTagCounts() {
   });
   return tagCounts;
 }
+
+export async function registerUser(email: string, password: string) {
+  await request({
+    method: "POST",
+    endpoint: "/api/users",
+    body: { email, password },
+  });
+}
