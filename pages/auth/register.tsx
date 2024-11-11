@@ -8,10 +8,12 @@ export const getServerSideProps = (async (context) => {
   // redirect to sign-in page if env var `IS_REGISTRATION_INVITE_ONLY === true`
   return {
     props: {},
-    ...(IS_REGISTRATION_INVITE_ONLY && { redirect: {
-      destination: "/auth/sign-in",
-      permanent: false,
-    } }),
+    ...(IS_REGISTRATION_INVITE_ONLY && {
+      redirect: {
+        destination: "/auth/sign-in",
+        permanent: false,
+      },
+    }),
   };
 }) satisfies GetServerSideProps;
 

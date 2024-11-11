@@ -10,7 +10,7 @@ import {
   faEllipsis,
   faPenToSquare,
   faTrash,
-  faArrowTurnRight,
+  faArrowTurnDown,
   faPersonWalkingArrowRight,
   faCircleLeft,
 } from "@fortawesome/free-solid-svg-icons";
@@ -152,8 +152,8 @@ export default function TaskOptionsMenu({
                     }`}
                   >
                     <FontAwesomeIcon
-                      icon={faArrowTurnRight}
-                      className="h-4 w-4"
+                      icon={faArrowTurnDown}
+                      className="h-4 w-4 -rotate-90"
                       aria-hidden="true"
                     />
                     <span className="">Postpone to</span>

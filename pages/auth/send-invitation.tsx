@@ -116,7 +116,7 @@ export default function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
       {formErrorMessage && (
         <div className="text-red-500">{formErrorMessage}</div>
       )}
-
+      
       {isLoading && (
         <div className="flex justify-center">
           <PulseLoader color="#d5dedb" className="mt-4" />

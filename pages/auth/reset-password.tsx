@@ -11,7 +11,7 @@ export const getServerSideProps = (async (context) => {
     return { props: {} };
   }
 
-  const tokenPayload = await getTokenPayload(token, 'request-password-reset');
+  const tokenPayload = await getTokenPayload(token, "request-password-reset");
   if (!tokenPayload) {
     return { props: {} };
   }
@@ -43,11 +43,15 @@ export default function ResetPasswordPage({
       : {
           body: (
             <div className="flex flex-col justify-center">
-              <div className="text-center">The token is invalid or expired.</div>
-              <button 
+              <div className="text-center">
+                The token is invalid or expired.
+              </div>
+              <button
                 className="rounded-md bg-red-200"
-                onClick={() => window.location.href = '/api/auth/signin'}
-              >Try again</button>
+                onClick={() => (window.location.href = "/api/auth/signin")}
+              >
+                Try again
+              </button>
             </div>
           ),
           isError: true,
@@ -76,13 +80,13 @@ export default function ResetPasswordPage({
       setMajorMessage({
         body: (
           <>
-            <div>
-              Your password has been successfully reset!
-            </div>
-            <button 
+            <div>Your password has been successfully reset!</div>
+            <button
               className="rounded-md bg-green-200"
-              onClick={() => window.location.href = '/auth/sign-in'}
-            >Sign in</button>
+              onClick={() => (window.location.href = "/auth/sign-in")}
+            >
+              Sign in
+            </button>
           </>
         ),
         isError: false,
