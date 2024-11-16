@@ -74,6 +74,7 @@ export default function TaggedTasksView({
       try {
         setTasks([]);
         setIsLoading(true);
+        console.log("about to fetch tagged tasks!"); // TODO remove
         const tasks = (await getTasks({ tag: tagName })).map(
           taskDtoToViewModel
         );
