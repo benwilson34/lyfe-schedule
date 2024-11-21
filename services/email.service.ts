@@ -12,12 +12,7 @@ import {
 } from "@/util/env";
 import mjmlToHtml from "mjml";
 import Handlebars from "handlebars";
-import {
-  XmlDocument,
-  XmlElement,
-  XmlText,
-  parseXml,
-} from "@rgrove/parse-xml";
+import { XmlDocument, XmlElement, XmlText, parseXml } from "@rgrove/parse-xml";
 
 // trying to import here to force copying the files
 import invitationMjml from "@/email-templates/invitation.mjml";
@@ -86,7 +81,7 @@ function extractPlaintextFromMjml(html: string) {
   return texts.join("\n\n");
 }
 
-function renderEmailTemplate(
+async function renderEmailTemplate(
   bodyTemplate: keyof typeof MJML_TEMPLATE_MAP,
   values: Record<string, string>
 ) {
@@ -97,7 +92,11 @@ function renderEmailTemplate(
   // substitute body template in main template
   const bodyMjml = MJML_TEMPLATE_MAP[bodyTemplate];
   const templateMjml = mainTemplateMjml.replace("{{body}}", bodyMjml);
-  const templateHtml = mjmlToHtml(templateMjml);
+
+  // Fixed a vulnerability by upgrading to mjml@5.0.0 (alpha) but the type definitions aren't
+  //   updated yet. Seems like the signature is the same except it's a Promise now.
+  //   See https://github.com/mjmlio/mjml/issues/2589
+  const templateHtml = await mjmlToHtml(templateMjml);
   if (templateHtml.errors?.length > 0) {
     console.error(templateHtml.errors);
   }
@@ -122,7 +121,7 @@ export async function sendPasswordResetEmail(
   values: { email: string; expiresDate: string; resetPasswordLink: string }
 ) {
   // TODO validate values? Or is type checking enough?
-  const renderedEmail = renderEmailTemplate("password-reset", values);
+  const renderedEmail = await renderEmailTemplate("password-reset", values);
 
   return sendEmail({
     to: toEmail,
@@ -139,7 +138,7 @@ export async function sendPasswordResetConfirmationEmail(
     requestResetPasswordLink: string;
   }
 ) {
-  const renderedEmail = renderEmailTemplate(
+  const renderedEmail = await renderEmailTemplate(
     "password-reset-confirmation",
     values
   );
@@ -154,7 +153,7 @@ export async function sendInvitationEmail(
   toEmail: string,
   values: { expiresDate: string; acceptInvitationLink: string }
 ) {
-  const renderedEmail = renderEmailTemplate("invitation", values);
+  const renderedEmail = await renderEmailTemplate("invitation", values);
   return sendEmail({
     to: toEmail,
     subject: "You're invited to use LyfeSchedule!",
@@ -166,7 +165,7 @@ export async function sendWelcomeEmail(
   toEmail: string,
   values: { signInLink: string }
 ) {
-  const renderedEmail = renderEmailTemplate("welcome", values);
+  const renderedEmail = await renderEmailTemplate("welcome", values);
   return sendEmail({
     to: toEmail,
     subject: "Welcome to LyfeSchedule!",
