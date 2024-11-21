@@ -123,6 +123,15 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. Pages will auto-update as you edit and save the files.
 
+### Demo build
+
+It is also possible to make a "demo build" where all the data storage is handled in the client via `window.localStorage`. This build is meant to serve as a low-cost, low-risk demonstration for how the app works. Mongo is not needed for this build and the API endpoints and auth flows are stripped out. This is driven by the `IS_DEMO_BUILD` env var, but it's easiest to use the provided demo-specific npm scripts:
+
+1. You can run the demo dev server with `npm run dev:demo`.
+1. You can build the demo app with `npm run build:demo`, which can then be started with `npm start`.
+
+TODO blog post?
+
 ### Testing
 
 This project uses Jest for automated testing. Run the tests:

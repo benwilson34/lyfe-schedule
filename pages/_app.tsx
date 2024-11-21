@@ -78,7 +78,7 @@ function Modals() {
           }
           confirmButtonText="Postpone"
           isDayValid={(day: any) =>
-            isPostponeDateValid(selectedTask!, day as Date)
+            isPostponeDateValid(selectedTask!, dayjs(day as Date), dayjs())
           }
         />
       )}

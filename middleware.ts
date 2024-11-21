@@ -4,11 +4,17 @@ import { getToken } from "next-auth/jwt";
 import { withAuth } from "next-auth/middleware";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 import { customAuthPages } from "./config/customAuthPages";
+import { IS_DEMO_BUILD } from "./util/env";
 
 export default async function middleware(
   req: NextRequest,
   event: NextFetchEvent
 ) {
+  // don't run auth middleware when the app is in demo mode
+  if (IS_DEMO_BUILD) {
+    return; // this ok?
+  }
+
   const token = await getToken({ req });
   const isAuthenticated = !!token;
 

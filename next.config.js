@@ -16,7 +16,6 @@ const nextConfig = {
   distDir: BUILD_DIR,
   reactStrictMode: true,
   webpack: (config, options) => {
-    console.log("\n\n>> demo build:", IS_DEMO_BUILD);
     // in demo mode, swap the frontend `api.service.ts` with `demo-api.service.ts`
     if (IS_DEMO_BUILD) {
       config.plugins.push(

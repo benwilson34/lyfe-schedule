@@ -1,27 +1,31 @@
 /**
  * Strictly frontend service
  *
- * For now I'm going to strip the offset to get the "canonical date". If/when we add time features, this
- *   will need to be revisited.
- *
- * @todo should wrap these functions with try-catch to log and display more user-friendly error message?
+ * This module serves as a "demo API" that uses localStorage instead of the remote API/data store.
  */
 
 import {
-  CreateTaskDto,
-  PatchTaskDto,
-  PostponeAction,
-  TaskDto,
+  isPostponeAction,
+  type ActionDto,
+  type CreateTaskDto,
+  type PatchTaskDto,
+  type PostponeActionDto,
+  type TaskDto,
 } from "@/types/task.dto";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import { getCanonicalDatestring } from "@/util/date";
-import { getTimezoneOffsetHeader } from "@/util/timezoneOffset";
 import { findIndex } from "lodash";
-import { Entries } from "@/util/types";
+import { Entries, Modify } from "@/util/types";
+import { formatDayKey } from "@/util/format";
+import {
+  getTasksForDay as calculateTasksForDay,
+  getTasksForDayRange as calculateTasksForDayRange,
+} from "@/util/task";
 
 const DEMO_USER_ID = "_";
-// will serve as a "data store"
-let demoTasks: TaskDto[] = [
+const TASK_KEY = "tasks";
+const TASK_ID_COUNTER_KEY = "taskIdCounter";
+const INIT_TASKS: TaskDto[] = [
   {
     id: "0",
     userId: DEMO_USER_ID,
@@ -41,22 +45,64 @@ let demoTasks: TaskDto[] = [
     tags: ["chores"],
   },
 ];
-let taskIdCounter: number = demoTasks.length;
-console.warn("LOADING FROM DEMO API!!"); // TODO remove
+// will serve as a "data store"
+// TODO should do ViewModel[]? So I don't have to parse the Dates over and over
+//   Maybe change the `api.service` functions that return `TaskDto` to `TaskViewModel`
+//   since that's what the consumer is going to use anyway.
+let demoTasks: TaskDto[];
+let demoTaskIdCounter: number;
+let isLoaded = false;
 
-function findTask(id: string): TaskDto {
-  const foundTask = demoTasks.find(({ id: taskId }) => taskId === id);
+function loadData(): TaskDto[] | null {
+  if (!global.window) {
+    console.warn("global.window is not defined");
+    return null;
+  }
+  console.log("Loading demo data");
+  const loadedTasksString = global.window.localStorage.getItem(TASK_KEY);
+  demoTasks = loadedTasksString ? JSON.parse(loadedTasksString) : INIT_TASKS;
+  const loadedTaskIdCounterString =
+    global.window.localStorage.getItem(TASK_ID_COUNTER_KEY);
+  demoTaskIdCounter = loadedTaskIdCounterString
+    ? JSON.parse(loadedTaskIdCounterString)
+    : INIT_TASKS.length;
+  return demoTasks;
+}
+
+function loadDataIfNeeded(): TaskDto[] {
+  if (isLoaded) {
+    return demoTasks;
+  }
+  const tasks = loadData();
+  if (!tasks) {
+    throw new Error("Could not load data");
+  }
+  isLoaded = true;
+  return tasks;
+}
+
+function saveData() {
+  if (!global.window) {
+    console.warn("global.window is not defined");
+    return;
+  }
+  global.window.localStorage.setItem(TASK_KEY, JSON.stringify(demoTasks));
+  global.window.localStorage.setItem(
+    TASK_ID_COUNTER_KEY,
+    JSON.stringify(demoTaskIdCounter)
+  );
+}
+
+function findTask(tasks: TaskDto[], id: string): TaskDto {
+  const foundTask = tasks.find(({ id: taskId }) => taskId === id);
   if (!foundTask) {
     throw new Error(`Couldn't find task with id "${id}"`);
   }
   return foundTask;
 }
 
-function findTaskIndex(id: string): number {
-  const foundTaskIndex = findIndex(
-    demoTasks,
-    ({ id: taskId }) => taskId === id
-  );
+function findTaskIndex(tasks: TaskDto[], id: string): number {
+  const foundTaskIndex = findIndex(tasks, ({ id: taskId }) => taskId === id);
   if (!foundTaskIndex) {
     throw new Error(`Couldn't find task with id "${id}"`);
   }
@@ -64,71 +110,154 @@ function findTaskIndex(id: string): number {
 }
 
 export async function decryptJwt() {
-  throw new Error("not implemented");
+  throw new Error("not implemented in demo mode");
 }
 
 export async function getTasks({
   tag = "",
 }: {
-  tag: string;
-}): Promise<TaskDto[]> {
-  console.log("GETTING DEMO TASKS!!!!");
+  tag?: string;
+} = {}): Promise<TaskDto[]> {
+  // clone the array to be safe
+  const [...tasks] = loadDataIfNeeded();
   if (tag) {
-    return [...demoTasks].filter(({ tags: taskTags }) =>
-      taskTags?.includes(tag)
-    );
+    return tasks.filter(({ tags: taskTags }) => taskTags?.includes(tag));
   }
-  return [...demoTasks];
+  return tasks;
+}
+
+type ActionDtoWithDayjs = Modify<
+  ActionDto,
+  {
+    timestamp: Dayjs;
+    postponeUntilDate?: Dayjs;
+  }
+>;
+type TaskDtoWithDayjs = Modify<
+  TaskDto,
+  {
+    startDate: Dayjs;
+    endDate: Dayjs;
+    completedDate?: Dayjs;
+    actions?: ActionDtoWithDayjs[];
+  }
+>;
+
+function mapTaskDtoDateFieldsToDayjs(task: TaskDto): TaskDtoWithDayjs {
+  const newTask: TaskDtoWithDayjs = {
+    ...task,
+    startDate: dayjs(task.startDate),
+    endDate: dayjs(task.endDate),
+    completedDate: undefined, // hacky TS workaround
+    actions: undefined, // hacky TS workaround
+  };
+  if (task.completedDate) {
+    newTask.completedDate =
+      task.completedDate === undefined ? undefined : dayjs(task.completedDate);
+  }
+  if (task.actions) {
+    newTask.actions = task.actions.map((action) => {
+      const mappedAction: ActionDtoWithDayjs = {
+        timestamp: dayjs(action.timestamp),
+        postponeUntilDate: undefined, // hacky TS workaround
+      };
+      if (isPostponeAction(action as any)) {
+        // TODO fix typing
+        mappedAction.postponeUntilDate = dayjs(
+          (action as any).postponeUntilDate
+        );
+      }
+      return mappedAction;
+    });
+  }
+  return newTask;
+}
+
+function unmapTaskDtoDateFieldsToDayjs(task: TaskDtoWithDayjs): TaskDto {
+  const newTask: TaskDto = {
+    ...task,
+    startDate: task.startDate.toString(),
+    endDate: task.endDate.toString(),
+    completedDate: undefined, // hacky TS workaround
+    actions: undefined, // hacky TS workaround
+  };
+  if (task.completedDate) {
+    newTask.completedDate =
+      task.completedDate === undefined
+        ? undefined
+        : task.completedDate.toString();
+  }
+  if (task.actions) {
+    newTask.actions = task.actions.map((action) => {
+      const mappedAction = {
+        timestamp: action.toString(),
+        postponeUntilDate: undefined, // hacky TS workaround
+      };
+      if (isPostponeAction(action)) {
+        // TODO fix typing
+        mappedAction.postponeUntilDate = (
+          action as any
+        ).postponeUntilDate.toString();
+      }
+      return mappedAction;
+    });
+  }
+  return newTask;
 }
 
 export async function getTasksForDay(
   day: Dayjs
 ): Promise<Record<string, TaskDto[]>> {
-  throw new Error("not implemented yet");
-
-  // const { dayTasks } = await request<{ dayTasks: Record<string, TaskDto[]> }>({
-  //   method: "GET",
-  //   endpoint: "/api/tasks",
-  //   params: new URLSearchParams({ targetDay: getCanonicalDatestring(day) }),
-  // });
-  // return dayTasks;
+  // clone the array to be safe
+  const [...tasks] = loadDataIfNeeded().map(mapTaskDtoDateFieldsToDayjs);
+  const currentDay = dayjs();
+  const tasksForDay = calculateTasksForDay(tasks, day, currentDay);
+  return {
+    [formatDayKey(day)]: tasksForDay.map(unmapTaskDtoDateFieldsToDayjs),
+  };
 }
 
 export async function getTasksForDayRange(
   startDay: Dayjs,
   endDay: Dayjs
 ): Promise<Record<string, TaskDto[]>> {
-  throw new Error("not implemented yet");
-
-  // const { dayTasks } = await request<{ dayTasks: Record<string, TaskDto[]> }>({
-  //   method: "GET",
-  //   endpoint: "/api/tasks",
-  //   params: new URLSearchParams({
-  //     targetStartDay: getCanonicalDatestring(startDay),
-  //     targetEndDay: getCanonicalDatestring(endDay),
-  //   }),
-  // });
-  // return dayTasks;
+  // clone the array to be safe
+  const [...tasks] = loadDataIfNeeded().map(mapTaskDtoDateFieldsToDayjs);
+  const currentDay = dayjs();
+  const dayToTasksMap = calculateTasksForDayRange(
+    tasks,
+    startDay,
+    endDay,
+    currentDay
+  );
+  return Object.fromEntries(
+    Object.entries(dayToTasksMap).map(([dayKey, dayTasks]) => [
+      dayKey,
+      dayTasks.map(unmapTaskDtoDateFieldsToDayjs),
+    ])
+  );
 }
 
 export async function completeTask(
   completedTaskId: string,
   completedDate: Date
 ): Promise<string | undefined> {
-  const foundTask = findTask(completedTaskId);
+  const tasks = loadDataIfNeeded();
+  const foundTask = findTask(tasks, completedTaskId);
 
   let newStartDate: Dayjs | undefined = undefined;
   if (foundTask.repeatDays) {
     newStartDate = dayjs(completedDate)
       .startOf("day")
       .add(foundTask.repeatDays, "days");
-    demoTasks.push({
+    await createTask({
       ...foundTask,
       startDate: newStartDate.toString(),
       endDate: newStartDate.add(foundTask.rangeDays - 1, "days").toString(), // minus one because range is [start of startDate, end of endDate]
     });
   }
   foundTask.completedDate = completedDate.toString();
+  saveData();
   // if a new (repeating) task was created, return its startDate
   return newStartDate?.toString();
 }
@@ -136,32 +265,48 @@ export async function completeTask(
 export async function postponeTask(
   taskId: string,
   postponeUntilDate: Dayjs
-): Promise<undefined> {
-  const foundTask = findTask(taskId);
+): Promise<void> {
+  const [...tasks] = loadDataIfNeeded();
+  const foundTask = findTask(tasks, taskId);
   const postponeAction = {
     timestamp: dayjs().toString(),
     postponeUntilDate: getCanonicalDatestring(postponeUntilDate),
-  } as unknown as PostponeAction; // hmmm I think I need to change the `Action` types to be string instead of Date?
+  } as unknown as PostponeActionDto; // hmmm I think I need to change the `Action` types to be string instead of Date?
 
   if (foundTask.actions) {
     foundTask.actions.push(postponeAction);
   } else {
     foundTask.actions = [postponeAction];
   }
+  saveData();
 }
 
 // TODO or should the type be TaskViewModel then we'll just convert to TaskDto?
 export async function createTask(task: CreateTaskDto): Promise<string> {
-  const id = taskIdCounter.toString();
-  demoTasks.push({
+  const tasks = loadDataIfNeeded();
+  const id = demoTaskIdCounter.toString();
+  const {
+    title,
+    startDate,
+    endDate,
+    rangeDays,
+    repeatDays,
+    timeEstimateMins,
+    tags,
+  } = task;
+  tasks.push({
     id,
     userId: DEMO_USER_ID,
-    title: task.title,
-    startDate: task.startDate.toString(),
-    endDate: task.endDate.toString(),
-    rangeDays: task.rangeDays,
+    title,
+    startDate: startDate.toString(),
+    endDate: endDate.toString(),
+    rangeDays,
+    repeatDays,
+    timeEstimateMins,
+    tags,
   });
-  taskIdCounter += 1;
+  demoTaskIdCounter += 1;
+  saveData();
   return id;
 }
 
@@ -169,7 +314,8 @@ export async function patchTask(
   taskId: string,
   task: PatchTaskDto
 ): Promise<string> {
-  const foundTask = findTask(taskId);
+  const tasks = loadDataIfNeeded();
+  const foundTask = findTask(tasks, taskId);
   for (const [field, patch] of Object.entries(task) as Entries<typeof task>) {
     if (patch!.op === "remove") {
       delete foundTask[field];
@@ -179,21 +325,28 @@ export async function patchTask(
       foundTask[field] = patch!.value as never;
     }
   }
+  saveData();
   return taskId;
 }
 
 export async function deleteTask(taskId: string): Promise<void> {
-  const foundTaskIndex = findTaskIndex(taskId);
-  demoTasks.splice(foundTaskIndex, 1);
+  const tasks = loadDataIfNeeded();
+  const foundTaskIndex = findTaskIndex(tasks, taskId);
+  tasks.splice(foundTaskIndex, 1);
+  saveData();
 }
 
 export async function deleteAllTasks(): Promise<void> {
-  demoTasks = [];
+  let tasks = loadDataIfNeeded();
+  tasks = [];
+  demoTaskIdCounter = 0;
+  saveData();
 }
 
 export async function getTagCounts(): Promise<Record<string, number>> {
+  const tasks = loadDataIfNeeded();
   const tagCounts: Record<string, number> = {};
-  for (const { tags } of demoTasks) {
+  for (const { tags } of tasks) {
     if (!tags) {
       continue;
     }
@@ -212,27 +365,27 @@ export async function registerUserFromInvitation(
   token: string,
   password: string
 ): Promise<void> {
-  throw new Error("not implemented");
+  throw new Error("not implemented in demo mode");
 }
 
 export async function registerUser(
   email: string,
   password: string
 ): Promise<void> {
-  throw new Error("not implemented");
+  throw new Error("not implemented in demo mode");
 }
 
 export async function requestResetPassword(email: string): Promise<void> {
-  throw new Error("not implemented");
+  throw new Error("not implemented in demo mode");
 }
 
 export async function setNewPassword(
   token: string,
   password: string
 ): Promise<void> {
-  throw new Error("not implemented");
+  throw new Error("not implemented in demo mode");
 }
 
 export async function sendInvitation(inviteeEmail: string): Promise<void> {
-  throw new Error("not implemented");
+  throw new Error("not implemented in demo mode");
 }

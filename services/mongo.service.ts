@@ -38,18 +38,23 @@ export async function getTaskById(
   return targetTask;
 }
 
+// TODO maybe this could take a target date range? Overload?
 export async function getManyTasks(
   userId: string | ObjectId,
   {
     targetDay,
     includeCompleted = false,
     withTag = "",
-  }: { targetDay?: Date; includeCompleted?: boolean; withTag?: string } = {}
+  }: {
+    targetDay?: Date;
+    includeCompleted?: boolean;
+    withTag?: string;
+  } = {}
 ): Promise<TaskDao[]> {
   await initIfNeeded();
 
   const userOid = userId instanceof ObjectId ? userId : new ObjectId(userId);
-  const adjustedDate =
+  const adjustedTargetDay =
     targetDay &&
     dayjs
       .utc(targetDay)
@@ -60,7 +65,7 @@ export async function getManyTasks(
   const filter = {
     userId: userOid,
     completedDate: { $exists: false },
-    ...(adjustedDate && { startDate: { $lt: adjustedDate } }),
+    ...(adjustedTargetDay && { startDate: { $lt: adjustedTargetDay } }),
     ...(withTag.length > 0 && { tags: withTag }),
   };
   const tasks = await taskCollection!.find(filter).toArray();
@@ -71,7 +76,7 @@ export async function getManyTasks(
       userId: userOid,
       completedDate: {
         $gte: dayjs(targetDay).startOf("day").toDate(),
-        $lte: adjustedDate,
+        $lte: adjustedTargetDay,
       },
     };
     tasks.push(...(await taskCollection!.find(completedFilter).toArray()));

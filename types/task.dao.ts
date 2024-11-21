@@ -1,13 +1,33 @@
 import { ObjectId, OptionalId, WithoutId, WithId } from "mongodb";
 import {
+  ActionDto,
   CreateTaskDto,
   PatchTaskDto,
   isPostponeAction,
+  isPostponeActionDto,
   type TaskDto,
 } from "./task.dto";
-import dayjs from "@/lib/dayjs";
+import dayjs, { Dayjs } from "@/lib/dayjs";
 import { Modify, Patchable } from "@/util/types";
 import { getCanonicalDatestring } from "@/util/date";
+
+export type ActionDao = Modify<
+  ActionDto,
+  {
+    timestamp: Date;
+  }
+>;
+
+export type PostponeActionDao = ActionDao & {
+  postponeUntilDate: Date;
+};
+
+export function isPostponeActionDao(
+  action: ActionDao
+): action is PostponeActionDao {
+  // sufficient for now, maybe eventually there will be some `action.type` field to check instead
+  return (action as PostponeActionDao).postponeUntilDate !== undefined;
+}
 
 export type TaskDaoWithCalculatedFields = WithId<
   Modify<
@@ -17,6 +37,7 @@ export type TaskDaoWithCalculatedFields = WithId<
       startDate: Date;
       endDate: Date;
       completedDate?: Date;
+      actions?: ActionDao[];
     }
   >
 >;
@@ -40,13 +61,26 @@ export type PatchTaskDao = Patchable<
 >;
 
 // not a fan of this approach but it works for now
-export type InternalPatchTaskDao = Patchable<
-  WithoutId<TaskDao>
->;
+export type InternalPatchTaskDao = Patchable<WithoutId<TaskDao>>;
 
-export function convertTaskDaoToDto(
-  taskDao: TaskDaoWithCalculatedFields
-): TaskDto {
+export function convertTaskDaoToDto<
+  BaseTaskDao extends Modify<
+    TaskDaoWithCalculatedFields,
+    {
+      startDate: Date | Dayjs;
+      endDate: Date | Dayjs;
+      completedDate?: Date | Dayjs;
+      actions?: BaseAction[];
+    }
+  >,
+  BaseAction extends Modify<
+    ActionDao,
+    {
+      timestamp: Date | Dayjs;
+      postponeUntilDate?: Date | Dayjs;
+    }
+  >,
+>(taskDao: BaseTaskDao): TaskDto {
   const {
     _id,
     userId,
@@ -79,19 +113,20 @@ export function convertTaskDaoToDto(
       actions: actions.map((action) => ({
         timestamp: getCanonicalDatestring(action.timestamp, false),
         ...(isPostponeAction(action) && {
+          // TODO fix typing
           postponeUntilDate: getCanonicalDatestring(
-            action.postponeUntilDate,
+            (action as any).postponeUntilDate,
             false
           ),
         }),
       })),
     }),
-  } as TaskDto;
+  };
 }
 
 export function convertCreateTaskDtoToDao(
   createTaskDto: CreateTaskDto
-): TaskDao {
+): Omit<CreateTaskDao, "userId"> {
   const {
     title,
     timeEstimateMins,
@@ -115,12 +150,12 @@ export function convertCreateTaskDtoToDao(
     ...(actions && {
       actions: actions.map((action) => ({
         timestamp: dayjs.utc(action.timestamp).toDate(),
-        ...(isPostponeAction(action) && {
+        ...(isPostponeActionDto(action) && {
           postponeUntilDate: dayjs.utc(action.postponeUntilDate).toDate(),
         }),
       })),
     }),
-  } as TaskDao;
+  };
 }
 
 // should this even be handled here?

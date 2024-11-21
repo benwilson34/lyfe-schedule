@@ -16,7 +16,7 @@ import { useModalContext } from "@/contexts/modal-context";
 import { getManyTasks } from "@/services/mongo.service";
 import NavBar from "@/components/NavBar";
 import { getTasks } from "@/services/api.service";
-import { calculatePriority } from "@/util/date";
+import { calculatePriority } from "@/util/task";
 import { SortMode } from "@/util/enums";
 import {
   sortTasksByStartDate,
@@ -27,8 +27,19 @@ import {
 } from "@/util/task";
 import { clone } from "lodash";
 import SortControls from "@/components/SortControls";
+import { IS_DEMO_BUILD } from "@/util/env";
 
 export const getServerSideProps = (async (context: any) => {
+  const { tagName } = context.query;
+  // TODO validate tagName? Redirect?
+  if (IS_DEMO_BUILD) {
+    return {
+      props: {
+        tagName,
+      },
+    };
+  }
+
   // TODO this would be better as a util function
   // auth
   const token = await getToken({ req: context.req });
@@ -38,8 +49,6 @@ export const getServerSideProps = (async (context: any) => {
     return { props: {} };
   }
   const userId = token.sub!;
-  const { tagName } = context.query;
-  // TODO validate tagName? Redirect?
 
   const initTasks: TaskDto[] = (
     await getManyTasks(userId, { withTag: tagName })
@@ -54,7 +63,7 @@ export const getServerSideProps = (async (context: any) => {
 
 export default function TaggedTasksView({
   tagName,
-  initTasks,
+  initTasks = [],
 }: {
   tagName: string;
   initTasks: TaskDto[];
@@ -62,6 +71,7 @@ export default function TaggedTasksView({
   const { showAddEditModal } = useModalContext();
 
   // TODO gonna have to check `initTasks` when switching pages I think
+  // TODO this initial value is getting thrown away and refetched...maybe add a `needsInitialFetch: boolean` prop?
   const [tasks, setTasks] = useState<Task[]>(
     initTasks.map(taskDtoToViewModel) as Task[]
   );
@@ -74,7 +84,6 @@ export default function TaggedTasksView({
       try {
         setTasks([]);
         setIsLoading(true);
-        console.log("about to fetch tagged tasks!"); // TODO remove
         const tasks = (await getTasks({ tag: tagName })).map(
           taskDtoToViewModel
         );

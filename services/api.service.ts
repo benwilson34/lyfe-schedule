@@ -56,9 +56,8 @@ export async function decryptJwt() {
 export async function getTasks({
   tag = "",
 }: {
-  tag: string;
-}): Promise<TaskDto[]> {
-  console.log(">>> fetching from API"); // TODO remove
+  tag?: string;
+} = {}): Promise<TaskDto[]> {
   const params = new URLSearchParams();
   if (tag.length > 0) {
     params.append("tag", tag);

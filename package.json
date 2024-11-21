@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:demo": "env IS_DEMO_BUILD=true next dev",
     "build": "next build",
+    "build:demo": "env IS_DEMO_BUILD=true next build",
     "start": "next start",
     "lint": "next lint",
     "test": "jest --coverage",

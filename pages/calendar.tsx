@@ -26,8 +26,8 @@ import { useModalContext } from "@/contexts/modal-context";
 import { getTasksForDay, getTasksForDayRange } from "@/services/api.service";
 import { useSettingsContext } from "@/contexts/settings-context";
 import NavBar from "@/components/NavBar";
-import { calculatePriority } from "@/util/date";
 import {
+  calculatePriority,
   sortTasksByEndDate,
   sortTasksByRange,
   sortTasksByRepeatInterval,
