@@ -184,21 +184,13 @@ function Modals() {
 // }) satisfies GetServerSideProps;
 
 // there's probably a better way
-function Init() {
+function Init({ isDemoMode }: { isDemoMode: boolean }) {
   const { setMonthInfoSettings, setDayInfoSettings } = useSettingsContext();
   const { setIsAdmin } = useAuthContext();
 
   // set application-wide state only on first load
   useEffect(() => {
     async function load() {
-      // auth payload
-      try {
-        const { isAdmin } = await decryptJwt();
-        setIsAdmin(isAdmin);
-      } catch (maybeError: any) {
-        console.error(maybeError);
-      }
-
       // user-configured settings
       const savedSettings = JSON.parse(
         localStorage.getItem("settings") || "null"
@@ -206,6 +198,18 @@ function Init() {
       if (savedSettings) {
         setMonthInfoSettings(savedSettings.monthInfoSettings);
         setDayInfoSettings(savedSettings.dayInfoSettings);
+      }
+
+      if (isDemoMode) {
+        return;
+      }
+
+      // auth payload
+      try {
+        const { isAdmin } = await decryptJwt();
+        setIsAdmin(isAdmin);
+      } catch (maybeError: any) {
+        console.error(maybeError);
       }
     }
     load();
@@ -225,7 +229,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <SidebarContextProvider>
           <SettingsContextProvider>
             <AuthContextProvider>
-              <Init />
+              <Init isDemoMode={pageProps.isDemoMode} />
 
               <main className={exo2.className}>
                 <Component {...pageProps} />

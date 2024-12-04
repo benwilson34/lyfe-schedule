@@ -1,5 +1,7 @@
 import { parseBoolean } from "./parse-boolean";
 
+export const IS_DEMO_MODE =
+  parseBoolean(process.env.IS_DEMO_MODE || "") ?? false;
 export const DB_URL = process.env.DB_URL!;
 export const DB_NAME = process.env.DB_NAME!;
 // TODO move other defaults here
@@ -22,11 +24,12 @@ export const INVITATION_TOKEN_TTL_MINS =
 export const IS_REGISTRATION_INVITE_ONLY =
   parseBoolean(process.env.IS_REGISTRATION_INVITE_ONLY || "") ?? true;
 export const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
-export const IS_DEMO_MODE =
-  parseBoolean(process.env.IS_DEMO_MODE || "") ?? false;
-console.log({ IS_DEMO_MODE });
 
 export function checkForRequiredEnvVars() {
+  if (IS_DEMO_MODE) {
+    return;
+  }
+
   const requiredEnvVarKeys = [
     "DB_URL",
     "DB_NAME",
