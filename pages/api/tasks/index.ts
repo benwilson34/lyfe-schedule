@@ -26,6 +26,8 @@ import { getTimezoneOffsetFromHeader } from "@/util/timezoneOffset";
 import { Modify } from "@/util/types";
 import { isPostponeAction, TaskDto } from "@/types/task.dto";
 import { getCanonicalDatestring } from "@/util/date";
+import { handleUnimplementedEndpoint } from "@/util/apiResponse";
+import { IS_DEMO_BUILD } from "@/util/env";
 
 function handleError(maybeError: any, res: NextApiResponse) {
   console.error(maybeError);
@@ -256,10 +258,7 @@ async function deleteAllTasks(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log(`${req.method} ${req.url}`); // TODO replace with proper logging
   switch (req.method?.toUpperCase()) {
     case "GET":
@@ -275,12 +274,9 @@ export default async function handler(
       await deleteAllTasks(req, res);
       break;
     default:
-      new ErrorResponse({
-        status: 404,
-        errorCode: "resourceNotFound",
-        title: "Resource not found",
-        detail: `Can not ${req.method} ${req.url}`,
-      }).send(res);
+      handleUnimplementedEndpoint(req, res);
       break;
   }
 }
+
+export default IS_DEMO_BUILD ? handleUnimplementedEndpoint : handler;

@@ -6,15 +6,7 @@ import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 import { customAuthPages } from "./config/customAuthPages";
 import { IS_DEMO_BUILD } from "./util/env";
 
-export default async function middleware(
-  req: NextRequest,
-  event: NextFetchEvent
-) {
-  // don't run auth middleware when the app is in demo mode
-  if (IS_DEMO_BUILD) {
-    return; // this ok?
-  }
-
+async function middleware(req: NextRequest, event: NextFetchEvent) {
   const token = await getToken({ req });
   const isAuthenticated = !!token;
 
@@ -42,15 +34,20 @@ export default async function middleware(
   return authMiddleware(req, event);
 }
 
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-  ],
-};
+// does this actually work with tree-shaking?
+export default IS_DEMO_BUILD ? () => {} : middleware;
+
+export const config = IS_DEMO_BUILD
+  ? null
+  : {
+      matcher: [
+        /*
+         * Match all request paths except for the ones starting with:
+         * - api (API routes)
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         */
+        "/((?!api|_next/static|_next/image|favicon.ico).*)",
+      ],
+    };

@@ -1,7 +1,8 @@
 // see https://github.com/wpcodevo/nextauth-nextjs13-prisma/blob/main/src/app/login/form.tsx
 
-import { IS_REGISTRATION_INVITE_ONLY } from "@/util/env";
+import { IS_DEMO_BUILD, IS_REGISTRATION_INVITE_ONLY } from "@/util/env";
 import type {
+  GetServerSideProps,
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
@@ -11,19 +12,24 @@ import { useRouter } from "next/router";
 import { ChangeEvent, useState } from "react";
 import { PulseLoader } from "react-spinners";
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  return {
-    props: {
-      csrfToken: await getCsrfToken(context),
-      isRegistrationInviteOnly: IS_REGISTRATION_INVITE_ONLY,
-    },
-  };
-}
+export const getServerSideProps = IS_DEMO_BUILD
+  ? undefined
+  : ((async (context: GetServerSidePropsContext) => {
+      return {
+        props: {
+          csrfToken: await getCsrfToken(context),
+          isRegistrationInviteOnly: IS_REGISTRATION_INVITE_ONLY,
+        },
+      };
+    }) satisfies GetServerSideProps);
 
-export default function SignIn({
+function SignIn({
   csrfToken,
   isRegistrationInviteOnly,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+}: {
+  csrfToken?: string;
+  isRegistrationInviteOnly: boolean;
+}) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formValues, setFormValues] = useState({
@@ -79,7 +85,10 @@ export default function SignIn({
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <form className="flex flex-col min-h-full gap-y-4" onSubmit={handleSubmit}>
+          <form
+            className="flex flex-col min-h-full gap-y-4"
+            onSubmit={handleSubmit}
+          >
             <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
             <div>
               <label
@@ -148,7 +157,6 @@ export default function SignIn({
 
                 <div className="text-center">
                   Don&apos;t have an account yet?&nbsp;
-
                   <Link
                     href="/auth/register"
                     className="font-semibold text-indigo-600 hover:text-indigo-500"
@@ -176,3 +184,5 @@ export default function SignIn({
     </>
   );
 }
+
+export default IS_DEMO_BUILD ? undefined : SignIn;

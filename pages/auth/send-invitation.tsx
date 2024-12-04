@@ -2,22 +2,24 @@ import { GetServerSideProps } from "next";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 import { getToken } from "next-auth/jwt";
-import { ADMIN_USER_ID } from "@/util/env";
+import { ADMIN_USER_ID, IS_DEMO_BUILD } from "@/util/env";
 import NavBar from "@/components/NavBar";
 import { sendInvitation } from "@/services/api.service";
 
-export const getServerSideProps = (async (context) => {
-  // check session token to confirm it's an admin
-  const authToken = await getToken({ req: context.req });
-  if (!authToken) {
-    // shouldn't be able to get here
-    return { props: { isAdmin: false } };
-  }
-  const userId = authToken.sub!;
-  return { props: { isAdmin: ADMIN_USER_ID && userId === ADMIN_USER_ID } };
-}) satisfies GetServerSideProps;
+export const getServerSideProps = IS_DEMO_BUILD
+  ? undefined
+  : ((async (context) => {
+      // check session token to confirm it's an admin
+      const authToken = await getToken({ req: context.req });
+      if (!authToken) {
+        // shouldn't be able to get here
+        return { props: { isAdmin: false } };
+      }
+      const userId = authToken.sub!;
+      return { props: { isAdmin: ADMIN_USER_ID && userId === ADMIN_USER_ID } };
+    }) satisfies GetServerSideProps);
 
-export default function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
+function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
   const [email, setEmail] = useState("");
   const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -116,7 +118,7 @@ export default function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
       {formErrorMessage && (
         <div className="text-red-500">{formErrorMessage}</div>
       )}
-      
+
       {isLoading && (
         <div className="flex justify-center">
           <PulseLoader color="#d5dedb" className="mt-4" />
@@ -149,3 +151,5 @@ export default function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
     </>
   );
 }
+
+export default IS_DEMO_BUILD ? undefined : SendInvitationPage;
