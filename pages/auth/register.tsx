@@ -1,10 +1,10 @@
 import { registerUser } from "@/services/api.service";
-import { IS_DEMO_BUILD, IS_REGISTRATION_INVITE_ONLY } from "@/util/env";
+import { IS_DEMO_MODE, IS_REGISTRATION_INVITE_ONLY } from "@/util/env";
 import { GetServerSideProps } from "next";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 
-export const getServerSideProps = IS_DEMO_BUILD
+export const getServerSideProps = IS_DEMO_MODE
   ? undefined
   : ((async (context) => {
       // redirect to sign-in page if env var `IS_REGISTRATION_INVITE_ONLY === true`
@@ -189,4 +189,4 @@ function RegisterPage() {
   );
 }
 
-export default IS_DEMO_BUILD ? undefined : RegisterPage;
+export default IS_DEMO_MODE ? undefined : RegisterPage;

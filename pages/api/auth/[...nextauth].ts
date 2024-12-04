@@ -5,7 +5,7 @@ import argon2 from "argon2";
 import { getUserByEmail } from "@/services/mongo.service";
 import { userDaoToDto } from "@/types/user.dao";
 import { customAuthPages } from "@/config/customAuthPages";
-import { IS_DEMO_BUILD } from "@/util/env";
+import { IS_DEMO_MODE } from "@/util/env";
 import { handleUnimplementedEndpoint } from "@/util/apiResponse";
 
 export const authOptions: NextAuthOptions = {
@@ -57,6 +57,6 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-export default IS_DEMO_BUILD
+export default IS_DEMO_MODE
   ? handleUnimplementedEndpoint
   : NextAuth(authOptions);

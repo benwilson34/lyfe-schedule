@@ -27,7 +27,7 @@ import { Modify } from "@/util/types";
 import { isPostponeAction, TaskDto } from "@/types/task.dto";
 import { getCanonicalDatestring } from "@/util/date";
 import { handleUnimplementedEndpoint } from "@/util/apiResponse";
-import { IS_DEMO_BUILD } from "@/util/env";
+import { IS_DEMO_MODE } from "@/util/env";
 
 function handleError(maybeError: any, res: NextApiResponse) {
   console.error(maybeError);
@@ -279,4 +279,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default IS_DEMO_BUILD ? handleUnimplementedEndpoint : handler;
+export default IS_DEMO_MODE ? handleUnimplementedEndpoint : handler;

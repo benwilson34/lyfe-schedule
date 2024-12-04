@@ -26,14 +26,14 @@ import {
 } from "@/util/task";
 import { clone } from "lodash";
 import SortControls from "@/components/SortControls";
-import { IS_DEMO_BUILD } from "@/util/env";
+import { IS_DEMO_MODE } from "@/util/env";
 import { getTasks } from "@/services/api.service";
 
 export const getServerSideProps = (async (context: any) => {
   const props = {
-    isDemoBuild: IS_DEMO_BUILD,
+    isDemoMode: IS_DEMO_MODE,
   };
-  if (IS_DEMO_BUILD) {
+  if (IS_DEMO_MODE) {
     return { props };
   }
   // TODO this would be better as a util function

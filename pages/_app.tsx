@@ -230,9 +230,9 @@ export default function App({ Component, pageProps }: AppProps) {
               <main className={exo2.className}>
                 <Component {...pageProps} />
 
-                {pageProps.isDemoBuild && <DemoModeBanner />}
+                {pageProps.isDemoMode && <DemoModeBanner />}
 
-                <Sidebar isDemoBuild={pageProps.isDemoBuild} />
+                <Sidebar isDemoMode={pageProps.isDemoMode} />
 
                 <Modals />
 

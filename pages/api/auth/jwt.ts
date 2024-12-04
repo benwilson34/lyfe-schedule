@@ -3,7 +3,7 @@ import ErrorResponse, {
 } from "@/models/ErrorResponse";
 import SuccessResponse from "@/models/SuccessResponse";
 import { handleUnimplementedEndpoint } from "@/util/apiResponse";
-import { ADMIN_USER_ID, IS_DEMO_BUILD } from "@/util/env";
+import { ADMIN_USER_ID, IS_DEMO_MODE } from "@/util/env";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getToken } from "next-auth/jwt";
 
@@ -35,4 +35,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default IS_DEMO_BUILD ? handleUnimplementedEndpoint : handler;
+export default IS_DEMO_MODE ? handleUnimplementedEndpoint : handler;

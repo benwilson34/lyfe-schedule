@@ -2,11 +2,11 @@ import { GetServerSideProps } from "next";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 import { getToken } from "next-auth/jwt";
-import { ADMIN_USER_ID, IS_DEMO_BUILD } from "@/util/env";
+import { ADMIN_USER_ID, IS_DEMO_MODE } from "@/util/env";
 import NavBar from "@/components/NavBar";
 import { sendInvitation } from "@/services/api.service";
 
-export const getServerSideProps = IS_DEMO_BUILD
+export const getServerSideProps = IS_DEMO_MODE
   ? undefined
   : ((async (context) => {
       // check session token to confirm it's an admin
@@ -152,4 +152,4 @@ function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
-export default IS_DEMO_BUILD ? undefined : SendInvitationPage;
+export default IS_DEMO_MODE ? undefined : SendInvitationPage;

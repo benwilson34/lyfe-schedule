@@ -23,8 +23,7 @@ type TagInfo = {
   count: number;
 };
 
-export default function Sidebar({ isDemoBuild }: { isDemoBuild: boolean }) {
-  console.log("Sidebar", { isDemoBuild }); // TODO remove
+export default function Sidebar({ isDemoMode }: { isDemoMode: boolean }) {
   const { isVisible, setIsVisible } = useSidebarContext();
   const { setCurrentModal } = useModalContext();
   const { isAdmin } = useAuthContext();
@@ -108,7 +107,7 @@ export default function Sidebar({ isDemoBuild }: { isDemoBuild: boolean }) {
             <span className="font-bold">Lyfe</span>Schedule
           </div>
 
-          {isDemoBuild && (
+          {isDemoMode && (
             <div className="bg-accent text-ondark rounded-md mb-2 px-2 py-1 leading-tight">
               You're in demo mode!{" "}
               <a
@@ -177,7 +176,7 @@ export default function Sidebar({ isDemoBuild }: { isDemoBuild: boolean }) {
             need help?
           </a>
 
-          {!isDemoBuild && (
+          {!isDemoMode && (
             <div
               className="cursor-pointer hover:bg-gray-500/25"
               onClick={handleSignOutClick}

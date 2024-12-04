@@ -1,6 +1,6 @@
 // see https://github.com/wpcodevo/nextauth-nextjs13-prisma/blob/main/src/app/login/form.tsx
 
-import { IS_DEMO_BUILD, IS_REGISTRATION_INVITE_ONLY } from "@/util/env";
+import { IS_DEMO_MODE, IS_REGISTRATION_INVITE_ONLY } from "@/util/env";
 import type {
   GetServerSideProps,
   GetServerSidePropsContext,
@@ -12,7 +12,7 @@ import { useRouter } from "next/router";
 import { ChangeEvent, useState } from "react";
 import { PulseLoader } from "react-spinners";
 
-export const getServerSideProps = IS_DEMO_BUILD
+export const getServerSideProps = IS_DEMO_MODE
   ? undefined
   : ((async (context: GetServerSidePropsContext) => {
       return {
@@ -185,4 +185,4 @@ function SignIn({
   );
 }
 
-export default IS_DEMO_BUILD ? undefined : SignIn;
+export default IS_DEMO_MODE ? undefined : SignIn;

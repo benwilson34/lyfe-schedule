@@ -25,7 +25,7 @@ import {
   ADMIN_USER_ID,
   BASE_URL,
   INVITATION_TOKEN_TTL_MINS,
-  IS_DEMO_BUILD,
+  IS_DEMO_MODE,
   IS_REGISTRATION_INVITE_ONLY,
   PASSWORD_RESET_TOKEN_TTL_MINS,
 } from "@/util/env";
@@ -463,4 +463,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default IS_DEMO_BUILD ? handleUnimplementedEndpoint : handler;
+export default IS_DEMO_MODE ? handleUnimplementedEndpoint : handler;

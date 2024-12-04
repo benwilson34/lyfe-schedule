@@ -16,7 +16,7 @@ import SuccessResponse from "@/models/SuccessResponse";
 import { CreateTaskDao, convertPatchTaskDtoToDao } from "@/types/task.dao";
 import dayjs from "@/lib/dayjs";
 import { getCanonicalDatestring, stripOffset } from "@/util/date";
-import { IS_DEMO_BUILD } from "@/util/env";
+import { IS_DEMO_MODE } from "@/util/env";
 import { handleUnimplementedEndpoint } from "@/util/apiResponse";
 
 async function patchTask(req: NextApiRequest, res: NextApiResponse) {
@@ -319,4 +319,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default IS_DEMO_BUILD ? handleUnimplementedEndpoint : handler;
+export default IS_DEMO_MODE ? handleUnimplementedEndpoint : handler;

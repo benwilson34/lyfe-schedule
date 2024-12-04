@@ -1,7 +1,7 @@
 const { join } = require("path");
 const { DefinePlugin, NormalModuleReplacementPlugin } = require("webpack");
 
-const IS_DEMO_BUILD = process.env.IS_DEMO_BUILD === "true" || false;
+const IS_DEMO_MODE = process.env.IS_DEMO_MODE === "true" || false;
 const BUILD_DIR = ".next";
 
 /** @type {import('next').NextConfig} */
@@ -17,7 +17,7 @@ const nextConfig = {
   reactStrictMode: true,
   webpack: (config, options) => {
     // in demo mode, swap the frontend `api.service.ts` with `demo-api.service.ts`
-    if (IS_DEMO_BUILD) {
+    if (IS_DEMO_MODE) {
       config.plugins.push(
         new NormalModuleReplacementPlugin(
           /services\/api\.service/,

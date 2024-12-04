@@ -8,7 +8,7 @@ import ErrorResponse, {
 import SuccessResponse from "@/models/SuccessResponse";
 import { getToken } from "next-auth/jwt";
 import { handleUnimplementedEndpoint } from "@/util/apiResponse";
-import { IS_DEMO_BUILD } from "@/util/env";
+import { IS_DEMO_MODE } from "@/util/env";
 
 function handleError(maybeError: any, res: NextApiResponse) {
   console.error(maybeError);
@@ -56,4 +56,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default IS_DEMO_BUILD ? handleUnimplementedEndpoint : handler;
+export default IS_DEMO_MODE ? handleUnimplementedEndpoint : handler;

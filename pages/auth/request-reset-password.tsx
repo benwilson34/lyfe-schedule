@@ -1,10 +1,10 @@
 import { requestResetPassword } from "@/services/api.service";
-import { IS_DEMO_BUILD } from "@/util/env";
+import { IS_DEMO_MODE } from "@/util/env";
 import { GetServerSideProps } from "next";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 
-export const getServerSideProps = IS_DEMO_BUILD
+export const getServerSideProps = IS_DEMO_MODE
   ? undefined
   : ((async (context) => {
       const { email: initialEmail = null } = context.query;
@@ -109,4 +109,4 @@ function RequestResetPassword({
   );
 }
 
-export default IS_DEMO_BUILD ? undefined : RequestResetPassword;
+export default IS_DEMO_MODE ? undefined : RequestResetPassword;

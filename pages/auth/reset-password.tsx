@@ -4,9 +4,9 @@ import { getTokenPayload } from "../api/users";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 import { setNewPassword } from "@/services/api.service";
-import { IS_DEMO_BUILD } from "@/util/env";
+import { IS_DEMO_MODE } from "@/util/env";
 
-export const getServerSideProps = IS_DEMO_BUILD
+export const getServerSideProps = IS_DEMO_MODE
   ? undefined
   : ((async (context) => {
       const { token } = context.query;
@@ -219,4 +219,4 @@ function ResetPasswordPage({
   );
 }
 
-export default IS_DEMO_BUILD ? undefined : ResetPasswordPage;
+export default IS_DEMO_MODE ? undefined : ResetPasswordPage;

@@ -4,9 +4,9 @@ import { getTokenPayload } from "../api/users";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 import { registerUserFromInvitation } from "@/services/api.service";
-import { IS_DEMO_BUILD } from "@/util/env";
+import { IS_DEMO_MODE } from "@/util/env";
 
-export const getServerSideProps = IS_DEMO_BUILD
+export const getServerSideProps = IS_DEMO_MODE
   ? undefined
   : ((async (context) => {
       const { token } = context.query;
@@ -215,4 +215,4 @@ function AcceptInvitationPage({
   );
 }
 
-export default IS_DEMO_BUILD ? undefined : AcceptInvitationPage;
+export default IS_DEMO_MODE ? undefined : AcceptInvitationPage;

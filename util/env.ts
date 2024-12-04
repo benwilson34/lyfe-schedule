@@ -22,9 +22,9 @@ export const INVITATION_TOKEN_TTL_MINS =
 export const IS_REGISTRATION_INVITE_ONLY =
   parseBoolean(process.env.IS_REGISTRATION_INVITE_ONLY || "") ?? true;
 export const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
-export const IS_DEMO_BUILD =
-  parseBoolean(process.env.IS_DEMO_BUILD || "") ?? false;
-console.log({ IS_DEMO_BUILD });
+export const IS_DEMO_MODE =
+  parseBoolean(process.env.IS_DEMO_MODE || "") ?? false;
+console.log({ IS_DEMO_MODE });
 
 export function checkForRequiredEnvVars() {
   const requiredEnvVarKeys = [
