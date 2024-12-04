@@ -36,8 +36,18 @@ import {
 } from "@/util/task";
 import { SortMode } from "@/util/enums";
 import SortControls from "@/components/SortControls";
+import { IS_DEMO_BUILD } from "@/util/env";
+import { GetServerSideProps } from "next/types";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
+
+export const getServerSideProps = (async (context: any) => {
+  return {
+    props: {
+      isDemoBuild: IS_DEMO_BUILD,
+    },
+  };
+}) satisfies GetServerSideProps;
 
 export default function CalendarView() {
   const { showAddEditModal } = useModalContext();

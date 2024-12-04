@@ -24,6 +24,7 @@ import "@/styles/globals.css";
 import "@/styles/react-toggle-style.css";
 import "@/styles/CalendarPicker.css";
 import "@/styles/ToastContainer.css";
+import { DemoModeBanner } from "@/components/DemoModeBanner";
 
 const exo2 = Exo_2({ subsets: ["latin"] });
 
@@ -229,7 +230,9 @@ export default function App({ Component, pageProps }: AppProps) {
               <main className={exo2.className}>
                 <Component {...pageProps} />
 
-                <Sidebar />
+                {pageProps.isDemoBuild && <DemoModeBanner />}
+
+                <Sidebar isDemoBuild={pageProps.isDemoBuild} />
 
                 <Modals />
 

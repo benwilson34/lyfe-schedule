@@ -1,10 +1,4 @@
-function parseBoolean(boolString: string): boolean | null {
-  if (!/^(true|false)$/i.test(boolString)) {
-    // TODO print some "invalid configuration" error message?
-    return null;
-  }
-  return boolString.toLowerCase() === "true";
-}
+import { parseBoolean } from "./parse-boolean";
 
 export const DB_URL = process.env.DB_URL!;
 export const DB_NAME = process.env.DB_NAME!;

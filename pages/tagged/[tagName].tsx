@@ -32,12 +32,13 @@ import { IS_DEMO_BUILD } from "@/util/env";
 export const getServerSideProps = (async (context: any) => {
   const { tagName } = context.query;
   // TODO validate tagName? Redirect?
+  const props = {
+    tagName,
+    isDemoBuild: IS_DEMO_BUILD,
+  };
+
   if (IS_DEMO_BUILD) {
-    return {
-      props: {
-        tagName,
-      },
-    };
+    return { props };
   }
 
   // TODO this would be better as a util function
@@ -55,7 +56,7 @@ export const getServerSideProps = (async (context: any) => {
   ).map(convertTaskDaoToDto);
   return {
     props: {
-      tagName,
+      ...props,
       initTasks,
     },
   };

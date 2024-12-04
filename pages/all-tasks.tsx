@@ -29,28 +29,33 @@ import SortControls from "@/components/SortControls";
 import { IS_DEMO_BUILD } from "@/util/env";
 import { getTasks } from "@/services/api.service";
 
-export const getServerSideProps = IS_DEMO_BUILD
-  ? undefined
-  : ((async (context: any) => {
-      // TODO this would be better as a util function
-      // auth
-      const token = await getToken({ req: context.req });
-      if (!token) {
-        // shouldn't be possible to get to this point
-        console.error(`Error initializing: authentication error!`);
-        return { props: {} };
-      }
-      const userId = token.sub!;
+export const getServerSideProps = (async (context: any) => {
+  const props = {
+    isDemoBuild: IS_DEMO_BUILD,
+  };
+  if (IS_DEMO_BUILD) {
+    return { props };
+  }
+  // TODO this would be better as a util function
+  // auth
+  const token = await getToken({ req: context.req });
+  if (!token) {
+    // shouldn't be possible to get to this point
+    console.error(`Error initializing: authentication error!`);
+    return { props: {} };
+  }
+  const userId = token.sub!;
 
-      const initTasks: TaskDto[] = (await getManyTasks(userId)).map(
-        convertTaskDaoToDto
-      );
-      return {
-        props: {
-          initTasks,
-        },
-      };
-    }) satisfies GetServerSideProps);
+  const initTasks: TaskDto[] = (await getManyTasks(userId)).map(
+    convertTaskDaoToDto
+  );
+  return {
+    props: {
+      ...props,
+      initTasks,
+    },
+  };
+}) satisfies GetServerSideProps;
 
 export default function AllTasksView({ initTasks }: { initTasks?: TaskDto[] }) {
   const { showAddEditModal } = useModalContext();

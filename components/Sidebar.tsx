@@ -23,7 +23,8 @@ type TagInfo = {
   count: number;
 };
 
-export default function Sidebar() {
+export default function Sidebar({ isDemoBuild }: { isDemoBuild: boolean }) {
+  console.log("Sidebar", { isDemoBuild }); // TODO remove
   const { isVisible, setIsVisible } = useSidebarContext();
   const { setCurrentModal } = useModalContext();
   const { isAdmin } = useAuthContext();
@@ -107,6 +108,19 @@ export default function Sidebar() {
             <span className="font-bold">Lyfe</span>Schedule
           </div>
 
+          {isDemoBuild && (
+            <div className="bg-accent text-ondark rounded-md mb-2 px-2 py-1 leading-tight">
+              You're in demo mode!{" "}
+              <a
+                className="underline"
+                href="mailto:beta@lyfeschedule.com?subject=Request%20for%20beta%20access"
+              >
+                Click here to request full access to the beta
+              </a>
+              .
+            </div>
+          )}
+
           <div className="cursor-pointer" onClick={handleCalendarClick}>
             <FontAwesomeIcon icon={faCalendarDays} className="mr-2" />
             calendar
@@ -163,13 +177,18 @@ export default function Sidebar() {
             need help?
           </a>
 
-          <div
-            className="cursor-pointer hover:bg-gray-500/25"
-            onClick={handleSignOutClick}
-          >
-            <FontAwesomeIcon icon={faArrowRightFromBracket} className="mr-2" />
-            log out
-          </div>
+          {!isDemoBuild && (
+            <div
+              className="cursor-pointer hover:bg-gray-500/25"
+              onClick={handleSignOutClick}
+            >
+              <FontAwesomeIcon
+                icon={faArrowRightFromBracket}
+                className="mr-2"
+              />
+              log out
+            </div>
+          )}
 
           <div
             className="cursor-pointer hover:bg-gray-500/25"
