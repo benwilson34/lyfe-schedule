@@ -156,7 +156,7 @@ See the [Create initial user account(s)](#create-initial-user-accounts) section 
 
 ## Feedback
 
-Please let us know if you find a bug or have thoughts on what could be improved by sending an email to [feedback@lyfeschedule.com](mailto:feedback@lyfeschedule.com?subject=Feedback%20on%20LyfeSchedule).
+Please let us know if you find a bug or have thoughts on what could be improved by sending an email to [feedback@lyfeschedule.com](mailto:feedback@lyfeschedule.com?subject=Feedback%20on%20LyfeSchedule)!
 
 ## License
 
