@@ -32,9 +32,9 @@ export function DemoModeBanner() {
       </div>
 
       <div>
-        Hi! 👋 You're currently using LyfeSchedule in demo mode. All data is
-        stored local to this device. If you would like to sync your data between
-        devices,{" "}
+        Hi! 👋 You&apos;re currently using LyfeSchedule in demo mode. All data
+        is stored local to this device. If you would like to sync your data
+        between devices,{" "}
         <a
           className="underline"
           href="mailto:beta@lyfeschedule.com?subject=Request%20for%20beta%20access"

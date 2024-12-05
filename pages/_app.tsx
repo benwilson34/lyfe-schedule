@@ -213,6 +213,7 @@ function Init({ isDemoMode }: { isDemoMode: boolean }) {
       }
     }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <></>;

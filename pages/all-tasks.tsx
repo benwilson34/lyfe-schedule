@@ -84,7 +84,7 @@ export default function AllTasksView({ initTasks }: { initTasks?: TaskDto[] }) {
       }
     };
     fetchData();
-  }, []);
+  }, [initTasks]);
 
   const sortedTasks = useMemo(() => {
     const selectedSortingFunc = (() => {

@@ -102,11 +102,14 @@ export default function CalendarView() {
     [] // only on first load
   );
 
-  const sortTasksByPriority = (taskA: Task, taskB: Task): number =>
-    calculatePriority(taskA.startDate, taskA.endDate, selectedDay) <
-    calculatePriority(taskB.startDate, taskB.endDate, selectedDay)
-      ? -1
-      : 1;
+  const sortTasksByPriority = useCallback(
+    (taskA: Task, taskB: Task): number =>
+      calculatePriority(taskA.startDate, taskA.endDate, selectedDay) <
+      calculatePriority(taskB.startDate, taskB.endDate, selectedDay)
+        ? -1
+        : 1,
+    [selectedDay]
+  );
 
   const sortedSelectedDayTasks = useMemo(() => {
     const selectedSortingFunc = (() => {
@@ -141,10 +144,11 @@ export default function CalendarView() {
     const sortedTasks = clone(selectedDayTasks).sort(sortingFunc);
     return sortedTasks;
   }, [
-    selectedDayTasks,
-    selectedSort,
     isSortAscending,
     areCompletedTasksSortedFirst,
+    selectedDayTasks,
+    selectedSort,
+    sortTasksByPriority,
   ]);
 
   const toggleCompletedTasksSortedFirst = () =>

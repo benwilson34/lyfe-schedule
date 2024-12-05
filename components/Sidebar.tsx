@@ -109,7 +109,7 @@ export default function Sidebar({ isDemoMode }: { isDemoMode: boolean }) {
 
           {isDemoMode && (
             <div className="bg-accent text-ondark rounded-md mb-2 px-2 py-1 leading-tight">
-              You're in demo mode!{" "}
+              You&apos;re in demo mode!{" "}
               <a
                 className="underline"
                 href="mailto:beta@lyfeschedule.com?subject=Request%20for%20beta%20access"
