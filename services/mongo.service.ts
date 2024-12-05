@@ -23,7 +23,7 @@ import {
   TOKEN_PAYLOAD_COLLECTION_NAME,
 } from "@/util/env";
 
-const client = new MongoClient(DB_URL);
+let client: MongoClient | undefined;
 let taskCollection: Collection<TaskDao> | null = null;
 let userCollection: Collection<UserDao> | null = null;
 let tokenPayloadCollection: Collection<TokenPayloadDao> | null = null;
@@ -246,6 +246,7 @@ export async function deleteTokenPayload(token: string): Promise<string> {
 
 export async function init() {
   try {
+    client = new MongoClient(DB_URL);
     await client.connect();
     const db = client.db(DB_NAME);
     taskCollection = db.collection<TaskDao>(TASK_COLLECTION_NAME || "task");
