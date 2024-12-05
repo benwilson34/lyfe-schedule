@@ -15,7 +15,7 @@ export const getServerSideProps = IS_DEMO_MODE
       };
     }) satisfies GetServerSideProps);
 
-function RequestResetPassword({
+export default function RequestResetPassword({
   initialEmail,
 }: {
   initialEmail: string | null;
@@ -108,5 +108,3 @@ function RequestResetPassword({
     </>
   );
 }
-
-export default IS_DEMO_MODE ? undefined : RequestResetPassword;

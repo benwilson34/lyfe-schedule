@@ -3,10 +3,16 @@ const { DefinePlugin, NormalModuleReplacementPlugin } = require("webpack");
 
 const IS_DEMO_MODE = process.env.IS_DEMO_MODE === "true" || false;
 const BUILD_DIR = ".next";
+const DEMO_MODE_REDIRECT = [{
+  source: "/auth/:x",
+  destination: "/calendar",
+  permanent: true,
+}];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   redirects: async () => [
+    ...(IS_DEMO_MODE ? DEMO_MODE_REDIRECT : []),
     {
       source: "/",
       destination: "/calendar",

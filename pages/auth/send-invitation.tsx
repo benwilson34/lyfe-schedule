@@ -19,7 +19,7 @@ export const getServerSideProps = IS_DEMO_MODE
       return { props: { isAdmin: ADMIN_USER_ID && userId === ADMIN_USER_ID } };
     }) satisfies GetServerSideProps);
 
-function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
+export default function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
   const [email, setEmail] = useState("");
   const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -151,5 +151,3 @@ function SendInvitationPage({ isAdmin }: { isAdmin: boolean }) {
     </>
   );
 }
-
-export default IS_DEMO_MODE ? undefined : SendInvitationPage;

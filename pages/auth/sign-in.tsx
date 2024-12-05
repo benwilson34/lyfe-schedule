@@ -23,7 +23,7 @@ export const getServerSideProps = IS_DEMO_MODE
       };
     }) satisfies GetServerSideProps);
 
-function SignIn({
+export default function SignIn({
   csrfToken,
   isRegistrationInviteOnly,
 }: {
@@ -184,5 +184,3 @@ function SignIn({
     </>
   );
 }
-
-export default IS_DEMO_MODE ? undefined : SignIn;

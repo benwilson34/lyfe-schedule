@@ -27,7 +27,7 @@ export const getServerSideProps = IS_DEMO_MODE
       };
     }) satisfies GetServerSideProps);
 
-function AcceptInvitationPage({
+export default function AcceptInvitationPage({
   tokenPayload,
 }: {
   tokenPayload?: TokenPayloadDto;
@@ -214,5 +214,3 @@ function AcceptInvitationPage({
     </>
   );
 }
-
-export default IS_DEMO_MODE ? undefined : AcceptInvitationPage;

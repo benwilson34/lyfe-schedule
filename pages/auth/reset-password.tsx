@@ -29,7 +29,7 @@ export const getServerSideProps = IS_DEMO_MODE
       };
     }) satisfies GetServerSideProps);
 
-function ResetPasswordPage({
+export default function ResetPasswordPage({
   tokenPayload,
 }: {
   tokenPayload?: TokenPayloadDto;
@@ -218,5 +218,3 @@ function ResetPasswordPage({
     </>
   );
 }
-
-export default IS_DEMO_MODE ? undefined : ResetPasswordPage;

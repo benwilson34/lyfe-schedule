@@ -37,17 +37,15 @@ async function middleware(req: NextRequest, event: NextFetchEvent) {
 // does this actually work with tree-shaking?
 export default IS_DEMO_MODE ? () => {} : middleware;
 
-export const config = IS_DEMO_MODE
-  ? null
-  : {
-      matcher: [
-        /*
-         * Match all request paths except for the ones starting with:
-         * - api (API routes)
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         */
-        "/((?!api|_next/static|_next/image|favicon.ico).*)",
-      ],
-    };
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  ],
+};

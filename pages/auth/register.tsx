@@ -19,7 +19,7 @@ export const getServerSideProps = IS_DEMO_MODE
       };
     }) satisfies GetServerSideProps);
 
-function RegisterPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password1, setPassword1] = useState("");
   const [password2, setPassword2] = useState("");
@@ -188,5 +188,3 @@ function RegisterPage() {
     </>
   );
 }
-
-export default IS_DEMO_MODE ? undefined : RegisterPage;
