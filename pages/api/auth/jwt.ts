@@ -2,7 +2,8 @@ import ErrorResponse, {
   unauthenticatedErrorResponse,
 } from "@/models/ErrorResponse";
 import SuccessResponse from "@/models/SuccessResponse";
-import { ADMIN_USER_ID } from "@/util/env";
+import { handleUnimplementedEndpoint } from "@/util/apiResponse";
+import { ADMIN_USER_ID, IS_DEMO_MODE } from "@/util/env";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getToken } from "next-auth/jwt";
 
@@ -23,21 +24,15 @@ async function decryptJwt(req: NextApiRequest, res: NextApiResponse) {
   }).send(res);
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method?.toUpperCase()) {
     case "GET":
       await decryptJwt(req, res);
       break;
     default:
-      new ErrorResponse({
-        status: 404,
-        errorCode: "resourceNotFound",
-        title: "Resource not found",
-        detail: `Can not ${req.method} ${req.url}`,
-      }).send(res);
+      handleUnimplementedEndpoint(req, res);
       break;
   }
 }
+
+export default IS_DEMO_MODE ? handleUnimplementedEndpoint : handler;

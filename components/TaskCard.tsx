@@ -1,8 +1,11 @@
 import type { TaskViewModel as Task } from "@/types/task.viewModel";
 import dayjs, { Dayjs } from "@/lib/dayjs";
 import TaskOptionsMenu from "./TaskOptionsMenu";
-import { formatRepeatInterval, formatShownDate, formatTimeEstimate } from "@/util/format";
-import { calculatePriority } from "@/util/date";
+import {
+  formatRepeatInterval,
+  formatShownDate,
+  formatTimeEstimate,
+} from "@/util/format";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
 import { faCalendar, faClock } from "@fortawesome/free-regular-svg-icons";
@@ -94,7 +97,10 @@ export default function TaskCard({
   const handleCheckboxClick = async () => {
     setIsLoading(true);
     const completedDate = new Date();
-    const createdRepeatingTaskStartDate = await completeTask(task.id, completedDate);
+    const createdRepeatingTaskStartDate = await completeTask(
+      task.id,
+      completedDate
+    );
     if (createdRepeatingTaskStartDate) {
       showToastForCreatedRepeatingTask(createdRepeatingTaskStartDate);
     }
@@ -115,12 +121,12 @@ export default function TaskCard({
     completedDate: Date
   ) => {
     setIsLoading(true);
-    const createdRepeatingTaskStartDate = await completeTask(task.id, completedDate);
-    const completeDay = dayjs(completedDate)
-    afterComplete(
-      assign(task, { completedDate: completeDay }),
-      completeDay
+    const createdRepeatingTaskStartDate = await completeTask(
+      task.id,
+      completedDate
     );
+    const completeDay = dayjs(completedDate);
+    afterComplete(assign(task, { completedDate: completeDay }), completeDay);
     toast(`Task completed on ${formatShownDate(completeDay)}`);
     if (createdRepeatingTaskStartDate) {
       showToastForCreatedRepeatingTask(createdRepeatingTaskStartDate);

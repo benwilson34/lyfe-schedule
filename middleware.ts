@@ -4,11 +4,9 @@ import { getToken } from "next-auth/jwt";
 import { withAuth } from "next-auth/middleware";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 import { customAuthPages } from "./config/customAuthPages";
+import { IS_DEMO_MODE } from "./util/env";
 
-export default async function middleware(
-  req: NextRequest,
-  event: NextFetchEvent
-) {
+async function middleware(req: NextRequest, event: NextFetchEvent) {
   const token = await getToken({ req });
   const isAuthenticated = !!token;
 
@@ -35,6 +33,9 @@ export default async function middleware(
   // @ts-expect-error
   return authMiddleware(req, event);
 }
+
+// does this actually work with tree-shaking?
+export default IS_DEMO_MODE ? () => {} : middleware;
 
 export const config = {
   matcher: [

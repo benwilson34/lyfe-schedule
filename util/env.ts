@@ -1,11 +1,7 @@
-function parseBoolean(boolString: string): boolean | null {
-  if (!/^(true|false)$/i.test(boolString)) {
-    // TODO print some "invalid configuration" error message?
-    return null;
-  }
-  return boolString.toLowerCase() === "true";
-}
+import { parseBoolean } from "./parse-boolean";
 
+export const IS_DEMO_MODE =
+  parseBoolean(process.env.IS_DEMO_MODE || "") ?? false;
 export const DB_URL = process.env.DB_URL!;
 export const DB_NAME = process.env.DB_NAME!;
 // TODO move other defaults here
@@ -30,6 +26,10 @@ export const IS_REGISTRATION_INVITE_ONLY =
 export const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
 
 export function checkForRequiredEnvVars() {
+  if (IS_DEMO_MODE) {
+    return;
+  }
+
   const requiredEnvVarKeys = [
     "DB_URL",
     "DB_NAME",

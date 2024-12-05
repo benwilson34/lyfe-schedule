@@ -4,25 +4,28 @@ import { getTokenPayload } from "../api/users";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 import { registerUserFromInvitation } from "@/services/api.service";
+import { IS_DEMO_MODE } from "@/util/env";
 
-export const getServerSideProps = (async (context) => {
-  const { token } = context.query;
-  if (!token || Array.isArray(token)) {
-    return { props: {} };
-  }
+export const getServerSideProps = IS_DEMO_MODE
+  ? undefined
+  : ((async (context) => {
+      const { token } = context.query;
+      if (!token || Array.isArray(token)) {
+        return { props: {} };
+      }
 
-  const tokenPayload = await getTokenPayload(token, "send-invitation");
-  if (!tokenPayload) {
-    return { props: {} };
-  }
-  // TODO should check if invitee email already exists here too?
+      const tokenPayload = await getTokenPayload(token, "send-invitation");
+      if (!tokenPayload) {
+        return { props: {} };
+      }
+      // TODO should check if invitee email already exists here too?
 
-  return {
-    props: {
-      tokenPayload,
-    },
-  };
-}) satisfies GetServerSideProps;
+      return {
+        props: {
+          tokenPayload,
+        },
+      };
+    }) satisfies GetServerSideProps);
 
 export default function AcceptInvitationPage({
   tokenPayload,

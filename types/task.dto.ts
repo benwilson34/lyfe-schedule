@@ -1,15 +1,34 @@
-import { Patchable } from "@/util/types";
+import { Dayjs } from "@/lib/dayjs";
+import { Modify, Patchable } from "@/util/types";
 
-export type Action = {
-  timestamp: Date;
+export type BaseAction = {
+  timestamp: string | Date | Dayjs;
 };
 
-export type PostponeAction = Action & {
-  postponeUntilDate: Date;
+export type ActionDto = Modify<
+  BaseAction,
+  {
+    timestamp: string;
+  }
+>;
+
+export type PostponeActionDto = ActionDto & {
+  postponeUntilDate: string;
 };
 
-export function isPostponeAction(action: Action): action is PostponeAction {
-  return (action as PostponeAction).postponeUntilDate !== undefined;
+export function isPostponeAction<
+  BaseAction extends {
+    postponeUntilDate?: string | Date | Dayjs;
+  },
+>(action: BaseAction): boolean {
+  return action.postponeUntilDate !== undefined;
+}
+
+export function isPostponeActionDto(
+  action: ActionDto
+): action is PostponeActionDto {
+  // sufficient for now, maybe eventually there will be some `action.type` field to check instead
+  return (action as PostponeActionDto).postponeUntilDate !== undefined;
 }
 
 /**
@@ -30,7 +49,7 @@ export type TaskDto = {
   isProjected?: boolean; // calculated field (not part of the data model)
   tags?: string[];
   completedDate?: string;
-  actions?: Action[];
+  actions?: ActionDto[];
   priority?: number; // calculated field (not part of the data model)
 };
 

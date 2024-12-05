@@ -26,8 +26,8 @@ import { useModalContext } from "@/contexts/modal-context";
 import { getTasksForDay, getTasksForDayRange } from "@/services/api.service";
 import { useSettingsContext } from "@/contexts/settings-context";
 import NavBar from "@/components/NavBar";
-import { calculatePriority } from "@/util/date";
 import {
+  calculatePriority,
   sortTasksByEndDate,
   sortTasksByRange,
   sortTasksByRepeatInterval,
@@ -36,8 +36,18 @@ import {
 } from "@/util/task";
 import { SortMode } from "@/util/enums";
 import SortControls from "@/components/SortControls";
+import { IS_DEMO_MODE } from "@/util/env";
+import { GetServerSideProps } from "next/types";
 
 const NUM_DAILY_WORKING_MINS = 4 * 60; // TODO make user-configurable
+
+export const getServerSideProps = (async (context: any) => {
+  return {
+    props: {
+      isDemoMode: IS_DEMO_MODE,
+    },
+  };
+}) satisfies GetServerSideProps;
 
 export default function CalendarView() {
   const { showAddEditModal } = useModalContext();
@@ -92,11 +102,14 @@ export default function CalendarView() {
     [] // only on first load
   );
 
-  const sortTasksByPriority = (taskA: Task, taskB: Task): number =>
-    calculatePriority(taskA.startDate, taskA.endDate, selectedDay) <
-    calculatePriority(taskB.startDate, taskB.endDate, selectedDay)
-      ? -1
-      : 1;
+  const sortTasksByPriority = useCallback(
+    (taskA: Task, taskB: Task): number =>
+      calculatePriority(taskA.startDate, taskA.endDate, selectedDay) <
+      calculatePriority(taskB.startDate, taskB.endDate, selectedDay)
+        ? -1
+        : 1,
+    [selectedDay]
+  );
 
   const sortedSelectedDayTasks = useMemo(() => {
     const selectedSortingFunc = (() => {
@@ -131,10 +144,11 @@ export default function CalendarView() {
     const sortedTasks = clone(selectedDayTasks).sort(sortingFunc);
     return sortedTasks;
   }, [
-    selectedDayTasks,
-    selectedSort,
     isSortAscending,
     areCompletedTasksSortedFirst,
+    selectedDayTasks,
+    selectedSort,
+    sortTasksByPriority,
   ]);
 
   const toggleCompletedTasksSortedFirst = () =>

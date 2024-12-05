@@ -53,7 +53,11 @@ export async function decryptJwt() {
   });
 }
 
-export async function getTasks({ tag = "" }: { tag: string }) {
+export async function getTasks({
+  tag = "",
+}: {
+  tag?: string;
+} = {}): Promise<TaskDto[]> {
   const params = new URLSearchParams();
   if (tag.length > 0) {
     params.append("tag", tag);
@@ -66,7 +70,9 @@ export async function getTasks({ tag = "" }: { tag: string }) {
   return tasks;
 }
 
-export async function getTasksForDay(day: Dayjs) {
+export async function getTasksForDay(
+  day: Dayjs
+): Promise<Record<string, TaskDto[]>> {
   const { dayTasks } = await request<{ dayTasks: Record<string, TaskDto[]> }>({
     method: "GET",
     endpoint: "/api/tasks",
@@ -75,7 +81,10 @@ export async function getTasksForDay(day: Dayjs) {
   return dayTasks;
 }
 
-export async function getTasksForDayRange(startDay: Dayjs, endDay: Dayjs) {
+export async function getTasksForDayRange(
+  startDay: Dayjs,
+  endDay: Dayjs
+): Promise<Record<string, TaskDto[]>> {
   const { dayTasks } = await request<{ dayTasks: Record<string, TaskDto[]> }>({
     method: "GET",
     endpoint: "/api/tasks",
@@ -90,7 +99,7 @@ export async function getTasksForDayRange(startDay: Dayjs, endDay: Dayjs) {
 export async function completeTask(
   completedTaskId: string,
   completedDate: Date
-) {
+): Promise<string | undefined> {
   // there's only data in the response if the task was repeating and a new task was created
   const data = await request<
     | {
@@ -110,7 +119,10 @@ export async function completeTask(
   }
 }
 
-export async function postponeTask(taskId: string, postponeUntilDate: Dayjs) {
+export async function postponeTask(
+  taskId: string,
+  postponeUntilDate: Dayjs
+): Promise<undefined> {
   return request({
     method: "PUT",
     endpoint: `/api/tasks/${taskId}`,
@@ -122,7 +134,7 @@ export async function postponeTask(taskId: string, postponeUntilDate: Dayjs) {
 }
 
 // TODO or should the type be TaskViewModel then we'll just convert to TaskDto?
-export async function createTask(task: CreateTaskDto) {
+export async function createTask(task: CreateTaskDto): Promise<string> {
   const { taskId } = await request<{ taskId: string }>({
     method: "POST",
     endpoint: "/api/tasks",
@@ -132,7 +144,10 @@ export async function createTask(task: CreateTaskDto) {
   return taskId;
 }
 
-export async function patchTask(taskId: string, task: PatchTaskDto) {
+export async function patchTask(
+  taskId: string,
+  task: PatchTaskDto
+): Promise<string> {
   const { taskId: modifiedId } = await request<{ taskId: string }>({
     method: "PATCH",
     endpoint: `/api/tasks/${taskId}`,
@@ -142,15 +157,15 @@ export async function patchTask(taskId: string, task: PatchTaskDto) {
   return modifiedId;
 }
 
-export async function deleteTask(taskId: string) {
+export async function deleteTask(taskId: string): Promise<void> {
   await request({ method: "DELETE", endpoint: `/api/tasks/${taskId}` });
 }
 
-export async function deleteAllTasks() {
+export async function deleteAllTasks(): Promise<void> {
   await request({ method: "DELETE", endpoint: `/api/tasks` });
 }
 
-export async function getTagCounts() {
+export async function getTagCounts(): Promise<Record<string, number>> {
   const { tagCounts } = await request<{ tagCounts: Record<string, number> }>({
     method: "GET",
     endpoint: "/api/tags",
@@ -161,7 +176,7 @@ export async function getTagCounts() {
 export async function registerUserFromInvitation(
   token: string,
   password: string
-) {
+): Promise<void> {
   await request({
     method: "PUT",
     endpoint: "/api/users",
@@ -173,7 +188,10 @@ export async function registerUserFromInvitation(
   });
 }
 
-export async function registerUser(email: string, password: string) {
+export async function registerUser(
+  email: string,
+  password: string
+): Promise<void> {
   await request({
     method: "POST",
     endpoint: "/api/users",
@@ -181,7 +199,7 @@ export async function registerUser(email: string, password: string) {
   });
 }
 
-export async function requestResetPassword(email: string) {
+export async function requestResetPassword(email: string): Promise<void> {
   await request({
     method: "PUT",
     endpoint: "/api/users",
@@ -194,7 +212,10 @@ export async function requestResetPassword(email: string) {
   });
 }
 
-export async function setNewPassword(token: string, password: string) {
+export async function setNewPassword(
+  token: string,
+  password: string
+): Promise<void> {
   await request({
     method: "PUT",
     endpoint: "/api/users",
@@ -206,7 +227,7 @@ export async function setNewPassword(token: string, password: string) {
   });
 }
 
-export async function sendInvitation(inviteeEmail: string) {
+export async function sendInvitation(inviteeEmail: string): Promise<void> {
   await request({
     method: "PUT",
     endpoint: "/api/users",

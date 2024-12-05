@@ -1,21 +1,23 @@
 import { registerUser } from "@/services/api.service";
-import { IS_REGISTRATION_INVITE_ONLY } from "@/util/env";
+import { IS_DEMO_MODE, IS_REGISTRATION_INVITE_ONLY } from "@/util/env";
 import { GetServerSideProps } from "next";
 import { useState } from "react";
 import { PulseLoader } from "react-spinners";
 
-export const getServerSideProps = (async (context) => {
-  // redirect to sign-in page if env var `IS_REGISTRATION_INVITE_ONLY === true`
-  return {
-    props: {},
-    ...(IS_REGISTRATION_INVITE_ONLY && {
-      redirect: {
-        destination: "/auth/sign-in",
-        permanent: false,
-      },
-    }),
-  };
-}) satisfies GetServerSideProps;
+export const getServerSideProps = IS_DEMO_MODE
+  ? undefined
+  : ((async (context) => {
+      // redirect to sign-in page if env var `IS_REGISTRATION_INVITE_ONLY === true`
+      return {
+        props: {},
+        ...(IS_REGISTRATION_INVITE_ONLY && {
+          redirect: {
+            destination: "/auth/sign-in",
+            permanent: false,
+          },
+        }),
+      };
+    }) satisfies GetServerSideProps);
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");

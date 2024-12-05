@@ -25,6 +25,7 @@ import {
   ADMIN_USER_ID,
   BASE_URL,
   INVITATION_TOKEN_TTL_MINS,
+  IS_DEMO_MODE,
   IS_REGISTRATION_INVITE_ONLY,
   PASSWORD_RESET_TOKEN_TTL_MINS,
 } from "@/util/env";
@@ -32,6 +33,7 @@ import { formatFriendlyFullDate } from "@/util/format";
 import { tokenPayloadDaoToDto } from "@/types/tokenPayload.dao";
 import { TokenPayloadAction } from "@/types/tokenPayload.dto";
 import { getToken } from "next-auth/jwt";
+import { handleUnimplementedEndpoint } from "@/util/apiResponse";
 
 async function hashPassword(password: string) {
   return argon2.hash(password);
@@ -447,10 +449,7 @@ async function operateOnUsers(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method?.toUpperCase()) {
     case "POST":
       await register(req, res);
@@ -459,12 +458,9 @@ export default async function handler(
       await operateOnUsers(req, res);
       break;
     default:
-      new ErrorResponse({
-        status: 404,
-        errorCode: "resourceNotFound",
-        title: "Resource not found",
-        detail: `Can not ${req.method} ${req.url}`,
-      }).send(res);
+      handleUnimplementedEndpoint(req, res);
       break;
   }
 }
+
+export default IS_DEMO_MODE ? handleUnimplementedEndpoint : handler;

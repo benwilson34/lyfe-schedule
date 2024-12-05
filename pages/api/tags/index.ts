@@ -7,6 +7,8 @@ import ErrorResponse, {
 } from "@/models/ErrorResponse";
 import SuccessResponse from "@/models/SuccessResponse";
 import { getToken } from "next-auth/jwt";
+import { handleUnimplementedEndpoint } from "@/util/apiResponse";
+import { IS_DEMO_MODE } from "@/util/env";
 
 function handleError(maybeError: any, res: NextApiResponse) {
   console.error(maybeError);
@@ -42,22 +44,16 @@ async function getAllTags(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log(`${req.method} ${req.url}`); // TODO replace with proper logging
   switch (req.method?.toUpperCase()) {
     case "GET":
       await getAllTags(req, res);
       break;
     default:
-      new ErrorResponse({
-        status: 404,
-        errorCode: "resourceNotFound",
-        title: "Resource not found",
-        detail: `Can not ${req.method} ${req.url}`,
-      }).send(res);
+      handleUnimplementedEndpoint(req, res);
       break;
   }
 }
+
+export default IS_DEMO_MODE ? handleUnimplementedEndpoint : handler;

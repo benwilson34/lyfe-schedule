@@ -16,6 +16,8 @@ import SuccessResponse from "@/models/SuccessResponse";
 import { CreateTaskDao, convertPatchTaskDtoToDao } from "@/types/task.dao";
 import dayjs from "@/lib/dayjs";
 import { getCanonicalDatestring, stripOffset } from "@/util/date";
+import { IS_DEMO_MODE } from "@/util/env";
+import { handleUnimplementedEndpoint } from "@/util/apiResponse";
 
 async function patchTask(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -299,10 +301,7 @@ async function deleteTask(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log(`${req.method} ${req.url}`); // TODO replace with proper logging
   switch (req.method?.toUpperCase()) {
     case "PATCH":
@@ -315,12 +314,9 @@ export default async function handler(
       await deleteTask(req, res);
       break;
     default:
-      new ErrorResponse({
-        status: 404,
-        errorCode: "resourceNotFound",
-        title: "Resource not found",
-        detail: `Can not ${req.method} ${req.url}`,
-      }).send(res);
+      handleUnimplementedEndpoint(req, res);
       break;
   }
 }
+
+export default IS_DEMO_MODE ? handleUnimplementedEndpoint : handler;

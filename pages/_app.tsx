@@ -24,6 +24,7 @@ import "@/styles/globals.css";
 import "@/styles/react-toggle-style.css";
 import "@/styles/CalendarPicker.css";
 import "@/styles/ToastContainer.css";
+import { DemoModeBanner } from "@/components/DemoModeBanner";
 
 const exo2 = Exo_2({ subsets: ["latin"] });
 
@@ -78,7 +79,7 @@ function Modals() {
           }
           confirmButtonText="Postpone"
           isDayValid={(day: any) =>
-            isPostponeDateValid(selectedTask!, day as Date)
+            isPostponeDateValid(selectedTask!, dayjs(day as Date), dayjs())
           }
         />
       )}
@@ -183,21 +184,13 @@ function Modals() {
 // }) satisfies GetServerSideProps;
 
 // there's probably a better way
-function Init() {
+function Init({ isDemoMode }: { isDemoMode: boolean }) {
   const { setMonthInfoSettings, setDayInfoSettings } = useSettingsContext();
   const { setIsAdmin } = useAuthContext();
 
   // set application-wide state only on first load
   useEffect(() => {
     async function load() {
-      // auth payload
-      try {
-        const { isAdmin } = await decryptJwt();
-        setIsAdmin(isAdmin);
-      } catch (maybeError: any) {
-        console.error(maybeError);
-      }
-
       // user-configured settings
       const savedSettings = JSON.parse(
         localStorage.getItem("settings") || "null"
@@ -206,8 +199,21 @@ function Init() {
         setMonthInfoSettings(savedSettings.monthInfoSettings);
         setDayInfoSettings(savedSettings.dayInfoSettings);
       }
+
+      if (isDemoMode) {
+        return;
+      }
+
+      // auth payload
+      try {
+        const { isAdmin } = await decryptJwt();
+        setIsAdmin(isAdmin);
+      } catch (maybeError: any) {
+        console.error(maybeError);
+      }
     }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <></>;
@@ -224,12 +230,14 @@ export default function App({ Component, pageProps }: AppProps) {
         <SidebarContextProvider>
           <SettingsContextProvider>
             <AuthContextProvider>
-              <Init />
+              <Init isDemoMode={pageProps.isDemoMode} />
 
               <main className={exo2.className}>
                 <Component {...pageProps} />
 
-                <Sidebar />
+                {pageProps.isDemoMode && <DemoModeBanner />}
+
+                <Sidebar isDemoMode={pageProps.isDemoMode} />
 
                 <Modals />
 

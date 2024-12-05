@@ -3,7 +3,7 @@ import {
   taskDtoToViewModel,
   type TaskViewModel as Task,
 } from "@/types/task.viewModel";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { getToken } from "next-auth/jwt";
 import dayjs from "@/lib/dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,7 +15,7 @@ import { GetServerSideProps } from "next";
 import { useModalContext } from "@/contexts/modal-context";
 import { getManyTasks } from "@/services/mongo.service";
 import NavBar from "@/components/NavBar";
-import { calculatePriority } from "@/util/date";
+import { calculatePriority } from "@/util/task";
 import { SortMode } from "@/util/enums";
 import {
   sortTasksByStartDate,
@@ -26,8 +26,16 @@ import {
 } from "@/util/task";
 import { clone } from "lodash";
 import SortControls from "@/components/SortControls";
+import { IS_DEMO_MODE } from "@/util/env";
+import { getTasks } from "@/services/api.service";
 
 export const getServerSideProps = (async (context: any) => {
+  const props = {
+    isDemoMode: IS_DEMO_MODE,
+  };
+  if (IS_DEMO_MODE) {
+    return { props };
+  }
   // TODO this would be better as a util function
   // auth
   const token = await getToken({ req: context.req });
@@ -43,35 +51,40 @@ export const getServerSideProps = (async (context: any) => {
   );
   return {
     props: {
+      ...props,
       initTasks,
     },
   };
 }) satisfies GetServerSideProps;
 
-export default function AllTasksView({ initTasks }: { initTasks: TaskDto[] }) {
+export default function AllTasksView({ initTasks }: { initTasks?: TaskDto[] }) {
   const { showAddEditModal } = useModalContext();
 
   // TODO gonna have to check `initTasks` when switching pages I think
   const [tasks, setTasks] = useState<Task[]>(
-    initTasks.map(taskDtoToViewModel) as Task[]
+    initTasks?.map(taskDtoToViewModel) || []
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedSort, setSelectedSort] = useState<SortMode>(SortMode.Priority);
   const [isSortAscending, setIsSortAscending] = useState<boolean>(false);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const [shownStartDay, shownEndDay] = shownDateRange;
-  //       const dayTasks = await getTasksForDayRange(shownStartDay, shownEndDay);
-  //       setDayTasks(dayTasks);
-  //     } catch (maybeError) {
-  //       console.error(maybeError);
-  //       // TODO display some error message
-  //     }
-  //   };
-  //   fetchData();
-  // }, [shownDateRange]);
+  useEffect(() => {
+    if (initTasks) {
+      return;
+    }
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const tasks = await getTasks();
+        setTasks(tasks.map(taskDtoToViewModel));
+        setIsLoading(false);
+      } catch (maybeError) {
+        console.error(maybeError);
+        // TODO display some error message
+      }
+    };
+    fetchData();
+  }, [initTasks]);
 
   const sortedTasks = useMemo(() => {
     const selectedSortingFunc = (() => {
