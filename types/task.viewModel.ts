@@ -35,13 +35,14 @@ export function taskDtoToViewModel(taskDto: TaskDto): TaskViewModel {
     ...(taskDto.completedDate && {
       completedDate: dayjs(taskDto.completedDate),
     }),
-    ...(taskDto.actions &&
-      taskDto.actions.map((action) => ({
+    ...(taskDto.actions && {
+      actions: taskDto.actions.map((action) => ({
         timestamp: dayjs(action.timestamp),
         ...((action as any).postponeUntilDate && {
           // TODO fix typing
           postponeUntilDate: dayjs((action as any).postponeUntilDate),
         }),
-      }))),
+      })),
+    }),
   } as TaskViewModel;
 }

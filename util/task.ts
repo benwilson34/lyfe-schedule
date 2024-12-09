@@ -202,7 +202,7 @@ export function getTasksForDay<
     .map(
       (task) =>
         assign(task, {
-          lastPostponeUntilDate: getLastPostponeUntilDay(task.actions),
+          lastPostponeUntilDay: getLastPostponeUntilDay(task.actions),
           // TODO don't calculate priority here
           priority: calculatePriority(task.startDate, task.endDate, currentDay),
         })
