@@ -25,26 +25,6 @@ import {
 const DEMO_USER_ID = "_";
 const TASK_KEY = "tasks";
 const TASK_ID_COUNTER_KEY = "taskIdCounter";
-const INIT_TASKS: TaskDto[] = [
-  {
-    id: "0",
-    userId: DEMO_USER_ID,
-    title: "demo task 1",
-    startDate: "2024-11-13",
-    endDate: "2024-11-18",
-    rangeDays: 6,
-    tags: ["chores", "tag1"],
-  },
-  {
-    id: "1",
-    userId: DEMO_USER_ID,
-    title: "demo task 2",
-    startDate: "2024-11-10",
-    endDate: "2024-11-13",
-    rangeDays: 4,
-    tags: ["chores"],
-  },
-];
 // will serve as a "data store"
 // TODO should do ViewModel[]? So I don't have to parse the Dates over and over
 //   Maybe change the `api.service` functions that return `TaskDto` to `TaskViewModel`
@@ -60,12 +40,66 @@ function loadData(): TaskDto[] | null {
   }
   console.log("Loading demo data");
   const loadedTasksString = global.window.localStorage.getItem(TASK_KEY);
-  demoTasks = loadedTasksString ? JSON.parse(loadedTasksString) : INIT_TASKS;
+  const today = dayjs();
+  const initTasks: TaskDto[] = [
+    {
+      title: "Try out LyfeSchedule",
+      startDate: today,
+      rangeDays: 1,
+      timeEstimateMins: 10,
+    },
+    {
+      title: "Sweep the floor",
+      startDate: today.subtract(8, "day"),
+      rangeDays: 7,
+      repeatDays: 7,
+      tags: ["chores"],
+    },
+    {
+      title: "Drop off package at the post office",
+      startDate: today.subtract(1, "day"),
+      rangeDays: 4,
+      timeEstimateMins: 30,
+      tags: ["work", "chores"],
+    },
+    {
+      title: "Work out",
+      startDate: today.subtract(1, "day"),
+      rangeDays: 2,
+      repeatDays: 1,
+      timeEstimateMins: 60,
+      tags: ["personal-goals"],
+    },
+    {
+      title: "Wash water bottle",
+      startDate: today.subtract(1, "day"),
+      rangeDays: 5,
+      repeatDays: 3,
+      timeEstimateMins: 5,
+      tags: ["chores"],
+    },
+    {
+      title: "Respond to emails",
+      startDate: today,
+      rangeDays: 1,
+      repeatDays: 1,
+      timeEstimateMins: 10,
+      completedDate: formatDayKey(today),
+      tags: ["work"],
+    },
+  ].map((task, index) => ({
+    ...task,
+    userId: DEMO_USER_ID,
+    id: index.toString(),
+    startDate: formatDayKey(task.startDate),
+    endDate: formatDayKey(dayjs(task.startDate).add(task.rangeDays - 1, "day")),
+  }));
+  demoTasks = loadedTasksString ? JSON.parse(loadedTasksString) : initTasks;
   const loadedTaskIdCounterString =
     global.window.localStorage.getItem(TASK_ID_COUNTER_KEY);
   demoTaskIdCounter = loadedTaskIdCounterString
     ? JSON.parse(loadedTaskIdCounterString)
-    : INIT_TASKS.length;
+    : initTasks.length;
   return demoTasks;
 }
 
