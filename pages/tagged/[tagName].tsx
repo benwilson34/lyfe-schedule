@@ -169,7 +169,7 @@ export default function TaggedTasksView({
       </section> */}
 
       <section
-        className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-4`}
+        className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-6`}
       >
         <div className="flex max-w-lg w-full items-center justify-between">
           <div>

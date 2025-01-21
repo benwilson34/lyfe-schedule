@@ -8,8 +8,6 @@ import { Exo_2 } from "next/font/google";
 import { CalendarPicker } from "./CalendarPicker";
 import dayjs from "@/lib/dayjs";
 
-const exo2 = Exo_2({ subsets: ["latin"] });
-
 export function CalendarPickerModal({
   isOpen,
   setIsOpen,
@@ -66,7 +64,7 @@ export function CalendarPickerModal({
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
         as="div"
-        className={`${exo2.className} relative z-30`}
+        className={`relative z-30`}
         initialFocus={cancelButtonRef}
         onClose={setIsOpen}
       >

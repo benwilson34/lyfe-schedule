@@ -67,7 +67,7 @@ export default function SortControls({
                 className="group relative cursor-default select-none py-1 px-2 text-gray-900 data-[focus]:bg-accent data-[focus]:text-white"
               >
                 <div className="flex items-center justify-between gap-x-2">
-                  <span className="block font-normal group-data-[selected]:font-semibold">
+                  <span className="block group-data-[selected]:font-semibold">
                     {sortMode}
                   </span>
 

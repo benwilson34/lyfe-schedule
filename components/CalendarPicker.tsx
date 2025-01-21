@@ -41,14 +41,14 @@ export const onTileClassName = ({
   date: Date;
   view: string;
 }) => {
-  let classes = "p-0 h-10 rounded-lg text-xs text-ondark align-top";
+  let classes = "p-0 h-10 rounded-lg text-xs align-top";
   if (view === "month") {
     classes += " text-left";
   }
   if (dayjs(date).startOf("day") < dayjs().startOf("day")) {
-    return `${classes} bg-general-200 border-2 border-general-200`;
+    return `${classes} bg-general-200 border-2 border-general-200 text-onlight`;
   }
-  return `${classes} bg-general-500 border-2 border-general-500`;
+  return `${classes} bg-general-500 border-2 border-general-500 text-ondark`;
 };
 
 const formatWeekday = (locale: string | undefined, date: Date): string => {

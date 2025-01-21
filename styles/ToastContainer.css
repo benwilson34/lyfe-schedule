@@ -1,6 +1,6 @@
 /* see https://fkhadra.github.io/react-toastify/how-to-style */
 
 :root {
-  /* unset the variable so it falls back to Exo2 */
-  --toastify-font-family: unset; 
+  /* unset the variable so it falls back to app default (see _app.tsx) */
+  --toastify-font-family: unset;
 }

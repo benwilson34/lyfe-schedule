@@ -1,3 +1,5 @@
+const defaultTheme = require("tailwindcss/defaultTheme");
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   important: true,
@@ -17,18 +19,21 @@ module.exports = {
           100: "rgb(var(--general-100-rgb) / <alpha-value>)",
         },
         accent: "rgb(var(--accent-rgb) / <alpha-value>)",
-        warning: "rgb(var(--warning-rgb) / <alpha-value>)",
+        // warning: "rgb(var(--warning-rgb) / <alpha-value>)",
         attention: "rgb(var(--attention-rgb) / <alpha-value>)",
-        onlight: "rgb(var(--on-light-rgb) / <alpha-value>)",
-        ondark: "rgb(var(--on-dark-rgb) / <alpha-value>)",
-        onwarning: "rgb(var(--on-warning-rgb) / <alpha-value>)",
-        // onattention: "rgb(var(--on-attention-rgb) / <alpha-value>)",
         disabled: {
           100: "rgb(var(--disabled-100-rgb) / <alpha-value>)",
           DEFAULT: "rgb(var(--disabled-200-rgb) / <alpha-value>)",
           200: "rgb(var(--disabled-200-rgb) / <alpha-value>)",
         },
+        onlight: "rgb(var(--on-light-rgb) / <alpha-value>)",
+        ondark: "rgb(var(--on-dark-rgb) / <alpha-value>)",
+        // onwarning: "rgb(var(--on-warning-rgb) / <alpha-value>)",
+        // onattention: "rgb(var(--on-attention-rgb) / <alpha-value>)",
         ondisabled: "rgb(var(--on-disabled-rgb) / <alpha-value>)",
+      },
+      fontFamily: {
+        sans: ["var(--font-geologica)", ...defaultTheme.fontFamily.sans],
       },
       // fontSize: {
       //   "2xs": ["0.5rem", "0.75rem"],

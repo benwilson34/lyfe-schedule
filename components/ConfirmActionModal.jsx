@@ -10,8 +10,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { Exo_2 } from "next/font/google";
 
-const exo2 = Exo_2({ subsets: ["latin"] });
-
 export function ConfirmActionModal({
   isOpen,
   setIsOpen,
@@ -32,7 +30,7 @@ export function ConfirmActionModal({
   if (!isOpen) return null;
 
   return (
-    <Transition.Root show={isOpen} as={Fragment} className={exo2.className}>
+    <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
         as="div"
         className="relative z-30"

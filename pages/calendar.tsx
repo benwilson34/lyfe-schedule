@@ -265,7 +265,7 @@ export default function CalendarView() {
       <div
         className={`${contentClassName} flex justify-center items-end w-full`}
       >
-        <div className={`text-xs text-ondark italic mr-0.5 relative -bottom-1`}>
+        <div className={`text-xs italic mr-0.5 relative -bottom-1`}>
           {count}
         </div>
       </div>
@@ -428,7 +428,7 @@ export default function CalendarView() {
       </section>
 
       <section
-        className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-4`}
+        className={`flex min-h-screen flex-col items-center pl-8 pr-8 gap-y-6`}
       >
         <div className="flex max-w-lg w-full items-center justify-between">
           <div>

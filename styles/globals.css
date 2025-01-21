@@ -3,20 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --on-light-rgb: 0 97 206;
-  --on-dark-rgb: 245 243 222;
-  --on-warning-rgb: 126 88 33;
-  /* --on-attention-rgb: 155 34 25; */
-  --on-disabled-rgb: 84 84 84;
   --background-rgb: 245 243 222;
+  --general-500-rgb: 0 86 198;
+  --general-200-rgb: 185 213 230;
+  --general-100-rgb: 185 213 230; /* same as general-200 for now */
+  --accent-rgb: 86 235 0;
+  /* --warning-rgb: 245 228 174; */
+  --attention-rgb: 255 45 28;
   --disabled-100-rgb: 218 215 196;
   --disabled-200-rgb: 183 183 173;
-  --general-500-rgb: 0 97 206;
-  --general-200-rgb: 164 192 215;
-  --general-100-rgb: 213 222 219;
-  --accent-rgb: 0 193 167;
-  --warning-rgb: 245 228 174;
-  --attention-rgb: 212 47 131;
+  --on-light-rgb: 0 86 198; /* same as general-500 */
+  --on-dark-rgb: 245 243 222; /* same as background */
+  /* --on-warning-rgb: 126 88 33; */
+  /* --on-attention-rgb: 155 34 25; */
+  --on-disabled-rgb: 84 84 84;
 }
 
 /* TODO support dark theme */
@@ -28,9 +28,11 @@
   }
 } */
 
-html, body {
+html,
+body {
   min-height: 100%;
   max-height: 100%;
+  @apply font-sans font-light;
 }
 
 body {
@@ -79,26 +81,27 @@ input[type] {
   @apply p-0 border-0;
 }
 
-input[type=number] {
+input[type="number"] {
   @apply rounded bg-background ring-2 ring-general-200 font-semibold;
 }
 
-input[type=number][disabled] {
+input[type="number"][disabled] {
   @apply bg-disabled-200 ring-1 ring-ondisabled;
 }
 
-
 .loader {
-  @apply aspect-square;
-  @apply rounded-full;
-  @apply border-2;
-  @apply border-transparent;
-  @apply border-r-onlight;
-  @apply border-b-onlight;
+  @apply aspect-square rounded-full border-2 border-transparent border-r-onlight border-b-onlight;
   animation: l2 0.65s infinite linear;
 }
-@keyframes l2 {to{transform: rotate(1turn)}}
+@keyframes l2 {
+  to {
+    transform: rotate(1turn);
+  }
+}
 
+#headlessui-portal-root {
+  @apply font-sans;
+}
 
 /* TODO move to own file? */
 
@@ -120,8 +123,7 @@ input[type=number][disabled] {
 }
 
 .task__checkbox {
-  @apply border-onlight;
-  @apply cursor-pointer;
+  @apply border-onlight cursor-pointer;
 }
 
 .task--completed .task__checkbox {
@@ -129,24 +131,16 @@ input[type=number][disabled] {
 }
 
 .task__checkbox--disabled {
-  @apply border-disabled-200;
-  @apply cursor-default;
+  @apply border-disabled-200 cursor-default;
 }
 
 .task--completed .task__checkbox--disabled {
-  @apply border-ondisabled;
-  @apply cursor-default;
+  @apply border-ondisabled cursor-default;
 }
 
 .task__checkbox--disabled::before {
-  @apply absolute;
   content: "";
-  @apply border-t-2;
-  @apply border-t-disabled-200;
-  @apply w-[1.414rem];
-  @apply -rotate-45;
-  @apply top-2;
-  @apply -left-1;
+  @apply absolute border-t-2 border-t-disabled-200 w-[1.414rem] -rotate-45 top-2 -left-1;
 }
 
 .task--completed .task__checkbox--disabled::before {
@@ -164,8 +158,7 @@ input[type=number][disabled] {
 /* default loader styles apply to active (not completed) tasks */
 
 .task--completed .task__loader {
-  @apply border-r-ondisabled;
-  @apply border-b-ondisabled;
+  @apply border-r-ondisabled border-b-ondisabled;
 }
 
 .task__date-range--attention {

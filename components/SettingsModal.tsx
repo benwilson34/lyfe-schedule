@@ -13,9 +13,6 @@ import {
 import { Exo_2 } from "next/font/google";
 import { deleteAllTasks } from "@/services/api.service";
 
-// TODO why is this needed even though the font is included in `_app`?
-const exo2 = Exo_2({ subsets: ["latin"] });
-
 export function SettingsModal({
   isOpen,
   setIsOpen,
@@ -144,7 +141,8 @@ export function SettingsModal({
         monthInfoSettings.dailyAverageSection.isTimePercentageShowing,
         (isChecked) => {
           setMonthInfoSettings((prevSettings) => {
-            prevSettings.dailyAverageSection.isTimePercentageShowing = isChecked;
+            prevSettings.dailyAverageSection.isTimePercentageShowing =
+              isChecked;
             return prevSettings;
           });
         },
@@ -190,7 +188,8 @@ export function SettingsModal({
         dayInfoSettings.remainingTaskSection.isTimePercentageShowing,
         (isChecked) => {
           setDayInfoSettings((prevSettings) => {
-            prevSettings.remainingTaskSection.isTimePercentageShowing = isChecked;
+            prevSettings.remainingTaskSection.isTimePercentageShowing =
+              isChecked;
             return prevSettings;
           });
         },
@@ -223,7 +222,8 @@ export function SettingsModal({
         dayInfoSettings.completedTaskSection.isTimePercentageShowing,
         (isChecked) => {
           setDayInfoSettings((prevSettings) => {
-            prevSettings.completedTaskSection.isTimePercentageShowing = isChecked;
+            prevSettings.completedTaskSection.isTimePercentageShowing =
+              isChecked;
             return prevSettings;
           });
         },
@@ -248,7 +248,7 @@ export function SettingsModal({
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
         as="div"
-        className={`${exo2.className} relative z-10`}
+        className={`relative z-10`}
         initialFocus={cancelButtonRef}
         onClose={setIsOpen}
       >

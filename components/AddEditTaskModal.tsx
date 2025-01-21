@@ -30,9 +30,6 @@ import { CreateTaskDto, PatchTaskDto } from "@/types/task.dto";
 import { getCanonicalDatestring } from "@/util/date";
 import { isEqual } from "lodash";
 
-// TODO why is this needed even though the font is included in `_app`?
-const exo2 = Exo_2({ subsets: ["latin"] });
-
 const Bound = {
   START: "start",
   END: "end",
@@ -54,7 +51,9 @@ export function AddEditTaskModal({
   initialTags: string[] | null;
 }) {
   const [title, setTitle] = useState(task?.title || "");
-  const [inputTags, setInputTags] = useState((task?.tags || initialTags)?.join(" ") || "");
+  const [inputTags, setInputTags] = useState(
+    (task?.tags || initialTags)?.join(" ") || ""
+  );
   // TODO handle `useStartTime === true`
   const [startDate, setStartDate] = useState(
     task?.startDate || initialStartDate || dayjs()
@@ -593,7 +592,7 @@ export function AddEditTaskModal({
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
         as="div"
-        className={`${exo2.className} relative z-30`}
+        className={`relative z-30`}
         initialFocus={cancelButtonRef}
         onClose={handleClose}
       >

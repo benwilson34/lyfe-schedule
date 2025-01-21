@@ -1,5 +1,5 @@
 import type { AppProps } from "next/app";
-import { Exo_2 } from "next/font/google";
+import { Geologica } from "next/font/google";
 import ModalContextProvider, {
   useModalContext,
 } from "@/contexts/modal-context";
@@ -26,7 +26,7 @@ import "@/styles/CalendarPicker.css";
 import "@/styles/ToastContainer.css";
 import { DemoModeBanner } from "@/components/DemoModeBanner";
 
-const exo2 = Exo_2({ subsets: ["latin"] });
+const geologica = Geologica({ subsets: ["latin"] });
 
 function Modals() {
   const {
@@ -232,7 +232,14 @@ export default function App({ Component, pageProps }: AppProps) {
             <AuthContextProvider>
               <Init isDemoMode={pageProps.isDemoMode} />
 
-              <main className={exo2.className}>
+              {/* needed in order to use a single font import across the whole app, see https://github.com/vercel/next.js/discussions/70724#discussioncomment-10824927 */}
+              <style jsx global>{`
+                :root {
+                  --font-geologica: ${geologica.style.fontFamily};
+                }
+              `}</style>
+
+              <main>
                 <Component {...pageProps} />
 
                 {pageProps.isDemoMode && <DemoModeBanner />}
