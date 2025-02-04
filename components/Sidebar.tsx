@@ -168,7 +168,7 @@ export default function Sidebar({ isDemoMode }: { isDemoMode: boolean }) {
           </a>
 
           <a
-            href="https://docs.lyfeschedule.com/getting-started.html"
+            href="https://lyfeschedule.com/docs/getting-started"
             target="_blank"
             className="cursor-pointer hover:bg-gray-500/25"
           >

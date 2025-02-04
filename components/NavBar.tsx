@@ -16,10 +16,7 @@ export default function NavBar() {
         />
       </div>
 
-      <a
-        href="https://docs.lyfeschedule.com/getting-started.html"
-        target="_blank"
-      >
+      <a href="https://lyfeschedule.com/docs/getting-started" target="_blank">
         <FontAwesomeIcon
           icon={faCircleQuestion}
           className="cursor-pointer hover:bg-gray-500/25"

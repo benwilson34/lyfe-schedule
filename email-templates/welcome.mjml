@@ -1,33 +1,35 @@
-    <mj-column>
-      <mj-text>
-        <p>
-          Welcome to LyfeSchedule!! Thanks for your interest in my little productivity app 😁
-        </p>
+<mj-column>
+  <mj-text>
+    <p>
+      Welcome to LyfeSchedule!! Thanks for your interest in my little
+      productivity app 😁
+    </p>
 
-        <p>
-          This app is in beta and is being actively developed. I'm accepting any and all feedback at this time - please email me at
-          <a href="mailto:feedback@lyfeschedule.com?subject=LyfeSchedule%20Feedback&amp;body=I%20have%20some%20feedback%20about%20LyfeSchedule%3A%0A%0A">feedback@lyfeschedule.com</a>
-          if you encounter a bug, have a question, or have an idea for an improvement!
-        </p>
+    <p>
+      This app is in beta and is being actively developed. I'm accepting any and
+      all feedback at this time - please email me at
+      <a
+        href="mailto:feedback@lyfeschedule.com?subject=LyfeSchedule%20Feedback&amp;body=I%20have%20some%20feedback%20about%20LyfeSchedule%3A%0A%0A"
+        >feedback@lyfeschedule.com</a
+      >
+      if you encounter a bug, have a question, or have an idea for an
+      improvement!
+    </p>
 
-        <p>
-          I recommend going through the  
-          <a href="https://docs.lyfeschedule.com/getting-started.html">Getting Started guide</a>
-          to get introduced to the app.
-        </p>
-      
-        <p>
-          You can now sign in and start using it immediately!
-        </p>
-      </mj-text>
+    <p>
+      I recommend going through the
+      <a href="https://lyfeschedule.com/docs/getting-started"
+        >Getting Started guide</a
+      >
+      to get introduced to the app.
+    </p>
 
-      <mj-button mj-class="button" href="{{signInLink}}">
-        Sign in
-      </mj-button>
+    <p>You can now sign in and start using it immediately!</p>
+  </mj-text>
 
-      <mj-text>
-        <p>
-          💚 Ben
-        </p>
-      </mj-text>
-    </mj-column>
+  <mj-button mj-class="button" href="{{signInLink}}"> Sign in </mj-button>
+
+  <mj-text>
+    <p>💚 Ben</p>
+  </mj-text>
+</mj-column>

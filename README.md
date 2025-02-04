@@ -14,7 +14,7 @@ _the todo app for people that get things done eventually™_
 
 ⏱️ **Time Estimates**: Estimate how long your tasks will take so you can plan around them.
 
-Be sure to read the [user-facing documentation](https://docs.lyfeschedule.com/) for more info.
+Be sure to read the [user-facing documentation](https://lyfeschedule.com/docs/) for more info.
 
 This app can be run locally on any machine that supports Node and MongoDB, or it can be deployed remotely "on the cloud". If you just want to try it out, there is an invite-only instance running for beta testing purposes. Send us [an email](mailto:beta@lyfeschedule.com?subject=Request%20for%20beta%20access) to request access.
 
