@@ -11,7 +11,12 @@ import { faCheck, faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
 import { faCalendar, faClock } from "@fortawesome/free-regular-svg-icons";
 import { useMemo, useState } from "react";
 import { autoPlacement, useFloating } from "@floating-ui/react";
-import { completeTask, deleteTask, postponeTask } from "@/services/api.service";
+import {
+  completeTask,
+  deleteTask,
+  postponeTask,
+  rescheduleTask,
+} from "@/services/api.service";
 import { useModalContext } from "@/contexts/modal-context";
 import { assign } from "lodash";
 import Overlay from "./Overlay";
@@ -44,6 +49,7 @@ export default function TaskCard({
   afterComplete,
   afterEdit,
   afterPostpone,
+  afterReschedule,
   afterDelete,
 }: {
   task: Task;
@@ -51,6 +57,7 @@ export default function TaskCard({
   afterComplete: (task: Task, completeDay: Dayjs) => void;
   afterEdit: (task: Task) => void;
   afterPostpone: (task: Task, postponeDay: Dayjs) => void;
+  afterReschedule: (task: Task, rescheduleDay: Dayjs) => void;
   afterDelete: (task: Task) => void;
 }) {
   const {
@@ -69,6 +76,7 @@ export default function TaskCard({
     showAddEditModal,
     showPostponeToModal,
     showCompleteOnAnotherDayModal,
+    showRescheduleModal,
     showDeleteModal,
   } = useModalContext();
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
@@ -117,6 +125,19 @@ export default function TaskCard({
     showAddEditModal(task, afterEdit, { initialStartDate: selectedDay });
   };
 
+  const handlePostponeOptionClick = async (postponeDay: Dayjs) => {
+    // TODO try-catch?
+    setIsLoading(true);
+    await postponeTask(task.id, postponeDay);
+    toast(`Task postponed to ${formatShownDate(postponeDay)}`);
+    afterPostpone(task, postponeDay);
+    setIsLoading(false);
+  };
+
+  const handlePostponeToAnotherDayOptionClick = () => {
+    showPostponeToModal(task, (d) => handlePostponeOptionClick(dayjs(d)));
+  };
+
   const handleConfirmedCompleteTaskOnAnotherDay = async (
     completedDate: Date
   ) => {
@@ -134,24 +155,29 @@ export default function TaskCard({
     setIsLoading(false);
   };
 
-  const handlePostponeOptionClick = async (postponeDay: Dayjs) => {
-    // TODO try-catch?
-    setIsLoading(true);
-    await postponeTask(task.id, postponeDay);
-    toast(`Task postponed to ${formatShownDate(postponeDay)}`);
-    afterPostpone(task, postponeDay);
-    setIsLoading(false);
-  };
-
-  const handlePostponeToAnotherDayOptionClick = () => {
-    showPostponeToModal(task, (d) => handlePostponeOptionClick(dayjs(d)));
-  };
-
   const handleCompleteOnAnotherDayOptionClick = () => {
     showCompleteOnAnotherDayModal(
       task,
       handleConfirmedCompleteTaskOnAnotherDay
     );
+  };
+
+  const handleConfirmedRescheduleTask = async (rescheduleDay: Dayjs) => {
+    // TODO try-catch?
+    setIsLoading(true);
+    await rescheduleTask(task.id, rescheduleDay);
+    toast(`Task rescheduled to ${formatShownDate(rescheduleDay)}`);
+    const updatedTask = {
+      ...task,
+      startDate: rescheduleDay,
+      endDate: rescheduleDay.add(task.rangeDays - 1, "day"),
+    };
+    afterReschedule(updatedTask, rescheduleDay);
+    setIsLoading(false);
+  };
+
+  const handleRescheduleOptionClick = () => {
+    showRescheduleModal(task, (d) => handleConfirmedRescheduleTask(dayjs(d)));
   };
 
   const handleConfirmedDelete = async () => {
@@ -288,6 +314,7 @@ export default function TaskCard({
           onEditClick={handleEditOptionClick}
           onPostponeClick={handlePostponeOptionClick}
           onPostponeToAnotherDayClick={handlePostponeToAnotherDayOptionClick}
+          onRescheduleClick={handleRescheduleOptionClick}
           onCompleteOnAnotherDayClick={handleCompleteOnAnotherDayOptionClick}
           onDeleteClick={handleDeleteOptionClick}
           floating={floating}

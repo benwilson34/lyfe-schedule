@@ -7,6 +7,12 @@ import { Dialog, Transition } from "@headlessui/react";
 import { Exo_2 } from "next/font/google";
 import { CalendarPicker } from "./CalendarPicker";
 import dayjs from "@/lib/dayjs";
+import Button from "./Button";
+
+type QuickSelectButton = {
+  label: string;
+  onClick: () => Date;
+};
 
 export function CalendarPickerModal({
   isOpen,
@@ -18,6 +24,7 @@ export function CalendarPickerModal({
   confirmButtonClasses = "bg-accent hover:bg-green-500 text-background",
   isDayValid = () => true,
   dayFeedback = () => <></>,
+  quickSelectButtons = [],
 }: {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -28,6 +35,7 @@ export function CalendarPickerModal({
   confirmButtonClasses?: string;
   isDayValid?: (day: Date) => boolean;
   dayFeedback?: (day: Date) => React.ReactNode;
+  quickSelectButtons?: QuickSelectButton[];
 }) {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const selectedDayFeedback = useMemo(
@@ -57,6 +65,24 @@ export function CalendarPickerModal({
     setIsOpen(false);
     onConfirm(selectedDay);
   }, [selectedDay, onConfirm, setIsOpen]);
+
+  function renderQuickSelectButtons(quickSelectButtons_: QuickSelectButton[]) {
+    return (
+      <div className="mt-4">
+        <span className="font-semibold">Quick select: </span>
+
+        {quickSelectButtons_.map(({ label, onClick }) => (
+          <Button
+            palette="general-200"
+            key={label}
+            onClick={() => handleSelectedDayChange(onClick())}
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
+    );
+  }
 
   if (!isOpen) return null;
 
@@ -109,6 +135,9 @@ export function CalendarPickerModal({
                       onChange={(d) => handleSelectedDayChange(d as Date)}
                       value={selectedDay}
                     />
+
+                    {quickSelectButtons.length > 0 &&
+                      renderQuickSelectButtons(quickSelectButtons)}
 
                     {selectedDayFeedback}
                   </div>

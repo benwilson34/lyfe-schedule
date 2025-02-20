@@ -7,6 +7,7 @@ export type Modal =
   | "edit"
   | "postponeTo"
   | "completeOnAnotherDay"
+  | "reschedule"
   | "delete"
   | "settings";
 export type ModalContext = {
@@ -32,6 +33,10 @@ export type ModalContext = {
     onConfirm: (selectedDay: Date) => void
   ) => void;
   showCompleteOnAnotherDayModal: (
+    selectedTask: Task,
+    onConfirm: (selectedDay: Date) => void
+  ) => void;
+  showRescheduleModal: (
     selectedTask: Task,
     onConfirm: (selectedDay: Date) => void
   ) => void;
@@ -95,6 +100,15 @@ export default function ModalContextProvider({
     setOnCalendarPickerConfirm(() => onConfirm);
   };
 
+  const showRescheduleModal = (
+    selectedTask: Task,
+    onConfirm: (selectedDay: Date) => void
+  ) => {
+    setCurrentModal("reschedule");
+    setSelectedTask(selectedTask);
+    setOnCalendarPickerConfirm(() => onConfirm);
+  };
+
   const showDeleteModal = (selectedTask: Task, onConfirm: () => void) => {
     setCurrentModal("delete");
     setSelectedTask(selectedTask);
@@ -115,6 +129,7 @@ export default function ModalContextProvider({
         showAddEditModal,
         showPostponeToModal,
         showCompleteOnAnotherDayModal,
+        showRescheduleModal,
         showDeleteModal,
       }}
     >

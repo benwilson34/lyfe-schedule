@@ -227,6 +227,70 @@ async function postponeTask(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
+async function rescheduleTask(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const { taskId } = req.query;
+    if (!taskId || Array.isArray(taskId)) {
+      new ErrorResponse({
+        status: 404,
+        errorCode: "invalidFields",
+        title: "TODO",
+        detail: "TODO",
+      }).send(res);
+      return;
+    }
+
+    // auth
+    const token = await getToken({ req });
+    if (!token) {
+      unauthenticatedErrorResponse.send(res);
+      return;
+    }
+    const userId = token.sub!;
+
+    // TODO validation
+    const { rescheduleDate } = req.body;
+    if (!rescheduleDate) {
+      new ErrorResponse({
+        status: 400,
+        errorCode: "invalidFields",
+        title: "TODO",
+        detail: "TODO",
+      }).send(res);
+      return;
+    }
+
+    const task = await getTaskByIdFromDb(taskId);
+    if (!task) {
+      notFoundErrorResponse.send(res);
+      return;
+    }
+    if (task.userId.toString() !== userId) {
+      // TODO better to include in "resource not found"?
+      unauthenticatedErrorResponse.send(res);
+      return;
+    }
+
+    const nextStartDay = dayjs.utc(rescheduleDate);
+    await patchTaskInDb(taskId, {
+      startDate: {
+        op: "update",
+        value: nextStartDay.toDate(),
+      },
+      endDate: {
+        op: "update",
+        value: nextStartDay.add(task.rangeDays - 1, "day").toDate(),
+      },
+    });
+
+    // TODO send updated task in response?
+    new SuccessResponse().send(res);
+  } catch (maybeError) {
+    console.error(maybeError);
+    internalErrorResponse.send(res);
+  }
+}
+
 async function operateOnTask(req: NextApiRequest, res: NextApiResponse) {
   try {
     // TODO validate body?
@@ -246,6 +310,9 @@ async function operateOnTask(req: NextApiRequest, res: NextApiResponse) {
         break;
       case "postpone":
         await postponeTask(req, res);
+        break;
+      case "reschedule":
+        await rescheduleTask(req, res);
         break;
       default:
         new ErrorResponse({

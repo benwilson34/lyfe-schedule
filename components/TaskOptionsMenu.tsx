@@ -13,6 +13,7 @@ import {
   faArrowTurnDown,
   faPersonWalkingArrowRight,
   faCircleLeft,
+  faArrowsTurnRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatShownDate } from "@/util/format";
 import { TaskViewModel as Task } from "@/types/task.viewModel";
@@ -49,6 +50,7 @@ export default function TaskOptionsMenu({
   onEditClick,
   onPostponeClick,
   onPostponeToAnotherDayClick,
+  onRescheduleClick,
   onCompleteOnAnotherDayClick,
   onDeleteClick,
   floating,
@@ -61,6 +63,7 @@ export default function TaskOptionsMenu({
   onEditClick: () => void;
   onPostponeClick: (postponeDay: Dayjs) => void;
   onPostponeToAnotherDayClick: () => void;
+  onRescheduleClick: () => void;
   onCompleteOnAnotherDayClick: () => void;
   onDeleteClick: () => void;
   floating: UseFloatingReturn;
@@ -158,6 +161,7 @@ export default function TaskOptionsMenu({
                     />
                     <span className="">Postpone to</span>
                   </div>
+
                   <div className="group relative flex flex-col pl-6 font-semibold">
                     <div
                       onClick={() => {
@@ -169,6 +173,7 @@ export default function TaskOptionsMenu({
                       {selectedDayIsToday ? "Tomorrow" : "Next day"} (
                       {formatShownDate(nextDay)})
                     </div>
+
                     <div
                       onClick={() => {
                         onPostponeClick(weekendDay);
@@ -179,6 +184,7 @@ export default function TaskOptionsMenu({
                       {selectedDayIsWeekend ? "Next weekend" : "Weekend"} (
                       {formatShownDate(weekendDay)})
                     </div>
+
                     <div
                       onClick={() => {
                         onPostponeClick(nextWeekDay);
@@ -188,6 +194,7 @@ export default function TaskOptionsMenu({
                     >
                       Next week ({formatShownDate(nextWeekDay)})
                     </div>
+
                     <div
                       onClick={() => {
                         onPostponeToAnotherDayClick();
@@ -197,6 +204,28 @@ export default function TaskOptionsMenu({
                     >
                       Another day
                     </div>
+                  </div>
+                </div>
+
+                <div className="border-t-[1px] border-general" />
+
+                <div
+                  onClick={() => {
+                    onRescheduleClick();
+                    close();
+                  }}
+                  className="group relative flex items-center gap-x-2 rounded-lg p-1 hover:bg-gray-50 cursor-pointer"
+                >
+                  {/* <div className="mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white"> */}
+                  <FontAwesomeIcon
+                    icon={faArrowsTurnRight}
+                    className="h-4 w-4  group-hover:text-indigo-600"
+                    aria-hidden="true"
+                  />
+                  {/* </div> */}
+                  <div>
+                    <span className="font-semibold">Reschedule</span>
+                    {/* <p className="mt-1 text-gray-600">{item.description}</p> */}
                   </div>
                 </div>
 

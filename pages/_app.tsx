@@ -125,6 +125,43 @@ function Modals() {
         />
       )}
 
+      {currentModal === "reschedule" && (
+        <CalendarPickerModal
+          isOpen={true}
+          setIsOpen={() => setCurrentModal("none")}
+          onConfirm={onCalendarPickerConfirm!}
+          title="Reschedule task"
+          body={
+            <>
+              <div>
+                Choose the new start date for{" "}
+                <span className="font-semibold">{selectedTask!.title}</span>.
+              </div>
+
+              <div>
+                If you want to keep the current start date but hide the task
+                until a future day, you want to <em>Postpone</em> instead.
+              </div>
+            </>
+          }
+          confirmButtonText="Reschedule"
+          quickSelectButtons={[
+            { label: "Today", onClick: () => dayjs().toDate() },
+            ...(selectedTask?.repeatDays
+              ? [
+                  {
+                    label: "Next time",
+                    onClick: () =>
+                      dayjs(selectedTask.startDate)
+                        .add(selectedTask.repeatDays!, "day")
+                        .toDate(),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      )}
+
       {currentModal === "delete" && (
         <ConfirmActionModal
           isOpen={true}

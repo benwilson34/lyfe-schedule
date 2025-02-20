@@ -315,6 +315,19 @@ export async function postponeTask(
   saveData();
 }
 
+export async function rescheduleTask(
+  taskId: string,
+  rescheduleDate: Dayjs
+): Promise<void> {
+  const [...tasks] = loadDataIfNeeded();
+  const foundTask = findTask(tasks, taskId);
+  foundTask.startDate = rescheduleDate.toString();
+  foundTask.endDate = rescheduleDate
+    .add(foundTask.rangeDays - 1, "day")
+    .toString();
+  saveData();
+}
+
 // TODO or should the type be TaskViewModel then we'll just convert to TaskDto?
 export async function createTask(task: CreateTaskDto): Promise<string> {
   const tasks = loadDataIfNeeded();

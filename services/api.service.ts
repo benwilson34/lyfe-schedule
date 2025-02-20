@@ -133,6 +133,20 @@ export async function postponeTask(
   });
 }
 
+export async function rescheduleTask(
+  taskId: string,
+  rescheduleDate: Dayjs
+): Promise<undefined> {
+  return request({
+    method: "PUT",
+    endpoint: `/api/tasks/${taskId}`,
+    body: {
+      operation: "reschedule",
+      rescheduleDate: getCanonicalDatestring(rescheduleDate),
+    },
+  });
+}
+
 // TODO or should the type be TaskViewModel then we'll just convert to TaskDto?
 export async function createTask(task: CreateTaskDto): Promise<string> {
   const { taskId } = await request<{ taskId: string }>({

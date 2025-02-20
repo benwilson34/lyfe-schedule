@@ -192,6 +192,7 @@ export default function AllTasksView({ initTasks }: { initTasks?: TaskDto[] }) {
               afterComplete={updateTasks}
               afterEdit={updateTasks}
               afterPostpone={updateTasks}
+              afterReschedule={updateTasks}
               afterDelete={afterDeleteTask}
             />
           ))

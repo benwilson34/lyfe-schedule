@@ -234,12 +234,12 @@ export default function CalendarView() {
     setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
   };
 
-  const afterPostponeTask = async (task: Task) => {
+  const afterPostponeTask = (task: Task) => {
     // TODO could use 2nd param `postponeDate` to update `dayTasks`?
     setSelectedDayTasks((tasks) => tasks.filter((t) => t.id !== task.id));
   };
 
-  const afterDeleteTask = async (deletedTask: Task) => {
+  const afterDeleteTask = (deletedTask: Task) => {
     setSelectedDayTasks((tasks) =>
       tasks.filter((t) => t.id !== deletedTask.id)
     );
@@ -468,6 +468,7 @@ export default function CalendarView() {
               afterComplete={afterCompleteTask}
               afterEdit={afterEditTask}
               afterPostpone={afterPostponeTask}
+              afterReschedule={afterEditTask}
               afterDelete={afterDeleteTask}
             />
           ))
