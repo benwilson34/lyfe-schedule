@@ -205,6 +205,7 @@ export default function TaggedTasksView({
               afterComplete={updateTasks}
               afterEdit={updateTasks}
               afterPostpone={updateTasks}
+              afterReschedule={updateTasks}
               afterDelete={afterDeleteTask}
             />
           ))
